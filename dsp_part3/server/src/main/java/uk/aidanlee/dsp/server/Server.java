@@ -1,0 +1,76 @@
+package uk.aidanlee.dsp.server;
+
+import com.badlogic.gdx.utils.TimeUtils;
+import uk.aidanlee.dsp.server.data.Game;
+import uk.aidanlee.dsp.server.net.Connections;
+import uk.aidanlee.dsp.server.net.NetManager;
+
+import java.util.List;
+
+public class Server {
+    /**
+     * Sends and receives UDP packets on a separate thread for the server.
+     */
+    public static NetManager netManager;
+
+    /**
+     * Processes packets received by the net manager and stores info on all connected clients.
+     */
+    public static Connections connections;
+
+    /**
+     * Holds data and processes the game simulation.
+     */
+    public static Game game;
+
+    /**
+     *
+     */
+    public static void start(int _port, int _maxClients) {
+        netManager  = new NetManager(_port);
+        connections = new Connections(_maxClients);
+
+        // Start the socket thread for sending and receiving data.
+        netManager.start();
+
+        // Setup the game simulation.
+        game = new Game(_maxClients);
+
+        // Setup variables for server fixed time step.
+        final float step = 1.0f / 60.0f;
+        final float tick = 1.0f / 30.0f;
+
+        double currentTime = 0;
+        double stepAccumulator = 0;
+        double tickAccumulator = 0;
+
+        // Main server loop
+        while (true) {
+
+            double newTime   = TimeUtils.millis() / 1000.0;
+            double frameTime = Math.min(newTime - currentTime, 0.25);
+
+            currentTime = newTime;
+            stepAccumulator += frameTime;
+            tickAccumulator += frameTime;
+
+            while (stepAccumulator >= step) {
+                stepAccumulator -= step;
+
+                // Simulate game world.
+                game.simulate(step);
+            }
+
+            while (tickAccumulator >= tick) {
+                tickAccumulator -= tick;
+
+                // Send data out to clients.
+                connections.update();
+            }
+        }
+    }
+
+    public static void shutdown() {
+        //
+    }
+}

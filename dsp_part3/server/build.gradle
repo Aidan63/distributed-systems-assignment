@@ -1,0 +1,16 @@
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+mainClassName = 'uk.aidanlee.dsp.server.ServerLauncher'
+eclipse.project.name = appName + '-server'
+
+dependencies {
+  compile project(':shared')
+}
+
+jar {
+  from { configurations.compile.collect { zipTree(it) } }
+  manifest {
+    attributes 'Main-Class': project.mainClassName
+  }
+}
