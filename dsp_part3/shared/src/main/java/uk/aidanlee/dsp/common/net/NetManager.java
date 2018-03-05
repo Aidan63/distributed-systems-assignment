@@ -1,13 +1,11 @@
-package uk.aidanlee.dsp.net;
-
-import uk.aidanlee.dsp.common.net.BitPacker;
-import uk.aidanlee.dsp.common.net.EndPoint;
-import uk.aidanlee.dsp.data.Game;
+package uk.aidanlee.dsp.common.net;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NetManager extends Thread {
     /**
@@ -21,21 +19,45 @@ public class NetManager extends Thread {
     private byte[] buffer;
 
     /**
-     * The address and port of the server.
+     * All of the packets received by this thread.
      */
-    private EndPoint destination;
+    private Queue<Packet> packets;
 
     /**
-     * Creates a network manager and attempts to connect to the provided address and port.
+     * Creates a network manager which will listen for packets on an automatically assigned port.
      */
     public NetManager() {
         try {
-            socket = new DatagramSocket();
-            buffer = new byte[1400];
+            socket  = new DatagramSocket();
+            buffer  = new byte[1400];
+            packets = new ConcurrentLinkedQueue<>();
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
             System.exit(-1);
         }
+    }
+
+    /**
+     * Creates a network manager and attempts to listen for packets on a specified port.
+     * @param _port The port to listen on.
+     */
+    public NetManager(int _port) {
+        try {
+            socket  = new DatagramSocket(_port);
+            buffer  = new byte[1400];
+            packets = new ConcurrentLinkedQueue<>();
+        } catch (SocketException _ex) {
+            System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
+            System.exit(-1);
+        }
+    }
+
+    /**
+     * Thread safe access to the packets received by a concurrent linked queue.
+     * @return Queue of packets.
+     */
+    public Queue<Packet> getPackets() {
+        return packets;
     }
 
     /**
@@ -56,8 +78,8 @@ public class NetManager extends Thread {
                 BitPacker bit = new BitPacker();
                 bit.writeBytes(packet.getData(), packet.getLength());
 
-                // Pass the data and sender info to the connections class for processing.
-                Game.connections.processPacket(bit);
+                // Add the packet to the queue to be read by the main thread.
+                packets.offer(new Packet(bit.toBytes(), from));
             } catch (IOException _ex) {
                 System.out.println("Network Manager : IO Exception reading data from UDP socket - " + _ex.getMessage());
                 System.exit(-1);
@@ -67,22 +89,14 @@ public class NetManager extends Thread {
 
     /**
      * Sends data to the game server.
-     * @param _data The byte array to send.
+     * @param _packet The byte array to send.
      */
-    public synchronized void send(byte[] _data) {
+    public void send(Packet _packet) {
         try {
-            DatagramPacket packet = new DatagramPacket(_data, _data.length, destination.getAddress(), destination.getPort());
+            DatagramPacket packet = new DatagramPacket(_packet.getData(), _packet.getData().length, _packet.getEndpoint().getAddress(), _packet.getEndpoint().getPort());
             socket.send(packet);
         } catch (IOException _ex) {
             System.out.println("Network Manager : IO Exception sending datagram packet to server - " + _ex.getMessage());
         }
-    }
-
-    /**
-     * Sets the servers location.
-     * @param destination The address and port of the server.
-     */
-    public synchronized void setDestination(EndPoint destination) {
-        this.destination = destination;
     }
 }

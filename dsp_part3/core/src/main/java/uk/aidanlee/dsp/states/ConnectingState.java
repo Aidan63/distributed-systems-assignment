@@ -25,7 +25,7 @@ public class ConnectingState extends State {
     @Override
     public void onUpdate() {
         // Send a connection packet!
-        Game.netManager.send(Packet.Connection(playerName));
+        Game.netManager.send(Packet.Connection(playerName, Game.connections.getServer()));
     }
 
     @Override

@@ -1,20 +1,18 @@
 package uk.aidanlee.dsp.states;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
 import imgui.WindowFlags;
+import uk.aidanlee.dsp.common.net.BitPacker;
+import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.commands.CmdChatMessage;
-import uk.aidanlee.dsp.common.net.commands.CmdTest;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.Game;
 import uk.aidanlee.dsp.net.Client;
 
-import java.awt.*;
-import java.util.LinkedList;
 import java.util.List;
 
 public class LobbyState extends State {
@@ -30,9 +28,9 @@ public class LobbyState extends State {
     public void onUpdate() {
 
         // Send a netchan update out.
-        byte[] data = Game.netChan.send();
+        BitPacker data = Game.netChan.send();
         if (data != null) {
-            Game.netManager.send(data);
+            Game.netManager.send(new Packet(data.toBytes(), Game.connections.getServer()));
         }
 
         drawClientList();
@@ -87,7 +85,11 @@ public class LobbyState extends State {
         if (ImGui.INSTANCE.button("send", new Vec2(-1, 0))) {
             // Send chat message to server.
             String str = new String(inputBox).trim();
-            Game.netChan.addCommand(new CmdChatMessage(Game.connections.getUs().getId(), str));
+            System.out.println("Adding chat message");
+            Game.netChan.addReliableCommand(new CmdChatMessage(Game.connections.getUs().getId(), str));
+
+            // Add the message to out chat log
+            Game.chatlog.addPlayerMessage(Game.connections.getUs().getName(), str);
 
             // reset the input box.
             inputBox  = new char[255];

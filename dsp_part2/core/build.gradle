@@ -1,0 +1,11 @@
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+eclipse.project.name = appName + '-core'
+
+dependencies {
+    compile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    compile "com.github.kotlin-graphics:imgui:-SNAPSHOT"
+    compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+    compile "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
+    compile "com.google.code.gson:gson:2.8.2"
+    compile fileTree(dir: 'libs', include: '*.jar')
+}

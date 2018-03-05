@@ -4,7 +4,7 @@ import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.race.Race;
 import uk.aidanlee.dsp.net.Connections;
-import uk.aidanlee.dsp.net.NetManager;
+import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.states.ConnectingState;
 import uk.aidanlee.dsp.states.LobbyState;
 import uk.aidanlee.dsp.states.MenuState;

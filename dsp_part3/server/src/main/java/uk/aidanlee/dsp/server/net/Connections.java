@@ -45,17 +45,22 @@ public class Connections {
     /**
      * Processes UDP packets received from the NetManager.
      * @param _packet Bit packed message data.
-     * @param _from   The address and port the data arrived from.
      */
-    public synchronized void processPacket(BitPacker _packet, EndPoint _from) {
-        // If first bit is 1 then the packet is OOB
-        if (_packet.readBoolean()) {
-            processOOBPacket(_packet, _from);
+    public synchronized void processPacket(Packet _packet) {
+
+        BitPacker bits = new BitPacker();
+        bits.writeBytes(_packet.getData());
+
+        if (bits.readBoolean()) {
+
+            // If first bit is 1 then the packet is OOB
+            processOOBPacket(bits, _packet.getEndpoint());
         } else {
+
             // If that first bit is 0 then its a net chan packet.
             // Find the right netchan based on the sender and process the packet.
-            int id = findExistingClientIndex(_from);
-            CommandProcessor.parse(clients[id].receive(_packet));
+            int id = findExistingClientIndex(_packet.getEndpoint());
+            CommandProcessor.parse(clients[id].receive(bits));
         }
     }
 
@@ -65,11 +70,11 @@ public class Connections {
     public void update() {
         for (int i = 0; i < maxClients; i++) {
             if (isClientConnected(i)) {
-                byte[] data = clients[i].send();
+                BitPacker data = clients[i].send();
                 if (data == null) continue;
 
                 EndPoint ep = clients[i].getDestination();
-                Server.netManager.send(data, ep);
+                Server.netManager.send(new Packet(data.toBytes(), ep));
             }
         }
     }
@@ -91,7 +96,6 @@ public class Connections {
     }
 
     public void addReliableCommandAllExcept(Command _c, int _id) {
-        System.out.println("Adding reliable command");
         for (int i = 0; i < maxClients; i++) {
             if (isClientConnected(i) && i != _id) {
                 clients[i].addReliableCommand(_c);
@@ -141,13 +145,13 @@ public class Connections {
                     maxClients,
                     numClientsConnected,
                     0,
-                    getClientInfo()), _from);
+                    getClientInfo(), _from));
             return;
         }
 
         // Decline connection if server is full
         if (numClientsConnected == maxClients) {
-            Server.netManager.send(Packet.ConnectionDenied(), _from);
+            Server.netManager.send(Packet.ConnectionDenied(_from));
             return;
         }
 
@@ -168,7 +172,7 @@ public class Connections {
                 maxClients,
                 numClientsConnected,
                 0,
-                getClientInfo()), _from);
+                getClientInfo(), _from));
 
         // Tell all clients (except the newly connected client) a new client has connected.
         addReliableCommandAllExcept(new CmdClientConnected(getClientInfoFor(clientID)), clientID);

@@ -8,6 +8,7 @@ import imgui.Context;
 import imgui.ContextKt;
 import imgui.ImGui;
 import imgui.impl.LwjglGL3;
+import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.Game;
@@ -39,6 +40,13 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
+        // Read a packet (if any) and process it.
+        Packet pck = Game.netManager.getPackets().poll();
+        if (pck != null) {
+            Game.connections.processPacket(pck);
+        }
+
+        // Main game fixed time-step loop.
         double newTime   = TimeUtils.millis() / 1000.0;
         double frameTime = Math.min(newTime - currentTime, 0.25);
 
@@ -64,7 +72,7 @@ public class Main extends ApplicationAdapter {
             // Send 10 disconnection packets and hope at-least one gets through
             for (int i = 0; i < 10; i++) {
                 // Send a connection packet!
-                Game.netManager.send(Packet.Disconnection());
+                Game.netManager.send(Packet.Disconnection(Game.connections.getServer()));
             }
         }
 

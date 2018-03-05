@@ -1,6 +1,7 @@
 package uk.aidanlee.dsp.net;
 
 import uk.aidanlee.dsp.common.net.BitPacker;
+import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.data.Game;
 
@@ -14,6 +15,11 @@ public class Connections {
      * Array of all clients in the server, including our-self.
      */
     private Client[] clients;
+
+    /**
+     * Servers endpoint location.
+     */
+    private EndPoint server;
 
     /**
      * The current connection state of this client.
@@ -43,22 +49,32 @@ public class Connections {
         return us;
     }
 
+    public EndPoint getServer() {
+        return server;
+    }
+    public void setServer(EndPoint server) {
+        this.server = server;
+    }
+
     // Public API
 
     /**
      * Reads the initial data from a packet received from the NetManager.
-     * @param _data bit packed message data.
+     * @param _packet Packet class containing the byte data and sender.
      */
-    public synchronized void processPacket(BitPacker _data) {
+    public synchronized void processPacket(Packet _packet) {
+        BitPacker data = new BitPacker();
+        data.writeBytes(_packet.getData());
+
         // First bit indicates if the packet is OOB (1) or netchan (0).
-        if (_data.readBoolean()) {
-            processOOBPacket(_data);
+        if (data.readBoolean()) {
+            processOOBPacket(data);
         } else {
             // We cannot process net chan messages if we are not in the connected state.
             if (state != ConnectionState.Connected) return;
 
             // Send netchan packet to the net channel and parse any commands
-            BitPacker commands = Game.netChan.receive(_data);
+            BitPacker commands = Game.netChan.receive(data);
             CommandProcessor.parse(commands);
         }
     }

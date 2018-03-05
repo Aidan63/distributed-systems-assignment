@@ -4,6 +4,8 @@ import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.data.Game;
 
+import java.net.StandardSocketOptions;
+
 public class CommandProcessor {
 
     /**
@@ -35,6 +37,8 @@ public class CommandProcessor {
      */
     private static void cmdClientConnected(BitPacker _data) {
 
+        System.out.println("NEW CLIENT CONNECTED?!");
+
         // Read Basic Info
         String name = _data.readString();
         int    id   = _data.readByte();
@@ -51,6 +55,7 @@ public class CommandProcessor {
         int tB = _data.readByte();
 
         Client c = new Client(id, name);
+        System.out.println(name);
         c.setShipIndex (idx);
         c.setShipColor (new float[] { sR, sG, sB });
         c.setTrailColor(new float[] { tR, tG, tB });
@@ -66,8 +71,10 @@ public class CommandProcessor {
     private static void cmdClientDisconnected(BitPacker _data) {
 
         int id = _data.readByte();
-        Game.chatlog.addServerMessage(Game.connections.getClients()[id].getName() + " has left");
-        Game.connections.getClients()[id] = null;
+        Client[] clients = Game.connections.getClients();
+
+        Game.chatlog.addServerMessage(clients[id].getName() + " has left");
+        clients[id] = null;
     }
 
     /**
@@ -78,6 +85,8 @@ public class CommandProcessor {
 
         int    id  = _data.readByte();
         String txt = _data.readString();
-        Game.chatlog.addPlayerMessage(Game.connections.getClients()[id].getName(), txt);
+
+        Client[] clients = Game.connections.getClients();
+        Game.chatlog.addPlayerMessage(clients[id].getName(), txt);
     }
 }

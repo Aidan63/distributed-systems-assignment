@@ -1,11 +1,10 @@
 package uk.aidanlee.dsp.server;
 
 import com.badlogic.gdx.utils.TimeUtils;
+import uk.aidanlee.dsp.common.net.NetManager;
+import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.server.data.Game;
 import uk.aidanlee.dsp.server.net.Connections;
-import uk.aidanlee.dsp.server.net.NetManager;
-
-import java.util.List;
 
 public class Server {
     /**
@@ -46,7 +45,13 @@ public class Server {
 
         // Main server loop
         while (true) {
+            // Read packets
+            Packet pck = netManager.getPackets().poll();
+            if (pck != null) {
+                connections.processPacket(pck);
+            }
 
+            // Server fixed time-step loop
             double newTime   = TimeUtils.millis() / 1000.0;
             double frameTime = Math.min(newTime - currentTime, 0.25);
 

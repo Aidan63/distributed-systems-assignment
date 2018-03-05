@@ -7,6 +7,7 @@ public class CmdChatMessage extends Command {
     private String message;
 
     public CmdChatMessage(int _id, String _msg) {
+        super();
         id      = _id;
         message = _msg;
     }

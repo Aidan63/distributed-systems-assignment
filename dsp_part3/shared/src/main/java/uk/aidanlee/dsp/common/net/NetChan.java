@@ -2,10 +2,7 @@ package uk.aidanlee.dsp.common.net;
 
 import uk.aidanlee.dsp.common.net.commands.Command;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class NetChan {
 
@@ -61,7 +58,7 @@ public class NetChan {
 
         reliableCommandQueue   = new PriorityQueue<>();
         unreliableCommandQueue = new PriorityQueue<>();
-        reliableBuffer = new LinkedList<>();
+        reliableBuffer = new ArrayList<>();
     }
 
     // Getters and Setters
@@ -92,7 +89,7 @@ public class NetChan {
      * Builds a net chan update packet for sending over the network.
      * @return
      */
-    public byte[] send() {
+    public BitPacker send() {
 
         int numReliableToSend   = Math.min(reliableCommandQueue.size(), MAX_RELIABLE_CMDS);
         int numUnreliableToSend = Math.min(unreliableCommandQueue.size(), MAX_PACKET_CMDS);
@@ -101,17 +98,20 @@ public class NetChan {
 
         // Fill the reliable buffer if needed / possible.
         if (reliableBuffer.isEmpty() && numReliableToSend > 0) {
+            System.out.println("Filling the reliable buffer");
             for (int i = 0; i < numReliableToSend; i++) {
                 reliableBuffer.add(reliableCommandQueue.remove());
             }
+            System.out.println(reliableCommandQueue.size() + " reliable commands to be buffered");
         }
 
         // Create the header data.
-        BitPacker data = createNetChanHeader();
+        BitPacker data = createNetChanHeader(numReliableToSend + numUnreliableToSend);
 
-        // Add our unreliable commands
-        for (Command cmd : reliableBuffer) {
-            cmd.add(data);
+        // Add all of the commands
+        for (int i = 0; i < reliableBuffer.size(); i++) {
+            System.out.println("Adding reliable command to netchan packet");
+            reliableBuffer.get(i).add(data);
         }
 
         // Pop and add some unreliable commands.
@@ -122,7 +122,7 @@ public class NetChan {
         // Increase the sequence number.
         sequence++;
 
-        return data.toBytes();
+        return data;
     }
 
     /**
@@ -131,17 +131,15 @@ public class NetChan {
      * @return
      */
     public BitPacker receive(BitPacker _packet) {
-        System.out.println("Netchan message received");
-
         int inSeq = _packet.readInteger();
         int inAck = _packet.readInteger();
+
+        ackSequence = inSeq;
 
         if (getMSB(inAck)) {
             System.out.println("Reliable Ack'd");
             reliableBuffer.clear();
         }
-
-        ackSequence = inSeq;
 
         return _packet;
     }
@@ -152,7 +150,7 @@ public class NetChan {
      * Construct the net chan header for the next outgoing packet.
      * @return Bit packer with the header data written to it.
      */
-    private BitPacker createNetChanHeader() {
+    private BitPacker createNetChanHeader(int _numCmds) {
         BitPacker header = new BitPacker();
 
         // Not an OOB packet
@@ -160,14 +158,13 @@ public class NetChan {
 
         // Write 32 bits for the sequence number.
         // MSB is used to indicate if there are reliable commands and used for acknowledging them.
-        sequence = setMSB(sequence, reliableBuffer.size() > 0);
-        header.writeInteger(sequence);
+        header.writeInteger(setMSB(sequence, reliableBuffer.size() > 0));
 
         // Write 32 bits for the ACK sequence number
         header.writeInteger(ackSequence);
 
         // Write a byte for the number of commands in this net chan packet.
-        header.writeByte((byte) (unreliableCommandQueue.size() + reliableBuffer.size()));
+        header.writeByte((byte) (_numCmds));
 
         return header;
     }

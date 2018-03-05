@@ -45,17 +45,18 @@ public class MenuState extends State {
         if (ImGui.INSTANCE.button("Connect", new Vec2(-1, 0))) {
             // Attempt to resolve and set the servers location.
             try {
-                String strIP = new String(ip).trim();
-                int intPort  = Integer.parseInt(new String(port).trim());
 
-                EndPoint location = new EndPoint(InetAddress.getByName(strIP), intPort);
-                Game.netManager.setDestination(location);
+                // Set the servers location.
+                String strIP    = new String(ip).trim();
+                int    intPort  = Integer.parseInt(new String(port).trim());
+                Game.connections.setServer(new EndPoint(InetAddress.getByName(strIP), intPort));
+
+                // then switch to the connecting state to start sending connection packets.
+                changeState("connecting", new String(name).trim(), null);
+
             } catch (UnknownHostException _ex) {
                 System.out.println("Unable to resolve address : " + new String(ip).trim());
             }
-
-            // then switch to the connecting state to start sending connection packets.
-            changeState("connecting", new String(name).trim(), null);
         }
 
         ImGui.INSTANCE.end();

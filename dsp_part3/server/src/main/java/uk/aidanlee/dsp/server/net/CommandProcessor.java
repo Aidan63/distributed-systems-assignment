@@ -23,7 +23,9 @@ public class CommandProcessor {
         int    id  = _data.readByte();
         String txt = _data.readString();
 
+        System.out.println("Client " + id + " said : " + txt);
+
         Command cmd = new CmdChatMessage(id, txt);
-        Server.connections.addCommandAll(cmd);
+        Server.connections.addReliableCommandAllExcept(cmd, id);
     }
 }

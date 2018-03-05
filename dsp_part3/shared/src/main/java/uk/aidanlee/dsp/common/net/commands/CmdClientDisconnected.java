@@ -9,7 +9,12 @@ public class CmdClientDisconnected extends Command {
     private int clientID;
 
     public CmdClientDisconnected(int _id) {
+        super();
         clientID = _id;
+    }
+
+    public int getClientID() {
+        return clientID;
     }
 
     @Override

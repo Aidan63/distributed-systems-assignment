@@ -1,0 +1,62 @@
+
+craft.png
+size: 128,512
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+craft
+  rotate: false
+  xy: 0, 0
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 0
+craft
+  rotate: false
+  xy: 0, 64
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 1
+craft
+  rotate: false
+  xy: 0, 128
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 2
+craft
+  rotate: false
+  xy: 0, 192
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 3
+craft
+  rotate: false
+  xy: 0, 256
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 4
+craft
+  rotate: false
+  xy: 0, 320
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 5
+craft
+  rotate: false
+  xy: 0, 384
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 6
+craft
+  rotate: false
+  xy: 0, 448
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: 7

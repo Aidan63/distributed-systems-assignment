@@ -14,6 +14,7 @@ public class CmdClientConnected extends Command {
      * @param _client Clients data.
      */
     public CmdClientConnected(ClientInfo _client) {
+        super();
         client = _client;
     }
 
