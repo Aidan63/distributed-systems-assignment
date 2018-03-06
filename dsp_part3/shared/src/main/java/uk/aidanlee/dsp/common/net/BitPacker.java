@@ -108,7 +108,7 @@ public class BitPacker {
      * Writes an entire float into the bit set.
      * @param _data The float to write.
      */
-    public void putFloat(float _data) {
+    public void writeFloat(float _data) {
         int raw = Float.floatToRawIntBits(_data);
 
         for (int i = 0; i < Float.SIZE; i++) {

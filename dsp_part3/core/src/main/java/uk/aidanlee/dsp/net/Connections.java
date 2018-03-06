@@ -1,8 +1,8 @@
 package uk.aidanlee.dsp.net;
 
-import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.Packet;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.data.Game;
 
 import java.util.Timer;
@@ -82,34 +82,32 @@ public class Connections {
      * @param _packet Packet class containing the byte data and sender.
      */
     private void processPacket(Packet _packet) {
-        BitPacker data = new BitPacker();
-        data.writeBytes(_packet.getData());
 
         // First bit indicates if the packet is OOB (1) or netchan (0).
-        if (data.readBoolean()) {
-            processOOBPacket(data);
+        if (_packet.getData().readBoolean()) {
+            processOOBPacket(_packet);
         } else {
             // We cannot process net chan messages if we are not in the connected state.
             if (state != ConnectionState.Connected) return;
 
             // Send netchan packet to the net channel and parse any commands
-            BitPacker commands = Game.netChan.receive(data);
+            Command[] commands = Game.netChan.receive(_packet);
             CommandProcessor.parse(commands);
         }
     }
 
     /**
      * Reads the first byte of the OOB Packet to figure out which type it is.
-     * @param _data OOB packet data.
+     * @param _packet OOB packet.
      */
-    private void processOOBPacket(BitPacker _data) {
-        switch (_data.readByte()) {
+    private void processOOBPacket(Packet _packet) {
+        switch (_packet.getData().readByte()) {
             case Packet.CONNECTION_RESPONSE:
-                readConnectionResponse(_data);
+                readConnectionResponse(_packet);
                 break;
 
             case Packet.DISCONNECTION:
-                readDisconnection(_data);
+                readDisconnection(_packet);
                 break;
 
             case Packet.HEARTBEAT:
@@ -123,15 +121,15 @@ public class Connections {
 
     /**
      * Read the connection response packet from the server.
-     * @param _data OOB connection response data.
+     * @param _packet OOB connection response data.
      */
-    private void readConnectionResponse(BitPacker _data) {
+    private void readConnectionResponse(Packet _packet) {
 
         // If we are not attempting to connect, ignore any connection response packets.
         if (state != ConnectionState.Connecting) return;
 
         // Connection Denied
-        if (!_data.readBoolean()) {
+        if (!_packet.getData().readBoolean()) {
             System.out.println("Connection Denied");
             Game.state.set("menu", null, null);
 
@@ -140,10 +138,10 @@ public class Connections {
 
         // Connection Accepted
 
-        int ourID        = _data.readByte();
-        int maxClients   = _data.readByte();
-        int mapIndex     = _data.readByte();
-        int numConnected = _data.readByte();
+        int ourID        = _packet.getData().readByte();
+        int maxClients   = _packet.getData().readByte();
+        int mapIndex     = _packet.getData().readByte();
+        int numConnected = _packet.getData().readByte();
 
         // Create the client structures and add their data.
         clients = new Client[maxClients];
@@ -151,25 +149,25 @@ public class Connections {
         for (int i = 0; i < numConnected; i++) {
 
             // Read Basic Info
-            String name = _data.readString();
-            int    id   = _data.readByte();
-            int    idx  = _data.readByte();
+            String name = _packet.getData().readString();
+            int    id   = _packet.getData().readByte();
+            int    idx  = _packet.getData().readByte();
 
             // Read ship color
-            int sR = _data.readByte();
-            int sG = _data.readByte();
-            int sB = _data.readByte();
+            float sR = _packet.getData().readFloat();
+            float sG = _packet.getData().readFloat();
+            float sB = _packet.getData().readFloat();
 
             // Read trail color
-            int tR = _data.readByte();
-            int tG = _data.readByte();
-            int tB = _data.readByte();
+            float tR = _packet.getData().readFloat();
+            float tG = _packet.getData().readFloat();
+            float tB = _packet.getData().readFloat();
 
             // Create a new client with the read data.
             Client c = new Client(id, name);
             c.setShipIndex (idx);
-            c.setShipColor (new float[] { sR, sG, sB });
-            c.setTrailColor(new float[] { tR, tG, tB });
+            c.setShipColor (new float[] { sR, sG, sB, 1 });
+            c.setTrailColor(new float[] { tR, tG, tB, 1 });
 
             // Add the client into the array.
             clients[id] = c;
@@ -189,10 +187,10 @@ public class Connections {
 
     /**
      *
-     * @param _data
+     * @param _packet
      */
-    private void readDisconnection(BitPacker _data) {
-        System.out.println("We have been disconnected / kicked / time-out by the server");
+    private void readDisconnection(Packet _packet) {
+        System.out.println("We have been disconnected / kicked by the server");
     }
 
     /**

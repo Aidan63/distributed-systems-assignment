@@ -15,19 +15,33 @@ public class Packet {
     /**
      * Raw bytes packet data.
      */
-    private byte[] data;
+    private BitPacker data;
 
     /**
      * The address and port this packet has arrived to or wants to be sent to.
      */
     private EndPoint endpoint;
 
-    public Packet(byte[] _data, EndPoint _ep) {
+    /**
+     *
+     * @param _data
+     * @param _ep
+     */
+    public Packet(BitPacker _data, EndPoint _ep) {
         data     = _data;
         endpoint = _ep;
     }
 
-    public byte[] getData() {
+    /**
+     *
+     * @param _ep
+     */
+    public Packet(EndPoint _ep) {
+        data     = new BitPacker();
+        endpoint = _ep;
+    }
+
+    public BitPacker getData() {
         return data;
     }
 
@@ -47,7 +61,7 @@ public class Packet {
         packer.writeByte(CONNECTION);
         packer.writeString(_name);
 
-        return new Packet(packer.toBytes(), _to);
+        return new Packet(packer, _to);
     }
 
     /**
@@ -59,7 +73,7 @@ public class Packet {
         packer.writeBoolean(true);
         packer.writeByte(DISCONNECTION);
 
-        return new Packet(packer.toBytes(), _to);
+        return new Packet(packer, _to);
     }
 
     /**
@@ -92,18 +106,18 @@ public class Packet {
 
             // Write ship color
             color = info.getShipColor();
-            packer.writeByte((byte) (color[0] * 255));
-            packer.writeByte((byte) (color[1] * 255));
-            packer.writeByte((byte) (color[2] * 255));
+            packer.writeFloat(color[0]);
+            packer.writeFloat(color[1]);
+            packer.writeFloat(color[2]);
 
             // Write trail color
             color = info.getTrailColor();
-            packer.writeByte((byte) (color[0] * 255));
-            packer.writeByte((byte) (color[1] * 255));
-            packer.writeByte((byte) (color[2] * 255));
+            packer.writeFloat(color[0]);
+            packer.writeFloat(color[1]);
+            packer.writeFloat(color[2]);
         }
 
-        return new Packet(packer.toBytes(), _to);
+        return new Packet(packer, _to);
     }
 
     /**
@@ -116,7 +130,7 @@ public class Packet {
         packer.writeByte(CONNECTION_RESPONSE);
         packer.writeBoolean(false);
 
-        return new Packet(packer.toBytes(), _to);
+        return new Packet(packer, _to);
     }
 
     /**
@@ -128,8 +142,6 @@ public class Packet {
         packer.writeBoolean(true);
         packer.writeByte(HEARTBEAT);
 
-        return new Packet(packer.toBytes(), _to);
+        return new Packet(packer, _to);
     }
-
-    // NetChan Packets
 }

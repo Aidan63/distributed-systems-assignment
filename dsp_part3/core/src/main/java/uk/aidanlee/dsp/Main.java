@@ -38,7 +38,7 @@ public class Main extends ApplicationAdapter {
         // Add a new input processor so ImGui is able to read key presses.
         Gdx.input.setInputProcessor(new ImGuiInputProcessor());
 
-        // Setup the games state machine and start the net services.
+        // Setup the games state machine.
         Game.start();
     }
 

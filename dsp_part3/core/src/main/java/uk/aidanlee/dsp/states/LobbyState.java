@@ -6,9 +6,9 @@ import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
 import imgui.WindowFlags;
-import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.commands.CmdChatMessage;
+import uk.aidanlee.dsp.common.net.commands.CmdClientUpdated;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.Game;
 import uk.aidanlee.dsp.net.Client;
@@ -18,6 +18,8 @@ import java.util.List;
 public class LobbyState extends State {
     private char[] inputBox;
 
+    private int[] ourShipIndex;
+
     public LobbyState(String _name) {
         super(_name);
 
@@ -25,17 +27,21 @@ public class LobbyState extends State {
     }
 
     @Override
-    public void onUpdate() {
+    public void onEnter(Object _enterWith) {
+        ourShipIndex = new int[] { Game.connections.getUs().getShipIndex() };
+    }
 
+    @Override
+    public void onUpdate() {
         // Send a netchan update out.
-        BitPacker data = Game.netChan.send();
-        if (data != null) {
-            Game.netManager.send(new Packet(data.toBytes(), Game.connections.getServer()));
+        Packet packet = Game.netChan.send();
+        if (packet != null) {
+            Game.netManager.send(packet);
         }
 
         drawClientList();
-
         drawChatBox();
+        drawPlayerSettings();
     }
 
     @Override
@@ -85,14 +91,35 @@ public class LobbyState extends State {
         if (ImGui.INSTANCE.button("send", new Vec2(-1, 0))) {
             // Send chat message to server.
             String str = new String(inputBox).trim();
-            System.out.println("Adding chat message");
-            Game.netChan.addReliableCommand(new CmdChatMessage(Game.connections.getUs().getId(), str));
 
-            // Add the message to out chat log
+            Game.netChan.addReliableCommand(new CmdChatMessage(Game.connections.getUs().getId(), str));
             Game.chatlog.addPlayerMessage(Game.connections.getUs().getName(), str);
 
             // reset the input box.
             inputBox  = new char[255];
+        }
+
+        ImGui.INSTANCE.end();
+    }
+
+    private void drawPlayerSettings() {
+        ImGui.INSTANCE.setNextWindowPos(new Vec2(520, 40), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(480, 280), Cond.Always);
+        ImGui.INSTANCE.begin("Ship Settings", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
+
+        boolean changed;
+        changed  = ImGui.INSTANCE.sliderInt("ship", ourShipIndex, 0, 7, "%.0f");
+        changed |= ImGui.INSTANCE.colorEdit3("ship color" , Game.connections.getUs().getShipColor() , 0);
+        changed |= ImGui.INSTANCE.colorEdit3("trail color", Game.connections.getUs().getTrailColor(), 0);
+
+        if (changed) {
+            // TODO : Send out reliable settings changed packets.
+            Game.connections.getUs().setShipIndex(ourShipIndex[0]);
+            Game.netChan.addReliableCommand(new CmdClientUpdated(
+                    Game.connections.getUs().getId(),
+                    ourShipIndex[0],
+                    Game.connections.getUs().getShipColor(),
+                    Game.connections.getUs().getTrailColor()));
         }
 
         ImGui.INSTANCE.end();

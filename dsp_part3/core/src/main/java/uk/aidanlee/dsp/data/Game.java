@@ -51,7 +51,7 @@ public class Game {
     private static Timer heartbeat;
 
     /**
-     *
+     * Creates the games state machine and enters the initial main "menu" state.
      */
     public static void start() {
         state = new StateMachine();
@@ -61,6 +61,9 @@ public class Game {
         state.set("menu", null, null);
     }
 
+    /**
+     * Read any packets (if we are running net services) and update the state machine.
+     */
     public static void update() {
         // Read packets
         if (connections != null) {
@@ -70,13 +73,21 @@ public class Game {
         state.update();
     }
 
+    /**
+     * Render the current state
+     */
     public static void render() {
         state.render();
     }
 
+    /**
+     * Clean up all game resources.
+     */
     public static void stop() {
         //
     }
+
+    // Net Services access
 
     /**
      *

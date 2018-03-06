@@ -58,17 +58,17 @@ public class MenuState extends State {
         ImGui.INSTANCE.inputText("IP"  , ip, 0);
         ImGui.INSTANCE.inputText("Port", port, 0);
         ImGui.INSTANCE.inputText("Name", name, 0);
+
         if (ImGui.INSTANCE.button("Connect", new Vec2(-1, 0))) {
-            // Attempt to resolve and set the servers location.
             try {
                 // Get the servers location.
-                String strIP    = new String(ip).trim();
-                int    intPort  = Integer.parseInt(new String(port).trim());
+                String serverIP   = new String(ip).trim();
+                int    serverPort = Integer.parseInt(new String(port).trim());
 
                 // then switch to the connecting state to start sending connection packets.
                 changeState("connecting", new ConnectionSettings(
                         new String(name).trim(),
-                        new EndPoint(InetAddress.getByName(strIP), intPort)), null);
+                        new EndPoint(InetAddress.getByName(serverIP), serverPort)), null);
 
             } catch (UnknownHostException _ex) {
                 System.out.println("Unable to resolve address : " + new String(ip).trim());

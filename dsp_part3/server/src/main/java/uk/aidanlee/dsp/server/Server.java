@@ -47,8 +47,9 @@ public class Server {
         while (true) {
             // Read packets
             Packet pck = netManager.getPackets().poll();
-            if (pck != null) {
+            while (pck != null) {
                 connections.processPacket(pck);
+                pck = netManager.getPackets().poll();
             }
 
             // Server fixed time-step loop

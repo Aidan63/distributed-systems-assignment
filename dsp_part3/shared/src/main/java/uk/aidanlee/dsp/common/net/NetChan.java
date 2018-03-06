@@ -1,6 +1,6 @@
 package uk.aidanlee.dsp.common.net;
 
-import uk.aidanlee.dsp.common.net.commands.Command;
+import uk.aidanlee.dsp.common.net.commands.*;
 
 import java.util.*;
 
@@ -33,17 +33,17 @@ public class NetChan {
     /**
      * All of the reliable commands which need to be sent.
      */
-    private Queue<Command> reliableCommandQueue;
+    private LinkedList<Command> reliableCommandQueue;
 
     /**
      * All of the unreliable commands which need to be sent.
      */
-    private Queue<Command> unreliableCommandQueue;
+    private LinkedList<Command> unreliableCommandQueue;
 
     /**
      * The reliable commands which are currently being sent.
      */
-    private List<Command> reliableBuffer;
+    private LinkedList<Command> reliableBuffer;
 
     /**
      *
@@ -56,15 +56,18 @@ public class NetChan {
 
         states = new State[PACKET_BACKUP];
 
-        reliableCommandQueue   = new PriorityQueue<>();
-        unreliableCommandQueue = new PriorityQueue<>();
-        reliableBuffer = new ArrayList<>();
+        reliableCommandQueue   = new LinkedList<>();
+        unreliableCommandQueue = new LinkedList<>();
+        reliableBuffer = new LinkedList<>();
     }
 
     // Getters and Setters
 
     public EndPoint getDestination() {
         return destination;
+    }
+    public void setDestination(EndPoint destination) {
+        this.destination = destination;
     }
 
     // Public API
@@ -86,87 +89,115 @@ public class NetChan {
     }
 
     /**
+     *
+     * @param _packet
+     * @return
+     */
+    public Command[] receive(Packet _packet) {
+
+        // Read sequence and ACK numbers.
+        int inSeq = _packet.getData().readInteger();
+        int inAck = _packet.getData().readInteger();
+
+        // Set our outgoing ACK to the sequence number just received.
+        ackSequence = inSeq;
+
+        // If the MSB in the received ACK is "1" then our reliable buffer was received.
+        // In which case we can clear the buffer and be ready to send more reliable commands.
+        if (getMSB(inAck)) {
+            reliableBuffer.clear();
+        }
+
+        // Read the commands from the packet.
+        int numCmds = _packet.getData().readByte();
+        Command[] cmds = new Command[numCmds];
+
+        for (int i = 0; i < numCmds; i++) {
+            byte cmdID = _packet.getData().readByte();
+            switch (cmdID) {
+                case Command.CLIENT_CONNECTED:
+                    System.out.println("NetChan Command : Client Connected");
+                    cmds[i] = new CmdClientConnected(_packet);
+                    break;
+
+                case Command.CLIENT_DISCONNECTED:
+                    System.out.println("NetChan Command : Client Disconnected");
+                    cmds[i] = new CmdClientDisconnected(_packet);
+                    break;
+
+                case Command.CHAT_MESSAGE:
+                    System.out.println("NetChan Command : Chat Message");
+                    cmds[i] = new CmdChatMessage(_packet);
+                    break;
+
+                case Command.CLIENT_UPDATED:
+                    System.out.println("NetChan Command : Client Updated");
+                    cmds[i] = new CmdClientUpdated(_packet);
+                    break;
+            }
+        }
+
+        return cmds;
+    }
+
+    /**
      * Builds a net chan update packet for sending over the network.
      * @return
      */
-    public BitPacker send() {
+    public Packet send() {
 
         int numReliableToSend   = Math.min(reliableCommandQueue.size(), MAX_RELIABLE_CMDS);
         int numUnreliableToSend = Math.min(unreliableCommandQueue.size(), MAX_PACKET_CMDS);
 
-        //if (numUnreliableToSend == 0 && (numReliableToSend == 0 || reliableBuffer.size() == 0 )) return null;
-
         // Fill the reliable buffer if needed / possible.
         if (reliableBuffer.isEmpty() && numReliableToSend > 0) {
-            System.out.println("Filling the reliable buffer");
             for (int i = 0; i < numReliableToSend; i++) {
-                reliableBuffer.add(reliableCommandQueue.remove());
+                reliableBuffer.add(reliableCommandQueue.removeFirst());
             }
-            System.out.println(reliableCommandQueue.size() + " reliable commands to be buffered");
         }
 
         // Create the header data.
-        BitPacker data = createNetChanHeader(numReliableToSend + numUnreliableToSend);
+        Packet packet = createNetChanPacket(numUnreliableToSend + reliableBuffer.size());
 
         // Add all of the commands
-        for (int i = 0; i < reliableBuffer.size(); i++) {
-            System.out.println("Adding reliable command to netchan packet");
-            reliableBuffer.get(i).add(data);
+        for (Command cmd : reliableBuffer) {
+            cmd.add(packet);
         }
 
         // Pop and add some unreliable commands.
         for (int i = 0; i < numUnreliableToSend; i++) {
-            unreliableCommandQueue.remove().add(data);
+            unreliableCommandQueue.remove().add(packet);
         }
 
         // Increase the sequence number.
         sequence++;
 
-        return data;
-    }
-
-    /**
-     *
-     * @param _packet
-     * @return
-     */
-    public BitPacker receive(BitPacker _packet) {
-        int inSeq = _packet.readInteger();
-        int inAck = _packet.readInteger();
-
-        ackSequence = inSeq;
-
-        if (getMSB(inAck)) {
-            System.out.println("Reliable Ack'd");
-            reliableBuffer.clear();
-        }
-
-        return _packet;
+        return packet;
     }
 
     // Internal Functions
 
     /**
-     * Construct the net chan header for the next outgoing packet.
-     * @return Bit packer with the header data written to it.
+     * Creates a new packet with a net channel header.
+     * @return Packet with net chan header.
      */
-    private BitPacker createNetChanHeader(int _numCmds) {
-        BitPacker header = new BitPacker();
+    private Packet createNetChanPacket(int _numCmds) {
+        Packet packet = new Packet(destination);
 
         // Not an OOB packet
-        header.writeBoolean(false);
+        packet.getData().writeBoolean(false);
 
         // Write 32 bits for the sequence number.
         // MSB is used to indicate if there are reliable commands and used for acknowledging them.
-        header.writeInteger(setMSB(sequence, reliableBuffer.size() > 0));
+        packet.getData().writeInteger(setMSB(sequence, reliableBuffer.size() > 0));
 
         // Write 32 bits for the ACK sequence number
-        header.writeInteger(ackSequence);
+        packet.getData().writeInteger(ackSequence);
 
         // Write a byte for the number of commands in this net chan packet.
-        header.writeByte((byte) (_numCmds));
+        packet.getData().writeByte((byte) _numCmds);
 
-        return header;
+        return packet;
     }
 
     private boolean getMSB(int _val) {

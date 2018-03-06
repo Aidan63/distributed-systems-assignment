@@ -63,7 +63,7 @@ public class NetManager extends Thread {
      */
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
+        while (true) {
             try {
                 // Read data from the UDP socket
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -77,9 +77,10 @@ public class NetManager extends Thread {
                 bit.writeBytes(packet.getData(), packet.getLength());
 
                 // Add the packet to the queue to be read by the main thread.
-                packets.offer(new Packet(bit.toBytes(), from));
+                packets.offer(new Packet(bit, from));
             } catch (IOException _ex) {
                 System.out.println("Network Manager : IO Exception reading data from UDP socket - " + _ex.getMessage());
+                break;
             }
         }
     }
@@ -98,7 +99,8 @@ public class NetManager extends Thread {
      */
     public void send(Packet _packet) {
         try {
-            DatagramPacket packet = new DatagramPacket(_packet.getData(), _packet.getData().length, _packet.getEndpoint().getAddress(), _packet.getEndpoint().getPort());
+            byte[] raw = _packet.getData().toBytes();
+            DatagramPacket packet = new DatagramPacket(raw, raw.length, _packet.getEndpoint().getAddress(), _packet.getEndpoint().getPort());
             socket.send(packet);
         } catch (IOException _ex) {
             System.out.println("Network Manager : IO Exception sending datagram packet to server - " + _ex.getMessage());

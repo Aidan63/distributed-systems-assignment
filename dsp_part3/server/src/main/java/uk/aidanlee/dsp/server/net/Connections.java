@@ -55,22 +55,18 @@ public class Connections {
      * Processes UDP packets received from the NetManager.
      * @param _packet Bit packed message data.
      */
-    public synchronized void processPacket(Packet _packet) {
-
-        BitPacker bits = new BitPacker();
-        bits.writeBytes(_packet.getData());
-
-        if (bits.readBoolean()) {
+    public void processPacket(Packet _packet) {
+        if (_packet.getData().readBoolean()) {
 
             // If first bit is 1 then the packet is OOB
-            processOOBPacket(bits, _packet.getEndpoint());
+            processOOBPacket(_packet);
         } else {
 
             // If that first bit is 0 then its a net chan packet.
             // Find the right netchan based on the sender and process the packet.
             int id = findExistingClientIndex(_packet.getEndpoint());
             if (id != -1) {
-                CommandProcessor.parse(clients[id].receive(bits));
+                CommandProcessor.parse(clients[id].receive(_packet));
             }
         }
     }
@@ -81,11 +77,10 @@ public class Connections {
     public void update() {
         for (int i = 0; i < maxClients; i++) {
             if (isClientConnected(i)) {
-                BitPacker data = clients[i].send();
-                if (data == null) continue;
+                Packet packet = clients[i].send();
+                if (packet == null) return;
 
-                EndPoint ep = clients[i].getDestination();
-                Server.netManager.send(new Packet(data.toBytes(), ep));
+                Server.netManager.send(packet);
             }
         }
     }
@@ -118,21 +113,21 @@ public class Connections {
 
     /**
      * Decodes the processes the out of band message.
-     * @param _packet Bit packed message data.
-     * @param _from   The address and port the data arrived from.
+     * @param _packet
      */
-    private void processOOBPacket(BitPacker _packet, EndPoint _from) {
-        switch (_packet.readByte()) {
+    private void processOOBPacket(Packet _packet) {
+        System.out.println("OOB Packet Received");
+        switch (_packet.getData().readByte()) {
             case Packet.CONNECTION:
-                onConnection(_from, _packet.readString());
+                onConnection(_packet);
                 break;
 
             case Packet.DISCONNECTION:
-                onDisconnection(_from);
+                onDisconnection(_packet);
                 break;
 
             case Packet.HEARTBEAT:
-                onHeartbeat(_from);
+                onHeartbeat(_packet);
                 break;
 
             default:
@@ -142,66 +137,71 @@ public class Connections {
 
     /**
      * If there is space in the server and there are no other clients with the same endpoint accept the connection request.
-     * @param _from The address and port of the connection request.
+     * @param _packet
      */
-    private void onConnection(EndPoint _from, String _name) {
+    private void onConnection(Packet _packet) {
         int clientID;
 
         // Check if we've already accepted a client from this endpoint.
         // If we have we send another accepted packet in case the others got lost.
-        clientID = findExistingClientIndex(_from);
+        clientID = findExistingClientIndex(_packet.getEndpoint());
         if (clientID != -1) {
             Server.netManager.send(Packet.ConnectionAccepted(
                     clientID,
                     maxClients,
                     numClientsConnected,
                     0,
-                    getClientInfo(), _from));
+                    getClientInfo(), _packet.getEndpoint()));
             return;
         }
 
         // Decline connection if server is full
         if (numClientsConnected == maxClients) {
-            Server.netManager.send(Packet.ConnectionDenied(_from));
+            Server.netManager.send(Packet.ConnectionDenied(_packet.getEndpoint()));
             return;
         }
 
         // Accept the new client!
         clientID = findFreeClientID();
         clientConnected[clientID] = true;
-        clients[clientID] = new NetChan(_from);
+        clients[clientID] = new NetChan(_packet.getEndpoint());
         numClientsConnected++;
 
-        // Add a new player to the game.
-        Server.game.addPlayer(clientID, _name);
+        System.out.println("New Client Connected : " + clientID);
+
+        // Read the name and add a new player to the game.
+        String name = _packet.getData().readString();
+        Server.game.addPlayer(clientID, name);
 
         // Start the timeout checker
-        resetTimeout(clientID, _from);
+        resetTimeout(_packet);
 
         // Send the connection response packet.
         // Client will receive info about all other clients except itself.
-        System.out.println("New client Connected with ID : " + clientID + " from " + _from.getAddress().toString() + ":" + _from.getPort());
+        System.out.println("New client Connected with ID : " + clientID + " from " + _packet.getEndpoint().getAddress().toString() + ":" + _packet.getEndpoint().getPort());
         Server.netManager.send(Packet.ConnectionAccepted(
                 clientID,
                 maxClients,
                 numClientsConnected,
                 0,
-                getClientInfo(), _from));
+                getClientInfo(), _packet.getEndpoint()));
 
         // Tell all clients (except the newly connected client) a new client has connected.
         addReliableCommandAllExcept(new CmdClientConnected(getClientInfoFor(clientID)), clientID);
     }
 
     /**
-     * //
-     * @param _from The address and port of where this disconnect packet arrived from.
+     *
+     * @param _packet
      */
-    private void onDisconnection(EndPoint _from) {
-        int clientID = findExistingClientIndex(_from);
-        if (clientID != -1 && getClientEndpoint(clientID).equals(_from)) {
+    private void onDisconnection(Packet _packet) {
+        int clientID = findExistingClientIndex(_packet.getEndpoint());
+        if (clientID != -1 && getClientEndpoint(clientID).equals(_packet.getEndpoint())) {
             clientConnected[clientID] = false;
             clients[clientID] = null;
             numClientsConnected--;
+
+            System.out.println("Client Disconnected : " + clientID);
 
             // Remove the player from the game.
             Server.game.removePlayer(clientID);
@@ -218,13 +218,15 @@ public class Connections {
     /**
      * Gets the client ID for the heartbeat packet and resets the timeout.
      * Responds to the client with a heartbeat packet.
-     * @param _from Address and port the packet came from.
+     * @param _packet
      */
-    private void onHeartbeat(EndPoint _from) {
-        int clientID = findExistingClientIndex(_from);
+    private void onHeartbeat(Packet _packet) {
+        int clientID = findExistingClientIndex(_packet.getEndpoint());
         if (clientID != -1) {
-            resetTimeout(clientID, _from);
-            Server.netManager.send(Packet.Heartbeat(_from));
+            System.out.println("Heartbeat from : " + clientID);
+
+            resetTimeout(_packet);
+            Server.netManager.send(Packet.Heartbeat(_packet.getEndpoint()));
         }
     }
 
@@ -309,26 +311,28 @@ public class Connections {
 
     /**
      * Resets the timeout for a client when a heart beat packet is received.
-     * @param _clientID The clients ID to reset.
+     * @param _packet
      */
-    private void resetTimeout(int _clientID, EndPoint _from) {
+    private void resetTimeout(Packet _packet) {
+        //
+        int id = findExistingClientIndex(_packet.getEndpoint());
 
         // Task to disconnect the client once its timed out.
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                System.out.println(_clientID + " timed out");
-                onDisconnection(_from);
+                System.out.println(id + " timed out");
+                onDisconnection(_packet);
             }
         };
 
         // Cancel an existing timer.
-        if (timeouts[_clientID] != null) {
-            timeouts[_clientID].cancel();
+        if (timeouts[id] != null) {
+            timeouts[id].cancel();
         }
 
         // Add a new timer for 5 seconds.
-        timeouts[_clientID] = new Timer();
-        timeouts[_clientID].schedule(task, 5000);
+        timeouts[id] = new Timer();
+        timeouts[id].schedule(task, 5000);
     }
 }

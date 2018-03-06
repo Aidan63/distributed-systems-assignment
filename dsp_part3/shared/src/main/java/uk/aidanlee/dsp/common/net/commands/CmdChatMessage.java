@@ -1,21 +1,44 @@
 package uk.aidanlee.dsp.common.net.commands;
 
-import uk.aidanlee.dsp.common.net.BitPacker;
+import uk.aidanlee.dsp.common.net.Packet;
 
 public class CmdChatMessage extends Command {
-    private int id;
-    private String message;
 
+    /**
+     * The ID of the client who sent this message.
+     */
+    public final int clientID;
+
+    /**
+     * The chat message string.
+     */
+    public final String message;
+
+    /**
+     *
+     * @param _id
+     * @param _msg
+     */
     public CmdChatMessage(int _id, String _msg) {
-        super();
-        id      = _id;
-        message = _msg;
+        super(Command.CHAT_MESSAGE);
+        clientID = _id;
+        message  = _msg;
+    }
+
+    /**
+     *
+     * @param _packet
+     */
+    public CmdChatMessage(Packet _packet) {
+        super(Command.CHAT_MESSAGE);
+        clientID = _packet.getData().readByte();
+        message  = _packet.getData().readString();
     }
 
     @Override
-    public void add(BitPacker _packet) {
-        _packet.writeByte(Command.CHAT_MESSAGE);
-        _packet.writeByte((byte) id);
-        _packet.writeString(message);
+    public void add(Packet _packet) {
+        _packet.getData().writeByte(Command.CHAT_MESSAGE);
+        _packet.getData().writeByte((byte) clientID);
+        _packet.getData().writeString(message);
     }
 }

@@ -20,9 +20,9 @@ public class ConnectingState extends State {
         ConnectionSettings settings = (ConnectionSettings) _enterWith;
 
         playerName = settings.getName();
-        Game.connections.setServer(settings.getEp());
 
-        System.out.println("connecting as " + _enterWith);
+        Game.netChan.setDestination(settings.getEp());
+        Game.connections.setServer(settings.getEp());
 
         Game.connections.setState(ConnectionState.Connecting);
     }

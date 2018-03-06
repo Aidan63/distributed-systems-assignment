@@ -1,25 +1,34 @@
 package uk.aidanlee.dsp.common.net.commands;
 
-import uk.aidanlee.dsp.common.net.BitPacker;
+import uk.aidanlee.dsp.common.net.Packet;
 
 public class CmdClientDisconnected extends Command {
     /**
      * The ID of the disconnected client.
      */
-    private int clientID;
+    public final int clientID;
 
+    /**
+     *
+     * @param _id
+     */
     public CmdClientDisconnected(int _id) {
-        super();
+        super(Command.CLIENT_DISCONNECTED);
         clientID = _id;
     }
 
-    public int getClientID() {
-        return clientID;
+    /**
+     *
+     * @param _packet
+     */
+    public CmdClientDisconnected(Packet _packet) {
+        super(Command.CLIENT_DISCONNECTED);
+        clientID = _packet.getData().readByte();
     }
 
     @Override
-    public void add(BitPacker _packet) {
-        _packet.writeByte(Command.CLIENT_DISCONNECTED);
-        _packet.writeByte((byte) clientID);
+    public void add(Packet _packet) {
+        _packet.getData().writeByte(Command.CLIENT_DISCONNECTED);
+        _packet.getData().writeByte((byte) clientID);
     }
 }

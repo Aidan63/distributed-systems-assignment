@@ -53,12 +53,21 @@ public class Player {
     public int getShipIndex() {
         return shipIndex;
     }
+    public void setShipIndex(int shipIndex) {
+        this.shipIndex = shipIndex;
+    }
 
     public float[] getShipColor() {
         return shipColor;
     }
+    public void setShipColor(float[] shipColor) {
+        this.shipColor = shipColor;
+    }
 
     public float[] getTrailColor() {
         return trailColor;
+    }
+    public void setTrailColor(float[] trailColor) {
+        this.trailColor = trailColor;
     }
 }

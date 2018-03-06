@@ -1,31 +1,32 @@
 package uk.aidanlee.dsp.net;
 
-import uk.aidanlee.dsp.common.net.BitPacker;
-import uk.aidanlee.dsp.common.net.commands.Command;
+import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.data.Game;
-
-import java.net.StandardSocketOptions;
 
 public class CommandProcessor {
 
     /**
      * Parse an unknown amount of commands
-     * @param _data
+     * @param _cmds
      */
-    public static void parse(BitPacker _data) {
+    public static void parse(Command[] _cmds) {
 
-        for (int i = 0; i < _data.readByte(); i++) {
-            switch (_data.readByte()) {
+        for (Command cmd : _cmds) {
+            switch (cmd.id) {
                 case Command.CLIENT_CONNECTED:
-                    cmdClientConnected(_data);
+                    cmdClientConnected((CmdClientConnected) cmd);
                     break;
 
                 case Command.CLIENT_DISCONNECTED:
-                    cmdClientDisconnected(_data);
+                    cmdClientDisconnected((CmdClientDisconnected) cmd);
                     break;
 
                 case Command.CHAT_MESSAGE:
-                    cmdChatMessage(_data);
+                    cmdChatMessage((CmdChatMessage) cmd);
+                    break;
+
+                case Command.CLIENT_UPDATED:
+                    cmdClientUpdate((CmdClientUpdated) cmd);
                     break;
             }
         }
@@ -33,60 +34,50 @@ public class CommandProcessor {
 
     /**
      *
-     * @param _data
+     * @param _cmd
      */
-    private static void cmdClientConnected(BitPacker _data) {
+    private static void cmdClientConnected(CmdClientConnected _cmd) {
+        Client c = new Client(_cmd.client.getId(), _cmd.client.getName());
+        c.setShipIndex (_cmd.client.getShipIndex());
+        c.setShipColor (_cmd.client.getShipColor());
+        c.setTrailColor(_cmd.client.getTrailColor());
 
-        System.out.println("NEW CLIENT CONNECTED?!");
-
-        // Read Basic Info
-        String name = _data.readString();
-        int    id   = _data.readByte();
-        int    idx  = _data.readByte();
-
-        // Read ship color
-        int sR = _data.readByte();
-        int sG = _data.readByte();
-        int sB = _data.readByte();
-
-        // Read trail color
-        int tR = _data.readByte();
-        int tG = _data.readByte();
-        int tB = _data.readByte();
-
-        Client c = new Client(id, name);
-        System.out.println(name);
-        c.setShipIndex (idx);
-        c.setShipColor (new float[] { sR, sG, sB });
-        c.setTrailColor(new float[] { tR, tG, tB });
-
-        Game.connections.getClients()[id] = c;
-        Game.chatlog.addServerMessage(name + " has joined");
+        Game.connections.getClients()[_cmd.client.getId()] = c;
+        Game.chatlog.addServerMessage(_cmd.client.getName() + " has joined");
     }
 
     /**
      *
-     * @param _data
+     * @param _cmd
      */
-    private static void cmdClientDisconnected(BitPacker _data) {
+    private static void cmdClientDisconnected(CmdClientDisconnected _cmd) {
 
-        int id = _data.readByte();
         Client[] clients = Game.connections.getClients();
+        if (clients[_cmd.clientID] == null) return;
 
-        Game.chatlog.addServerMessage(clients[id].getName() + " has left");
-        clients[id] = null;
+        Game.chatlog.addServerMessage(clients[_cmd.clientID].getName() + " has left");
+        clients[_cmd.id] = null;
     }
 
     /**
      *
-     * @param _data
+     * @param _cmd
      */
-    private static void cmdChatMessage(BitPacker _data) {
-
-        int    id  = _data.readByte();
-        String txt = _data.readString();
-
+    private static void cmdChatMessage(CmdChatMessage _cmd) {
         Client[] clients = Game.connections.getClients();
-        Game.chatlog.addPlayerMessage(clients[id].getName(), txt);
+        Game.chatlog.addPlayerMessage(clients[_cmd.clientID].getName(), _cmd.message);
+    }
+
+    /**
+     *
+     * @param _cmd
+     */
+    private static void cmdClientUpdate(CmdClientUpdated _cmd) {
+        Client c = Game.connections.getClients()[_cmd.clientID];
+        if (c == null) return;
+
+        c.setShipIndex (_cmd.index);
+        c.setShipColor (_cmd.shipColor);
+        c.setTrailColor(_cmd.trailColor);
     }
 }
