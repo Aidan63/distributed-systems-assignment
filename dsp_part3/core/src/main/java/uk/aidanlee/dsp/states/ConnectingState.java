@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.GL20;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.Game;
+import uk.aidanlee.dsp.net.ConnectionSettings;
 import uk.aidanlee.dsp.net.ConnectionState;
 
 public class ConnectingState extends State {
@@ -16,7 +17,11 @@ public class ConnectingState extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        playerName = (String) _enterWith;
+        ConnectionSettings settings = (ConnectionSettings) _enterWith;
+
+        playerName = settings.getName();
+        Game.connections.setServer(settings.getEp());
+
         System.out.println("connecting as " + _enterWith);
 
         Game.connections.setState(ConnectionState.Connecting);

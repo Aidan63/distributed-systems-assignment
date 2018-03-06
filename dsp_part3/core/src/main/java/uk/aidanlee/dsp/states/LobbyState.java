@@ -73,7 +73,7 @@ public class LobbyState extends State {
         List<String> log = Game.chatlog.getLog();
         for (int i = 0; i < log.size(); i++) {
             ImGui.INSTANCE.pushId(i);
-            ImGui.INSTANCE.text(log.get(i));
+            ImGui.INSTANCE.textWrapped(log.get(i));
             ImGui.INSTANCE.popId();
         }
         ImGui.INSTANCE.setScrollHere(0.5f);

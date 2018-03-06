@@ -7,6 +7,9 @@ import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.server.Server;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class Connections {
     /**
      * The maximum number of clients which can be connected to the server.
@@ -29,6 +32,11 @@ public class Connections {
     private NetChan[] clients;
 
     /**
+     * Timer for each client to check for time outs.
+     */
+    private Timer[] timeouts;
+
+    /**
      * Creates a new connection manager.
      * @param _maxClients Max number of clients.
      */
@@ -38,6 +46,7 @@ public class Connections {
 
         clientConnected = new boolean[maxClients];
         clients         = new NetChan[maxClients];
+        timeouts        = new Timer[maxClients];
     }
 
     // Public API
@@ -60,7 +69,9 @@ public class Connections {
             // If that first bit is 0 then its a net chan packet.
             // Find the right netchan based on the sender and process the packet.
             int id = findExistingClientIndex(_packet.getEndpoint());
-            CommandProcessor.parse(clients[id].receive(bits));
+            if (id != -1) {
+                CommandProcessor.parse(clients[id].receive(bits));
+            }
         }
     }
 
@@ -164,6 +175,9 @@ public class Connections {
         // Add a new player to the game.
         Server.game.addPlayer(clientID, _name);
 
+        // Start the timeout checker
+        resetTimeout(clientID, _from);
+
         // Send the connection response packet.
         // Client will receive info about all other clients except itself.
         System.out.println("New client Connected with ID : " + clientID + " from " + _from.getAddress().toString() + ":" + _from.getPort());
@@ -192,17 +206,26 @@ public class Connections {
             // Remove the player from the game.
             Server.game.removePlayer(clientID);
 
+            // Cancel the heartbeat timeout
+            timeouts[clientID].cancel();
+            timeouts[clientID] = null;
+
             // Tell all other clients that another client disconnected.
             addReliableCommandAll(new CmdClientDisconnected(clientID));
         }
     }
 
     /**
-     *
-     * @param _from
+     * Gets the client ID for the heartbeat packet and resets the timeout.
+     * Responds to the client with a heartbeat packet.
+     * @param _from Address and port the packet came from.
      */
     private void onHeartbeat(EndPoint _from) {
-        //
+        int clientID = findExistingClientIndex(_from);
+        if (clientID != -1) {
+            resetTimeout(clientID, _from);
+            Server.netManager.send(Packet.Heartbeat(_from));
+        }
     }
 
     // Client Helper Functions.
@@ -282,5 +305,30 @@ public class Connections {
      */
     private EndPoint getClientEndpoint(int _index) {
         return clients[_index].getDestination();
+    }
+
+    /**
+     * Resets the timeout for a client when a heart beat packet is received.
+     * @param _clientID The clients ID to reset.
+     */
+    private void resetTimeout(int _clientID, EndPoint _from) {
+
+        // Task to disconnect the client once its timed out.
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println(_clientID + " timed out");
+                onDisconnection(_from);
+            }
+        };
+
+        // Cancel an existing timer.
+        if (timeouts[_clientID] != null) {
+            timeouts[_clientID].cancel();
+        }
+
+        // Add a new timer for 5 seconds.
+        timeouts[_clientID] = new Timer();
+        timeouts[_clientID].schedule(task, 5000);
     }
 }

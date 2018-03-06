@@ -33,7 +33,6 @@ public class NetManager extends Thread {
             packets = new ConcurrentLinkedQueue<>();
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
-            System.exit(-1);
         }
     }
 
@@ -48,7 +47,6 @@ public class NetManager extends Thread {
             packets = new ConcurrentLinkedQueue<>();
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
-            System.exit(-1);
         }
     }
 
@@ -61,11 +59,11 @@ public class NetManager extends Thread {
     }
 
     /**
-     *
+     * While the thread is not interrupted (while (true) loop) listen for packets on the socket and place them on the queue.
      */
     @Override
     public void run() {
-        while (true) {
+        while (!Thread.currentThread().isInterrupted()) {
             try {
                 // Read data from the UDP socket
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -82,9 +80,16 @@ public class NetManager extends Thread {
                 packets.offer(new Packet(bit.toBytes(), from));
             } catch (IOException _ex) {
                 System.out.println("Network Manager : IO Exception reading data from UDP socket - " + _ex.getMessage());
-                System.exit(-1);
             }
         }
+    }
+
+    @Override
+    public void interrupt() {
+        System.out.println("Network Manager : Thread interrupted, shutting down.");
+        socket.close();
+
+        super.interrupt();
     }
 
     /**

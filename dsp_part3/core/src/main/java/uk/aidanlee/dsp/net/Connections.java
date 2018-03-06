@@ -5,6 +5,9 @@ import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.data.Game;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class Connections {
     /**
      * Quick access to our client instance.
@@ -27,10 +30,15 @@ public class Connections {
     private ConnectionState state;
 
     /**
+     * 5 second timer to check if we still have a connection to the server.
+     */
+    private Timer timeout;
+
+    /**
      * Creates a new Connections instance which is "Disconnected" from the server.
      */
     public Connections() {
-        state = ConnectionState.Disconnected;
+        state = ConnectionState.Connecting;
     }
 
     // Getters and Setters
@@ -59,10 +67,21 @@ public class Connections {
     // Public API
 
     /**
+     * If we are connecting or connected read and process a packet from the net manager thread.
+     */
+    public void readPackets() {
+        Packet pck = Game.netManager.getPackets().poll();
+        while (pck != null) {
+            processPacket(pck);
+            pck = Game.netManager.getPackets().poll();
+        }
+    }
+
+    /**
      * Reads the initial data from a packet received from the NetManager.
      * @param _packet Packet class containing the byte data and sender.
      */
-    public synchronized void processPacket(Packet _packet) {
+    private void processPacket(Packet _packet) {
         BitPacker data = new BitPacker();
         data.writeBytes(_packet.getData());
 
@@ -92,6 +111,9 @@ public class Connections {
             case Packet.DISCONNECTION:
                 readDisconnection(_data);
                 break;
+
+            case Packet.HEARTBEAT:
+                resetTimeout();
 
             default:
                 //
@@ -158,6 +180,8 @@ public class Connections {
             }
         }
 
+        resetTimeout();
+
         // Switch to the lobby state.
         state = ConnectionState.Connected;
         Game.state.set("lobby", null, null);
@@ -168,6 +192,29 @@ public class Connections {
      * @param _data
      */
     private void readDisconnection(BitPacker _data) {
-        //
+        System.out.println("We have been disconnected / kicked / time-out by the server");
+    }
+
+    /**
+     *
+     */
+    private void resetTimeout() {
+        if (timeout != null) {
+            timeout.cancel();
+            timeout = null;
+        }
+
+        // Start the timout timer.
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Server timeout.");
+
+                Game.netStop();
+                Game.state.set("menu", null, null);
+            }
+        };
+        timeout = new Timer();
+        timeout.schedule(task, 5000);
     }
 }

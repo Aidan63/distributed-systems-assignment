@@ -10,6 +10,7 @@ import org.lwjgl.system.CallbackI;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.Game;
+import uk.aidanlee.dsp.net.ConnectionSettings;
 import uk.aidanlee.dsp.net.ConnectionState;
 
 import java.net.InetAddress;
@@ -24,13 +25,28 @@ public class MenuState extends State {
         super(_name);
     }
 
+    /**
+     * Menu state is the only state which doesn't need networking services.
+     * So when we enter this state stop the services.
+     * @param _enterWith
+     */
     @Override
     public void onEnter(Object _enterWith) {
         ip   = new char[255];
         port = new char[255];
         name = new char[255];
 
-        Game.connections.setState(ConnectionState.Disconnected);
+        Game.netStop();
+    }
+
+    /**
+     * Menu state is the only state which doesn't need networking services.
+     * So when we leave this state we will want to start the services for the next state.
+     * @param _leaveWith Data to leave with.
+     */
+    @Override
+    public void onLeave(Object _leaveWith) {
+        Game.netStart();
     }
 
     @Override
@@ -45,14 +61,14 @@ public class MenuState extends State {
         if (ImGui.INSTANCE.button("Connect", new Vec2(-1, 0))) {
             // Attempt to resolve and set the servers location.
             try {
-
-                // Set the servers location.
+                // Get the servers location.
                 String strIP    = new String(ip).trim();
                 int    intPort  = Integer.parseInt(new String(port).trim());
-                Game.connections.setServer(new EndPoint(InetAddress.getByName(strIP), intPort));
 
                 // then switch to the connecting state to start sending connection packets.
-                changeState("connecting", new String(name).trim(), null);
+                changeState("connecting", new ConnectionSettings(
+                        new String(name).trim(),
+                        new EndPoint(InetAddress.getByName(strIP), intPort)), null);
 
             } catch (UnknownHostException _ex) {
                 System.out.println("Unable to resolve address : " + new String(ip).trim());

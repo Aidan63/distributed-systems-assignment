@@ -8,12 +8,9 @@ import imgui.Context;
 import imgui.ContextKt;
 import imgui.ImGui;
 import imgui.impl.LwjglGL3;
-import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.Packet;
-import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.Game;
 import uk.aidanlee.dsp.net.ConnectionState;
-import uk.aidanlee.dsp.states.MenuState;
 import uk.aidanlee.dsp.utils.ImGuiInputProcessor;
 import uno.glfw.GlfwWindow;
 
@@ -25,26 +22,31 @@ public class Main extends ApplicationAdapter {
 
     private Context imguiContext;
 
+    /**
+     * Ran once LibGDX has started up.
+     */
     @Override
     public void create() {
+        // Create the ImGui window for our menu UI
         Lwjgl3Graphics gfx = (Lwjgl3Graphics) Gdx.graphics;
         GlfwWindow imguiWindow = new GlfwWindow(gfx.getWindow().getWindowHandle());
 
+        // Create a new imgui context and pass the window to the LWJGL3 imgui backend.
         imguiContext = new Context(null);
         LwjglGL3.INSTANCE.init(imguiWindow, false);
 
+        // Add a new input processor so ImGui is able to read key presses.
         Gdx.input.setInputProcessor(new ImGuiInputProcessor());
 
-        Game.init();
+        // Setup the games state machine and start the net services.
+        Game.start();
     }
 
+    /**
+     * LibGDX game loop, called as fast as possible.
+     */
     @Override
     public void render() {
-        // Read a packet (if any) and process it.
-        Packet pck = Game.netManager.getPackets().poll();
-        if (pck != null) {
-            Game.connections.processPacket(pck);
-        }
 
         // Main game fixed time-step loop.
         double newTime   = TimeUtils.millis() / 1000.0;
@@ -57,26 +59,32 @@ public class Main extends ApplicationAdapter {
             accumulator -= step;
 
             LwjglGL3.INSTANCE.newFrame();
-            Game.state.update();
+            Game.update();
         }
 
-        Game.state.render();
+        Game.render();
 
         ImGui.INSTANCE.render();
         LwjglGL3.INSTANCE.renderDrawData(ImGui.INSTANCE.getDrawData());
     }
 
+    /**
+     * Called when LibGDX closes.
+     */
     @Override
     public void dispose() {
+        // If we are connected, send 10 disconnection packets and hope at-least one gets through.
         if (Game.connections.getState() == ConnectionState.Connected) {
-            // Send 10 disconnection packets and hope at-least one gets through
             for (int i = 0; i < 10; i++) {
-                // Send a connection packet!
                 Game.netManager.send(Packet.Disconnection(Game.connections.getServer()));
             }
         }
 
+        // Clean up imgui implementation.
         LwjglGL3.INSTANCE.shutdown();
         ContextKt.destroy(imguiContext);
+
+        // Clean up the game resources.
+        Game.stop();
     }
 }
