@@ -41,6 +41,11 @@ public class Game {
     public static StateMachine state;
 
     /**
+     * Game assets are stored in this instance.
+     */
+    public static Resources resources;
+
+    /**
      * Access to the race structure for when in game.
      */
     public static Race race;
@@ -59,6 +64,8 @@ public class Game {
         state.add(new ConnectingState("connecting"));
         state.add(new LobbyState("lobby"));
         state.set("menu", null, null);
+
+        resources = new Resources();
     }
 
     /**
@@ -84,7 +91,7 @@ public class Game {
      * Clean up all game resources.
      */
     public static void stop() {
-        //
+        resources.dispose();
     }
 
     // Net Services access

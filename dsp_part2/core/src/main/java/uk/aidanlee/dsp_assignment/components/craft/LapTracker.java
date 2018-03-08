@@ -3,10 +3,7 @@ package uk.aidanlee.dsp_assignment.components.craft;
 import uk.aidanlee.dsp_assignment.components.PolygonComponent;
 import uk.aidanlee.dsp_assignment.race.Race;
 import uk.aidanlee.dsp_assignment.structural.ec.Component;
-import uk.aidanlee.dsp_assignment.utils.TimeTools;
 import uk.aidanlee.jDiffer.Collision;
-
-import java.util.Date;
 
 public class LapTracker extends Component {
     private boolean[] checkpointsPassed;
@@ -45,10 +42,6 @@ public class LapTracker extends Component {
                 if (allCheckpointsPassed())
                 {
                     System.out.println("lap passed");
-                    float seconds = ((LapTimer)get("lap_timer")).time;
-                    Date d = new Date((long)seconds * 1000);
-                    System.out.println(d.toString());
-
                     remove("lap_timer");
 
                     for (int j = 0; j < checkpointCount; j++) {
@@ -59,7 +52,6 @@ public class LapTracker extends Component {
                 // If we are passing over the start point and haven't already add a new lap timer.
                 if (!checkpointsPassed[0]) {
                     System.out.println("Adding new timer...");
-                    add(new LapTimer("lap_timer"));
                 }
             }
 

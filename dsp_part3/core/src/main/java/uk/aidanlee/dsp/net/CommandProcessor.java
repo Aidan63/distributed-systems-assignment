@@ -28,6 +28,14 @@ public class CommandProcessor {
                 case Command.CLIENT_UPDATED:
                     cmdClientUpdate((CmdClientUpdated) cmd);
                     break;
+
+                case Command.CLIENT_READY:
+                    cmdClientReady((CmdClientReady) cmd);
+                    break;
+
+                case Command.CLIENT_UNREADY:
+                    cmdClientUnready((CmdClientUnready) cmd);
+                    break;
             }
         }
     }
@@ -56,7 +64,7 @@ public class CommandProcessor {
         if (clients[_cmd.clientID] == null) return;
 
         Game.chatlog.addServerMessage(clients[_cmd.clientID].getName() + " has left");
-        clients[_cmd.id] = null;
+        clients[_cmd.clientID] = null;
     }
 
     /**
@@ -79,5 +87,15 @@ public class CommandProcessor {
         c.setShipIndex (_cmd.index);
         c.setShipColor (_cmd.shipColor);
         c.setTrailColor(_cmd.trailColor);
+    }
+
+    private static void cmdClientReady(CmdClientReady _cmd) {
+        Client c = Game.connections.getClients()[_cmd.clientID];
+        c.setReady(true);
+    }
+
+    private static void cmdClientUnready(CmdClientUnready _cmd) {
+        Client c = Game.connections.getClients()[_cmd.clientID];
+        c.setReady(false);
     }
 }

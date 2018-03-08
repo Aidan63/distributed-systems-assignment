@@ -33,4 +33,8 @@ public class ClientInfo {
     public float[] getTrailColor() {
         return player.getTrailColor();
     }
+
+    public boolean isReady() {
+        return player.isReady();
+    }
 }

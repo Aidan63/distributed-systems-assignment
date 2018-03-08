@@ -1,0 +1,62 @@
+
+track.png
+size: 512,512
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+alt1
+  rotate: false
+  xy: 132, 262
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+alt2
+  rotate: false
+  xy: 2, 2
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+alt3
+  rotate: false
+  xy: 132, 132
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+alt4
+  rotate: false
+  xy: 262, 262
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+boost
+  rotate: false
+  xy: 2, 132
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+default
+  rotate: false
+  xy: 262, 132
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+pickup
+  rotate: false
+  xy: 132, 2
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+start
+  rotate: false
+  xy: 2, 262
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1

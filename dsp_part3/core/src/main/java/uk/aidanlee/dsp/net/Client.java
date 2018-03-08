@@ -26,9 +26,20 @@ public class Client {
      */
     private float[] trailColor;
 
+    /**
+     * The ready state of this client.
+     */
+    private boolean ready;
+
+    /**
+     *
+     * @param _id
+     * @param _name
+     */
     public Client(int _id, String _name) {
-        id   = _id;
-        name = _name;
+        id    = _id;
+        name  = _name;
+        ready = false;
     }
 
     public int getId() {
@@ -61,5 +72,13 @@ public class Client {
 
     public void setTrailColor(float[] trailColor) {
         this.trailColor = trailColor;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void setReady(boolean ready) {
+        this.ready = ready;
     }
 }

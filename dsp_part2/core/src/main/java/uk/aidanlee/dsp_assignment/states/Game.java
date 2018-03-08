@@ -86,8 +86,6 @@ public class Game extends State {
         spriteBatcher.dispose();
         meshBatcher.dispose();
         shape.dispose();
-
-        prof.disable();
     }
 
     @Override

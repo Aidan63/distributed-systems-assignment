@@ -101,6 +101,7 @@ public class Packet {
             packer.writeString(info.getName());
             packer.writeByte((byte) info.getId());
             packer.writeByte((byte) info.getShipIndex());
+            packer.writeBoolean(info.isReady());
 
             float[] color;
 

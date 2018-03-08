@@ -22,6 +22,11 @@ public class Player {
     private float[] trailColor;
 
     /**
+     * The ready state of this player.
+     */
+    private boolean ready;
+
+    /**
      * Creates a new player with default ship index and colors.
      * @param _name The name of this player.
      */
@@ -30,6 +35,7 @@ public class Player {
         shipIndex  = 0;
         shipColor  = new float[] { 1, 1, 1 };
         trailColor = new float[] { 1, 1, 1 };
+        ready      = false;
     }
 
     /**
@@ -69,5 +75,12 @@ public class Player {
     }
     public void setTrailColor(float[] trailColor) {
         this.trailColor = trailColor;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+    public void setReady(boolean ready) {
+        this.ready = ready;
     }
 }

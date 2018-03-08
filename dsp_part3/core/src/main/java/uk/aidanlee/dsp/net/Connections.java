@@ -149,9 +149,10 @@ public class Connections {
         for (int i = 0; i < numConnected; i++) {
 
             // Read Basic Info
-            String name = _packet.getData().readString();
-            int    id   = _packet.getData().readByte();
-            int    idx  = _packet.getData().readByte();
+            String  name  = _packet.getData().readString();
+            int     id    = _packet.getData().readByte();
+            int     idx   = _packet.getData().readByte();
+            boolean ready = _packet.getData().readBoolean();
 
             // Read ship color
             float sR = _packet.getData().readFloat();
@@ -166,6 +167,7 @@ public class Connections {
             // Create a new client with the read data.
             Client c = new Client(id, name);
             c.setShipIndex (idx);
+            c.setReady(ready);
             c.setShipColor (new float[] { sR, sG, sB, 1 });
             c.setTrailColor(new float[] { tR, tG, tB, 1 });
 
