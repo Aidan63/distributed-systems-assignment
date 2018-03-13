@@ -3,8 +3,11 @@ package uk.aidanlee.dsp.server;
 import com.badlogic.gdx.utils.TimeUtils;
 import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.common.net.Packet;
+import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.server.data.Game;
 import uk.aidanlee.dsp.server.net.Connections;
+import uk.aidanlee.dsp.server.states.RaceState;
+import uk.aidanlee.dsp.server.states.LobbyState;
 
 public class Server {
     /**
@@ -23,6 +26,11 @@ public class Server {
     public static Game game;
 
     /**
+     * The state machine for the server.
+     */
+    public static StateMachine state;
+
+    /**
      *
      */
     public static void start(int _port, int _maxClients) {
@@ -34,6 +42,12 @@ public class Server {
 
         // Setup the game simulation.
         game = new Game(_maxClients);
+
+        // Setup the game state machine.
+        state = new StateMachine();
+        state.add(new LobbyState("lobby"));
+        state.add(new RaceState("game"));
+        state.set("lobby", null, null);
 
         // Setup variables for server fixed time step.
         final float step = 1.0f / 60.0f;
@@ -64,7 +78,7 @@ public class Server {
                 stepAccumulator -= step;
 
                 // Simulate game world.
-                game.simulate(step);
+                state.update();
             }
 
             while (tickAccumulator >= tick) {

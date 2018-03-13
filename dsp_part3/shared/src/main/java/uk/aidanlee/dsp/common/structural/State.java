@@ -11,6 +11,10 @@ public class State {
      */
     private StateMachine machine;
 
+    /**
+     *
+     * @param _name
+     */
     public State(String _name) {
         name = _name;
     }
@@ -21,6 +25,10 @@ public class State {
 
     public void setMachine(StateMachine machine) {
         this.machine = machine;
+    }
+
+    public String getSubStateName() {
+        return "";
     }
 
     public void onEnter(Object _enterWith) {

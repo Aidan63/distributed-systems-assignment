@@ -4,14 +4,6 @@ import uk.aidanlee.dsp.common.data.ClientInfo;
 
 public class Packet {
 
-    // OOB Packet IDs
-    public static final byte CONNECTION = 0;
-    public static final byte CONNECTION_RESPONSE = 1;
-    public static final byte DISCONNECTION = 2;
-    public static final byte HEARTBEAT = 3;
-
-    // Packet
-
     /**
      * Raw bytes packet data.
      */
@@ -49,7 +41,13 @@ public class Packet {
         return endpoint;
     }
 
-    // OOB Packets Constructors
+    // OOB Packets Static Constructors
+
+    // OOB Packet IDs
+    public static final byte CONNECTION = 0;
+    public static final byte CONNECTION_RESPONSE = 1;
+    public static final byte DISCONNECTION = 2;
+    public static final byte HEARTBEAT = 3;
 
     /**
      *

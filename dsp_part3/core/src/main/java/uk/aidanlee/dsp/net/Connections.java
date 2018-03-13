@@ -166,7 +166,7 @@ public class Connections {
 
             // Create a new client with the read data.
             Client c = new Client(id, name);
-            c.setShipIndex (idx);
+            c.setShipIndex(idx);
             c.setReady(ready);
             c.setShipColor (new float[] { sR, sG, sB, 1 });
             c.setTrailColor(new float[] { tR, tG, tB, 1 });

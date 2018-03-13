@@ -11,6 +11,8 @@ public abstract class Command {
 
     public static final byte CHAT_MESSAGE = 5;
 
+    public static final byte SERVER_STATE = 6;
+
     public final byte id;
     public abstract void add(Packet _packet);
 

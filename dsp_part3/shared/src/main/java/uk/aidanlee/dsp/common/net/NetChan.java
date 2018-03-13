@@ -144,6 +144,11 @@ public class NetChan {
                     System.out.println("NetChan Command : Client Updated");
                     cmds[i] = new CmdClientUnready(_packet);
                     break;
+
+                case Command.SERVER_STATE:
+                    System.out.println("NetChan Command : Server State");
+                    cmds[i] = new CmdServerState(_packet);
+                    break;
             }
         }
 

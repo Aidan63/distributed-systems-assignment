@@ -24,6 +24,22 @@ public class StateMachine {
     // Public API
 
     /**
+     * Returns the name of the active state.
+     * @return State name string.
+     */
+    public String getActiveStateName() {
+        return activeState.getName();
+    }
+
+    /**
+     *
+     * @return
+     */
+    public State getActiveState() {
+        return activeState;
+    }
+
+    /**
      * Adds a new state to the machine.
      * @param _state The state to add.
      */

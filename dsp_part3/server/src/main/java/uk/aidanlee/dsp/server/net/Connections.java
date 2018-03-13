@@ -52,6 +52,14 @@ public class Connections {
     // Public API
 
     /**
+     * Returns the number of connected clients.
+     * @return
+     */
+    public int getNumClientsConnected() {
+        return numClientsConnected;
+    }
+
+    /**
      * Processes UDP packets received from the NetManager.
      * @param _packet Bit packed message data.
      */
@@ -152,6 +160,12 @@ public class Connections {
                     numClientsConnected,
                     0,
                     getClientInfo(), _packet.getEndpoint()));
+            return;
+        }
+
+        // Decline connection if we are not in a active lobby.
+        if (!Server.state.getActiveState().getSubStateName().equals("lobby-active")) {
+            Server.netManager.send(Packet.ConnectionDenied(_packet.getEndpoint()));
             return;
         }
 

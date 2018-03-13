@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.net;
 
+import uk.aidanlee.dsp.common.data.GameState;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.data.Game;
 
@@ -35,6 +36,10 @@ public class CommandProcessor {
 
                 case Command.CLIENT_UNREADY:
                     cmdClientUnready((CmdClientUnready) cmd);
+                    break;
+
+                case Command.SERVER_STATE:
+                    cmdServerState((CmdServerState) cmd);
                     break;
             }
         }
@@ -97,5 +102,19 @@ public class CommandProcessor {
     private static void cmdClientUnready(CmdClientUnready _cmd) {
         Client c = Game.connections.getClients()[_cmd.clientID];
         c.setReady(false);
+    }
+
+    private static void cmdServerState(CmdServerState _cmd) {
+        System.out.println("CMD Server State");
+        if (_cmd.state == GameState.LOBBY_COUNTDOWN) {
+            System.out.println("Server countdown started");
+        }
+
+        if (_cmd.state == GameState.GAME_DEBUG) {
+            if (Game.state.getActiveStateName().equals("lobby")) {
+                System.out.println("Changing to race");
+                Game.state.set("race", null, null);
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.states.ConnectingState;
 import uk.aidanlee.dsp.states.LobbyState;
 import uk.aidanlee.dsp.states.MenuState;
+import uk.aidanlee.dsp.states.RaceState;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -63,6 +64,7 @@ public class Game {
         state.add(new MenuState("menu"));
         state.add(new ConnectingState("connecting"));
         state.add(new LobbyState("lobby"));
+        state.add(new RaceState("race"));
         state.set("menu", null, null);
 
         resources = new Resources();
