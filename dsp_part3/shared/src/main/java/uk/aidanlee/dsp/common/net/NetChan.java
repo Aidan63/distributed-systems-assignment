@@ -28,7 +28,7 @@ public class NetChan {
     /**
      * Sliding window of states for this client.
      */
-    private State[] states;
+    private Snapshot[] states;
 
     /**
      * All of the reliable commands which need to be sent.
@@ -54,7 +54,7 @@ public class NetChan {
 
         destination = _dest;
 
-        states = new State[PACKET_BACKUP];
+        states = new Snapshot[PACKET_BACKUP];
 
         reliableCommandQueue   = new LinkedList<>();
         unreliableCommandQueue = new LinkedList<>();
@@ -116,37 +116,38 @@ public class NetChan {
             byte cmdID = _packet.getData().readByte();
             switch (cmdID) {
                 case Command.CLIENT_CONNECTED:
-                    System.out.println("NetChan Command : Client Connected");
                     cmds[i] = new CmdClientConnected(_packet);
                     break;
 
                 case Command.CLIENT_DISCONNECTED:
-                    System.out.println("NetChan Command : Client Disconnected");
                     cmds[i] = new CmdClientDisconnected(_packet);
                     break;
 
                 case Command.CHAT_MESSAGE:
-                    System.out.println("NetChan Command : Chat Message");
                     cmds[i] = new CmdChatMessage(_packet);
                     break;
 
                 case Command.CLIENT_UPDATED:
-                    System.out.println("NetChan Command : Client Updated");
                     cmds[i] = new CmdClientUpdated(_packet);
                     break;
 
                 case Command.CLIENT_READY:
-                    System.out.println("NetChan Command : Client Updated");
                     cmds[i] = new CmdClientReady(_packet);
                     break;
 
                 case Command.CLIENT_UNREADY:
-                    System.out.println("NetChan Command : Client Updated");
                     cmds[i] = new CmdClientUnready(_packet);
                     break;
 
+                case Command.CLIENT_INPUT:
+                    cmds[i] = new CmdClientInput(_packet);
+                    break;
+
+                case Command.SNAPSHOT:
+                    cmds[i] = new CmdSnapshot(_packet);
+                    break;
+
                 case Command.SERVER_STATE:
-                    System.out.println("NetChan Command : Server State");
                     cmds[i] = new CmdServerState(_packet);
                     break;
             }
@@ -179,8 +180,11 @@ public class NetChan {
             cmd.add(packet);
         }
 
+        //System.out.println("-");
+
         // Pop and add some unreliable commands.
         for (int i = 0; i < numUnreliableToSend; i++) {
+            //System.out.println("Adding unreliable CMD");
             unreliableCommandQueue.remove().add(packet);
         }
 

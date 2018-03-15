@@ -6,6 +6,7 @@ import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.server.data.Game;
 import uk.aidanlee.dsp.server.net.Connections;
+import uk.aidanlee.dsp.server.race.Race;
 import uk.aidanlee.dsp.server.states.RaceState;
 import uk.aidanlee.dsp.server.states.LobbyState;
 
@@ -24,6 +25,11 @@ public class Server {
      * Holds data and processes the game simulation.
      */
     public static Game game;
+
+    /**
+     *
+     */
+    public static Race race;
 
     /**
      * The state machine for the server.

@@ -49,7 +49,7 @@ public class Connections {
         timeouts        = new Timer[maxClients];
     }
 
-    // Public API
+    // Getters and Setters
 
     /**
      * Returns the number of connected clients.
@@ -58,6 +58,32 @@ public class Connections {
     public int getNumClientsConnected() {
         return numClientsConnected;
     }
+
+    /**
+     * Returns the max number of clients allowed in this server.
+     * @return
+     */
+    public int getMaxClients() {
+        return maxClients;
+    }
+
+    /**
+     * Returns an array of booleans for if each client is connected.
+     * @return
+     */
+    public boolean[] getClientConnected() {
+        return clientConnected;
+    }
+
+    /**
+     * Returns an array with all of the client objects
+     * @return
+     */
+    public NetChan[] getClients() {
+        return clients;
+    }
+
+    // Public API
 
     /**
      * Processes UDP packets received from the NetManager.
@@ -124,7 +150,6 @@ public class Connections {
      * @param _packet
      */
     private void processOOBPacket(Packet _packet) {
-        System.out.println("OOB Packet Received");
         switch (_packet.getData().readByte()) {
             case Packet.CONNECTION:
                 onConnection(_packet);
@@ -237,8 +262,6 @@ public class Connections {
     private void onHeartbeat(Packet _packet) {
         int clientID = findExistingClientIndex(_packet.getEndpoint());
         if (clientID != -1) {
-            System.out.println("Heartbeat from : " + clientID);
-
             resetTimeout(_packet);
             Server.netManager.send(Packet.Heartbeat(_packet.getEndpoint()));
         }

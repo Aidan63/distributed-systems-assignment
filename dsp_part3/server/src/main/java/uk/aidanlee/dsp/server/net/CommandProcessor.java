@@ -1,8 +1,12 @@
 package uk.aidanlee.dsp.server.net;
 
+import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.commands.*;
+import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.server.Server;
+
+import java.awt.color.ICC_ColorSpace;
 
 public class CommandProcessor {
     public static void parse(Command[] _cmds) {
@@ -22,6 +26,10 @@ public class CommandProcessor {
 
                 case Command.CLIENT_UNREADY:
                     cmdClientUnready((CmdClientUnready) cmd);
+                    break;
+
+                case Command.CLIENT_INPUT:
+                    cmdClientInput((CmdClientInput) cmd);
                     break;
 
                 default:
@@ -55,5 +63,20 @@ public class CommandProcessor {
         p.setReady(false);
 
         Server.connections.addCommandAllExcept(_cmd, _cmd.clientID);
+    }
+
+    private static void cmdClientInput(CmdClientInput _cmd) {
+        // Update the players input based on the remote client.
+        if (!Server.state.getActiveStateName().equals("game")) return;
+
+        Entity e = Server.race.craft.getRemotePlayers()[_cmd.clientID];
+        InputComponent ip = (InputComponent) e.get("input");
+
+        ip.accelerate = _cmd.accel;
+        ip.decelerate = _cmd.decel;
+        ip.steerLeft  = _cmd.steerLeft;
+        ip.steerRight = _cmd.steerRight;
+        ip.airBrakeLeft  = _cmd.abLeft;
+        ip.airBrakeRight = _cmd.abRight;
     }
 }

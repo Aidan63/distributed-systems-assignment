@@ -5,6 +5,6 @@ dependencies {
   compile "com.badlogicgames.gdx:gdx:$gdxVersion"
   compile project(':shared')
   compile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
-  compile files("libs/imgui-all.jar")
-  //compile "com.github.kotlin-graphics:imgui:-SNAPSHOT"
+  compile files("lib/imgui-all.jar")
+  compile files("lib/jDiffer.jar")
 }

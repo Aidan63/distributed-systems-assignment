@@ -9,6 +9,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class LobbyCountdownState extends State {
+    private int timer;
 
     LobbyCountdownState(String _name) {
         super(_name);
@@ -18,17 +19,18 @@ public class LobbyCountdownState extends State {
     public void onEnter(Object _enterWith) {
         // Tell all clients the game countdown has started.
         Server.connections.addReliableCommandAll(new CmdServerState(GameState.LOBBY_COUNTDOWN));
+        timer = 0;
+    }
 
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                // Change to the game and tell all clients.
-                Server.state.set("game", null, null);
-                Server.connections.addReliableCommandAll(new CmdServerState(GameState.GAME_DEBUG));
-            }
-        };
+    @Override
+    public void onUpdate() {
+        timer++;
 
-        Timer timer = new Timer();
-        timer.schedule(task, 3000);
+        // 3 second countdown
+        if (timer == 180) {
+            // Change to the game and tell all clients.
+            Server.state.set("game", null, null);
+            Server.connections.addReliableCommandAll(new CmdServerState(GameState.GAME_DEBUG));
+        }
     }
 }

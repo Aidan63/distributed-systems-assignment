@@ -6,6 +6,7 @@ eclipse.project.name = appName + '-server'
 
 dependencies {
   compile project(':shared')
+  compile files("lib/jDiffer.jar")
 }
 
 jar {

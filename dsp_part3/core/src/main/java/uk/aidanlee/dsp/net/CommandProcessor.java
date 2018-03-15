@@ -2,6 +2,7 @@ package uk.aidanlee.dsp.net;
 
 import uk.aidanlee.dsp.common.data.GameState;
 import uk.aidanlee.dsp.common.net.commands.*;
+import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.data.Game;
 
 public class CommandProcessor {
@@ -40,6 +41,10 @@ public class CommandProcessor {
 
                 case Command.SERVER_STATE:
                     cmdServerState((CmdServerState) cmd);
+                    break;
+
+                case Command.SNAPSHOT:
+                    cmdClientState((CmdSnapshot) cmd);
                     break;
             }
         }
@@ -115,6 +120,15 @@ public class CommandProcessor {
                 System.out.println("Changing to race");
                 Game.state.set("race", null, null);
             }
+        }
+    }
+
+    private static void cmdClientState(CmdSnapshot _cmd) {
+        for (int i = 0; i < _cmd.snapshot.getPlayers().size(); i++) {
+            Visual v = Game.race.craft.getRemotePlayers()[_cmd.snapshot.getPlayers().get(i).id];
+            v.pos.x    = _cmd.snapshot.getPlayers().get(i).x;
+            v.pos.y    = _cmd.snapshot.getPlayers().get(i).y;
+            v.rotation = _cmd.snapshot.getPlayers().get(i).angle;
         }
     }
 }
