@@ -2,14 +2,17 @@ package uk.aidanlee.dsp.states;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.Packet;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
-import uk.aidanlee.dsp.data.Game;
+import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.net.ConnectionSettings;
-import uk.aidanlee.dsp.net.ConnectionState;
+
+import java.util.LinkedList;
 
 public class ConnectingState extends State {
-    private String playerName;
+    private ConnectionSettings settings;
 
     public ConnectingState(String _name) {
         super(_name);
@@ -17,20 +20,15 @@ public class ConnectingState extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        ConnectionSettings settings = (ConnectionSettings) _enterWith;
-
-        playerName = settings.getName();
-
-        Game.netChan.setDestination(settings.getEp());
-        Game.connections.setServer(settings.getEp());
-
-        Game.connections.setState(ConnectionState.Connecting);
+        settings = (ConnectionSettings) _enterWith;
     }
 
     @Override
-    public void onUpdate() {
-        // Send a connection packet!
-        Game.netManager.send(Packet.Connection(playerName, Game.connections.getServer()));
+    public void onUpdate(LinkedList<Command> _cmds) {
+        readPackets();
+
+        // Send a connection request each step if we haven't heard anything back.
+        Client.netManager.send(Packet.Connection(settings.getName(), settings.getEp()));
     }
 
     @Override
@@ -39,5 +37,37 @@ public class ConnectingState extends State {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
+    }
+
+    /**
+     * Reads packets from the net manager.
+     * In the connecting state we are interested in Connection Response packets.
+     */
+    private void readPackets() {
+        Packet pck = Client.netManager.getPackets().poll();
+        while (pck != null) {
+            processPacket(pck);
+            pck = Client.netManager.getPackets().poll();
+        }
+    }
+
+    /**
+     *
+     * @param _packet
+     */
+    private void processPacket(Packet _packet) {
+        // If the packet is not OOB or a connection response we don't care about it.
+        if (!_packet.getData().readBoolean()) return;
+        if (!(_packet.getData().readByte() == Packet.CONNECTION_RESPONSE)) return;
+
+        if (_packet.getData().readBoolean()) {
+            // Connection Accepted
+            System.out.println("Connection Accepted");
+            changeState("game", new ConnectionResponse(settings.getEp(), _packet), null);
+        } else {
+            // Connection Denied
+            System.out.println("Connection Denied");
+            changeState("menu", null, null);
+        }
     }
 }

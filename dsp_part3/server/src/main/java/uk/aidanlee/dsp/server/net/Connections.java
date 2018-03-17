@@ -1,12 +1,15 @@
 package uk.aidanlee.dsp.server.net;
 
+import sun.net.www.http.ChunkedOutputStream;
 import uk.aidanlee.dsp.common.data.ClientInfo;
 import uk.aidanlee.dsp.common.net.*;
 import uk.aidanlee.dsp.common.net.commands.CmdClientConnected;
 import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
+import uk.aidanlee.dsp.common.net.commands.CmdSnapshot;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.server.Server;
 
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -37,6 +40,11 @@ public class Connections {
     private Timer[] timeouts;
 
     /**
+     * Dummy snapshot. Used to generate full updates.
+     */
+    private Snapshot dummySnapshot;
+
+    /**
      * Creates a new connection manager.
      * @param _maxClients Max number of clients.
      */
@@ -47,40 +55,12 @@ public class Connections {
         clientConnected = new boolean[maxClients];
         clients         = new NetChan[maxClients];
         timeouts        = new Timer[maxClients];
-    }
 
-    // Getters and Setters
-
-    /**
-     * Returns the number of connected clients.
-     * @return
-     */
-    public int getNumClientsConnected() {
-        return numClientsConnected;
-    }
-
-    /**
-     * Returns the max number of clients allowed in this server.
-     * @return
-     */
-    public int getMaxClients() {
-        return maxClients;
-    }
-
-    /**
-     * Returns an array of booleans for if each client is connected.
-     * @return
-     */
-    public boolean[] getClientConnected() {
-        return clientConnected;
-    }
-
-    /**
-     * Returns an array with all of the client objects
-     * @return
-     */
-    public NetChan[] getClients() {
-        return clients;
+        // Create the dummy snapshot and fill it with players with all fields ZEROed.
+        dummySnapshot = new Snapshot();
+        for (int i = 0; i < maxClients; i++) {
+            dummySnapshot.addPlayer(i, new Player("dummy"));
+        }
     }
 
     // Public API
@@ -109,13 +89,25 @@ public class Connections {
      * Send a net chan message out to all clients.
      */
     public void update() {
-        for (int i = 0; i < maxClients; i++) {
-            if (isClientConnected(i)) {
-                Packet packet = clients[i].send();
-                if (packet == null) return;
 
-                Server.netManager.send(packet);
-            }
+        Snapshot master = new Snapshot();
+        for (int i = 0; i < maxClients; i++) {
+            if (!isClientConnected(i)) continue;
+
+            master.addPlayer(i, Server.game.getPlayers()[i]);
+        }
+
+        // Send a net chan update for each client.
+        for (int i = 0; i < maxClients; i++) {
+            if (!isClientConnected(i)) continue;
+
+            // TODO : Generate a delta compressed snapshot for each client.
+            clients[i].addCommand(new CmdSnapshot(master));
+
+            Packet packet = clients[i].send();
+            if (packet == null) continue;
+
+            Server.netManager.send(packet);
         }
     }
 
@@ -188,8 +180,8 @@ public class Connections {
             return;
         }
 
-        // Decline connection if we are not in a active lobby.
-        if (!Server.state.getActiveState().getSubStateName().equals("lobby-active")) {
+        // Decline connection if the game is not in a active lobby
+        if (!Server.game.getState().equals("lobby-active")) {
             Server.netManager.send(Packet.ConnectionDenied(_packet.getEndpoint()));
             return;
         }
@@ -279,7 +271,7 @@ public class Connections {
         int index = 0;
         for (int i = 0; i < maxClients; i++) {
             if (isClientConnected(i)) {
-                Player player = Server.game.getPlayer(i);
+                Player player = Server.game.getPlayers()[i];
                 info[index] = new ClientInfo(i, player);
 
                 index++;
@@ -295,7 +287,7 @@ public class Connections {
      * @return new ClientInfo instance
      */
     private ClientInfo getClientInfoFor(int _clientID) {
-        Player player = Server.game.getPlayer(_clientID);
+        Player player = Server.game.getPlayers()[_clientID];
         return new ClientInfo(_clientID, player);
     }
 

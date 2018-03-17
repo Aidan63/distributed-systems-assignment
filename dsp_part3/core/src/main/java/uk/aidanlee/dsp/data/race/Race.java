@@ -8,7 +8,7 @@ public class Race {
     public final View view;
 
     public Race() {
-        circuit = new Circuit();
+        circuit = new Circuit("/media/aidan/BAD1-1589/dsp/dsp_part2/assets/tracks/track.p2");
         craft   = new Craft();
         view    = new View();
     }

@@ -34,6 +34,12 @@ public class Circuit {
 
     private Map<String, UUID> quadIDs;
 
+    // Constructors
+
+    public Circuit(String _filePath) {
+        load(_filePath);
+    }
+
     // Getters and Setters
 
     public CircuitInfo getInfo() {
@@ -60,7 +66,9 @@ public class Circuit {
         return wallTree;
     }
 
-    public void load(String _filePath) {
+    // Public API
+
+    private void load(String _filePath) {
         try {
             Gson gson = new Gson();
             CircuitJson json = gson.fromJson(new String(Files.readAllBytes(Paths.get(_filePath))), CircuitJson.class);

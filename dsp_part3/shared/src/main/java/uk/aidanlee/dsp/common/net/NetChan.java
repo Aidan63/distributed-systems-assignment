@@ -6,7 +6,7 @@ import java.util.*;
 
 public class NetChan {
 
-    private static final int PACKET_BACKUP = 32;
+    private static final int SNAPSHOT_BACKUP = 32;
     private static final int MAX_PACKET_CMDS = 4;
     private static final int MAX_RELIABLE_CMDS = 4;
 
@@ -28,7 +28,7 @@ public class NetChan {
     /**
      * Sliding window of states for this client.
      */
-    private Snapshot[] states;
+    private LinkedList<Snapshot> snapshots;
 
     /**
      * All of the reliable commands which need to be sent.
@@ -54,7 +54,7 @@ public class NetChan {
 
         destination = _dest;
 
-        states = new Snapshot[PACKET_BACKUP];
+        snapshots = new LinkedList<>();
 
         reliableCommandQueue   = new LinkedList<>();
         unreliableCommandQueue = new LinkedList<>();
@@ -86,6 +86,17 @@ public class NetChan {
      */
     public void addCommand(Command _c) {
         unreliableCommandQueue.add(_c);
+    }
+
+    /**
+     *
+     * @param _snapshot
+     */
+    public void addSnapshot(Snapshot _snapshot) {
+        snapshots.addFirst(_snapshot);
+        if (snapshots.size() > SNAPSHOT_BACKUP) {
+            snapshots.removeLast();
+        }
     }
 
     /**
@@ -127,16 +138,8 @@ public class NetChan {
                     cmds[i] = new CmdChatMessage(_packet);
                     break;
 
-                case Command.CLIENT_UPDATED:
-                    cmds[i] = new CmdClientUpdated(_packet);
-                    break;
-
-                case Command.CLIENT_READY:
-                    cmds[i] = new CmdClientReady(_packet);
-                    break;
-
-                case Command.CLIENT_UNREADY:
-                    cmds[i] = new CmdClientUnready(_packet);
+                case Command.CLIENT_SETTINGS:
+                    cmds[i] = new CmdClientSettings(_packet);
                     break;
 
                 case Command.CLIENT_INPUT:
@@ -180,11 +183,8 @@ public class NetChan {
             cmd.add(packet);
         }
 
-        //System.out.println("-");
-
         // Pop and add some unreliable commands.
         for (int i = 0; i < numUnreliableToSend; i++) {
-            //System.out.println("Adding unreliable CMD");
             unreliableCommandQueue.remove().add(packet);
         }
 
@@ -219,11 +219,22 @@ public class NetChan {
         return packet;
     }
 
+    /**
+     *
+     * @param _val
+     * @return
+     */
     private boolean getMSB(int _val) {
         int mask = 1 << 32;
         return (_val & mask) > 0;
     }
 
+    /**
+     *
+     * @param _val
+     * @param _bit
+     * @return
+     */
     private int setMSB(int _val, boolean _bit) {
         if (_bit) {
             int mask = 1 << 32;

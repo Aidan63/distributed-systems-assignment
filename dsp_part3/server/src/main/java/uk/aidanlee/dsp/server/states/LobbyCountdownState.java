@@ -2,16 +2,16 @@ package uk.aidanlee.dsp.server.states;
 
 import uk.aidanlee.dsp.common.data.GameState;
 import uk.aidanlee.dsp.common.net.commands.CmdServerState;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.server.Server;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.LinkedList;
 
 public class LobbyCountdownState extends State {
     private int timer;
 
-    LobbyCountdownState(String _name) {
+    public LobbyCountdownState(String _name) {
         super(_name);
     }
 
@@ -23,13 +23,13 @@ public class LobbyCountdownState extends State {
     }
 
     @Override
-    public void onUpdate() {
+    public void onUpdate(LinkedList<Command> _cmds) {
         timer++;
 
         // 3 second countdown
         if (timer == 180) {
             // Change to the game and tell all clients.
-            Server.state.set("game", null, null);
+            changeState("game", null, null);
             Server.connections.addReliableCommandAll(new CmdServerState(GameState.GAME_DEBUG));
         }
     }

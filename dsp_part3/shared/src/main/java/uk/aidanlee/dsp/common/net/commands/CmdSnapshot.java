@@ -1,41 +1,70 @@
 package uk.aidanlee.dsp.common.net.commands;
 
 import uk.aidanlee.dsp.common.net.Packet;
+import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.Snapshot;
 
 public class CmdSnapshot extends Command {
-    public final Snapshot snapshot;
+    public final Snapshot master;
 
-    public CmdSnapshot(Snapshot _snapshot) {
+    public CmdSnapshot(Snapshot _master) {
         super(Command.SNAPSHOT);
-        snapshot = _snapshot;
+        master = _master;
     }
 
     public CmdSnapshot(Packet _packet) {
         super(Command.SNAPSHOT);
+        master = new Snapshot();
 
-        snapshot = new Snapshot();
-        int numEnt = _packet.getData().readByte();
-        for (int i = 0; i < numEnt; i++) {
-            snapshot.addPlayer(
-                    _packet.getData().readByte(),
+        int numClients = _packet.getData().readByte();
+        for (int i = 0; i < numClients; i++) {
+            int clientID  = _packet.getData().readByte();
+            Player player = new Player("dummy");
+            player.setShipIndex(_packet.getData().readByte());
+            player.setShipColor(new float[] {
                     _packet.getData().readFloat(),
                     _packet.getData().readFloat(),
-                    _packet.getData().readFloat()
-            );
+                    _packet.getData().readFloat(), 1
+            });
+            player.setTrailColor(new float[] {
+                    _packet.getData().readFloat(),
+                    _packet.getData().readFloat(),
+                    _packet.getData().readFloat(), 1
+            });
+            player.setReady(_packet.getData().readBoolean());
+            player.setX(_packet.getData().readInteger());
+            player.setY(_packet.getData().readInteger());
+            player.setRotation((_packet.getData().readByte() / 255) * 360);
+
+            master.addPlayer(clientID, player);
         }
     }
 
     @Override
     public void add(Packet _packet) {
         _packet.getData().writeByte(Command.SNAPSHOT);
-        _packet.getData().writeByte((byte) snapshot.getPlayers().size());
+        _packet.getData().writeByte((byte) master.getPlayers());
 
-        for (int i = 0; i < snapshot.getPlayers().size(); i++) {
-            _packet.getData().writeByte((byte) snapshot.getPlayers().get(i).id);
-            _packet.getData().writeFloat(snapshot.getPlayers().get(i).x);
-            _packet.getData().writeFloat(snapshot.getPlayers().get(i).y);
-            _packet.getData().writeFloat(snapshot.getPlayers().get(i).angle);
+        for (int i = 0; i < master.getPlayers(); i++) {
+            Player player = master.getPlayer(i);
+            int    id     = master.getID(i);
+
+            _packet.getData().writeByte((byte) id);
+            _packet.getData().writeByte((byte) player.getShipIndex());
+
+            _packet.getData().writeFloat(player.getShipColor()[0]);
+            _packet.getData().writeFloat(player.getShipColor()[1]);
+            _packet.getData().writeFloat(player.getShipColor()[2]);
+
+            _packet.getData().writeFloat(player.getTrailColor()[0]);
+            _packet.getData().writeFloat(player.getTrailColor()[1]);
+            _packet.getData().writeFloat(player.getTrailColor()[2]);
+
+            _packet.getData().writeBoolean(player.isReady());
+
+            _packet.getData().writeInteger(player.getX());
+            _packet.getData().writeInteger(player.getY());
+            _packet.getData().writeByte((byte) ((player.getRotation() / 360) * 255));
         }
     }
 }

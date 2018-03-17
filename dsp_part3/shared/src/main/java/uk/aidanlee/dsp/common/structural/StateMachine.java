@@ -1,6 +1,9 @@
 package uk.aidanlee.dsp.common.structural;
 
+import uk.aidanlee.dsp.common.net.commands.Command;
+
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class StateMachine {
@@ -15,13 +18,23 @@ public class StateMachine {
     private State activeState;
 
     /**
+     * List of commands to pass to the active state next update
+     */
+    private LinkedList<Command> commands;
+
+    /**
      * Create a new empty state machine.
      */
     public StateMachine() {
-        states = new HashMap<>();
+        states   = new HashMap<>();
+        commands = new LinkedList<>();
     }
 
     // Public API
+
+    public void pushCommand(Command _cmd) {
+        commands.addLast(_cmd);
+    }
 
     /**
      * Returns the name of the active state.
@@ -94,7 +107,8 @@ public class StateMachine {
     }
 
     public void update() {
-        if (activeState != null) activeState.onUpdate();
+        if (activeState != null) activeState.onUpdate(commands);
+        commands.clear();
     }
     public void render() {
         if (activeState != null) activeState.onRender();

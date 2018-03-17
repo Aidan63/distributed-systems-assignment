@@ -8,19 +8,37 @@ import imgui.Context;
 import imgui.ContextKt;
 import imgui.ImGui;
 import imgui.impl.LwjglGL3;
-import uk.aidanlee.dsp.common.net.Packet;
-import uk.aidanlee.dsp.data.Game;
-import uk.aidanlee.dsp.net.ConnectionState;
+import uk.aidanlee.dsp.common.net.NetManager;
+import uk.aidanlee.dsp.common.structural.StateMachine;
+import uk.aidanlee.dsp.data.Resources;
+import uk.aidanlee.dsp.states.ConnectingState;
+import uk.aidanlee.dsp.states.GameState;
+import uk.aidanlee.dsp.states.MenuState;
 import uk.aidanlee.dsp.utils.ImGuiInputProcessor;
 import uno.glfw.GlfwWindow;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class Main extends ApplicationAdapter {
+public class Client extends ApplicationAdapter {
     private double accumulator;
     private double currentTime;
     private static final float step = 1.0f / 60.0f;
 
     private Context imguiContext;
+
+    /**
+     * Globally accessible resources used by the game.
+     */
+    public static Resources resources;
+
+    /**
+     * Globally accessible network manager to send and receive packets.
+     */
+    public static NetManager netManager;
+
+    /**
+     * Global state machine for the game.
+     */
+    public static StateMachine clientState;
 
     /**
      * Ran once LibGDX has started up.
@@ -38,8 +56,17 @@ public class Main extends ApplicationAdapter {
         // Add a new input processor so ImGui is able to read key presses.
         Gdx.input.setInputProcessor(new ImGuiInputProcessor());
 
-        // Setup the games state machine.
-        Game.start();
+        // Set up the game stuff.
+        resources = new Resources();
+
+        netManager = new NetManager();
+        netManager.start();
+
+        clientState = new StateMachine();
+        clientState.add(new MenuState("menu"));
+        clientState.add(new ConnectingState("connecting"));
+        clientState.add(new GameState("game"));
+        clientState.set("menu", null, null);
     }
 
     /**
@@ -48,7 +75,7 @@ public class Main extends ApplicationAdapter {
     @Override
     public void render() {
 
-        // Main game fixed time-step loop.
+        // Client game fixed time-step loop.
         double newTime   = TimeUtils.millis() / 1000.0;
         double frameTime = Math.min(newTime - currentTime, 0.25);
 
@@ -59,10 +86,10 @@ public class Main extends ApplicationAdapter {
             accumulator -= step;
 
             LwjglGL3.INSTANCE.newFrame();
-            Game.update();
+            clientState.update();
         }
 
-        Game.render();
+        clientState.render();
 
         ImGui.INSTANCE.render();
         LwjglGL3.INSTANCE.renderDrawData(ImGui.INSTANCE.getDrawData());
@@ -73,18 +100,11 @@ public class Main extends ApplicationAdapter {
      */
     @Override
     public void dispose() {
-        // If we are connected, send 10 disconnection packets and hope at-least one gets through.
-        if (Game.connections.getState() == ConnectionState.Connected) {
-            for (int i = 0; i < 10; i++) {
-                Game.netManager.send(Packet.Disconnection(Game.connections.getServer()));
-            }
-        }
+        clientState.unset(null);
+        resources.dispose();
 
         // Clean up imgui implementation.
         LwjglGL3.INSTANCE.shutdown();
         ContextKt.destroy(imguiContext);
-
-        // Clean up the game resources.
-        Game.stop();
     }
 }

@@ -124,8 +124,9 @@ public class BitPacker {
      * Writes a boolean into the bit set.
      * @param _data The boolean to write.
      */
-    public void writeBoolean(boolean _data) {
+    public boolean writeBoolean(boolean _data) {
         data.set(numBits++, _data);
+        return _data;
     }
 
 

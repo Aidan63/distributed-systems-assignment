@@ -1,4 +1,4 @@
-package uk.aidanlee.dsp.states;
+package uk.aidanlee.dsp.states.old;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -24,11 +24,28 @@ public class MenuState extends State {
         super(_name);
     }
 
+    /**
+     * Menu state is the only state which doesn't need networking services.
+     * So when we enter this state stop the services.
+     * @param _enterWith
+     */
     @Override
     public void onEnter(Object _enterWith) {
         ip   = new char[255];
         port = new char[255];
         name = new char[255];
+
+        Game.netStop();
+    }
+
+    /**
+     * Menu state is the only state which doesn't need networking services.
+     * So when we leave this state we will want to start the services for the next state.
+     * @param _leaveWith Data to leave with.
+     */
+    @Override
+    public void onLeave(Object _leaveWith) {
+        Game.netStart();
     }
 
     @Override
@@ -66,13 +83,5 @@ public class MenuState extends State {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
-    }
-
-    /**
-     * Read packets from the net manager.
-     * In the menu state we are interested in OOB Server Packets to builds a list of LAN lobbies.
-     */
-    private void readPackets() {
-        //
     }
 }

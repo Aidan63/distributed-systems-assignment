@@ -1,51 +1,30 @@
 package uk.aidanlee.dsp.common.net.commands;
 
 import uk.aidanlee.dsp.common.net.Packet;
+import uk.aidanlee.dsp.common.utils.ColorUtil;
 
-public class CmdClientUpdated extends Command {
-    /**
-     * The ID of the client who sent this command.
-     */
+public class CmdClientSettings extends Command {
     public final int clientID;
-
-    /**
-     * The clients ship index.
-     */
     public final int index;
-
-    /**
-     * 4 element (RGBA) normalized (0 - 1) array for ship color.
-     */
     public final float[] shipColor;
-
-    /**
-     * 4 element (RGBA) normalized (0 - 1) array for trail color.
-     */
     public final float[] trailColor;
+    public final boolean ready;
 
-    /**
-     *
-     * @param _id
-     * @param _idx
-     * @param _sCol
-     * @param _tCol
-     */
-    public CmdClientUpdated(int _id, int _idx, float[] _sCol, float[] _tCol) {
-        super(Command.CLIENT_UPDATED);
-        clientID   = _id;
-        index      = _idx;
+    public CmdClientSettings(int _clientID, int _index, float[] _sCol, float[] _tCol, boolean _ready) {
+        super(Command.CLIENT_SETTINGS);
+
+        clientID = _clientID;
+        index    = _index;
         shipColor  = _sCol;
         trailColor = _tCol;
+        ready = _ready;
     }
 
-    /**
-     *
-     * @param _packet
-     */
-    public CmdClientUpdated(Packet _packet) {
-        super(Command.CLIENT_UPDATED);
-        clientID  = _packet.getData().readByte();
-        index     = _packet.getData().readByte();
+    public CmdClientSettings(Packet _packet) {
+        super(Command.CLIENT_SETTINGS);
+
+        clientID = _packet.getData().readByte();
+        index    = _packet.getData().readByte();
         shipColor = new float[] {
                 _packet.getData().readFloat(),
                 _packet.getData().readFloat(),
@@ -56,11 +35,12 @@ public class CmdClientUpdated extends Command {
                 _packet.getData().readFloat(),
                 _packet.getData().readFloat(), 1
         };
+        ready = _packet.getData().readBoolean();
     }
 
     @Override
     public void add(Packet _packet) {
-        _packet.getData().writeByte(Command.CLIENT_UPDATED);
+        _packet.getData().writeByte(Command.CLIENT_SETTINGS);
         _packet.getData().writeByte((byte) clientID);
         _packet.getData().writeByte((byte) index);
 
@@ -72,5 +52,6 @@ public class CmdClientUpdated extends Command {
         _packet.getData().writeFloat(trailColor[1]);
         _packet.getData().writeFloat(trailColor[2]);
 
+        _packet.getData().writeBoolean(ready);
     }
 }

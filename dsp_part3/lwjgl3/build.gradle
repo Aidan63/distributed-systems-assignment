@@ -15,6 +15,6 @@ jar {
   archiveName "${appName}-${version}.jar"
   from { configurations.compile.collect { zipTree(it) } }
   manifest {
-    attributes 'Main-Class': project.mainClassName
+    attributes 'Client-Class': project.mainClassName
   }
 }

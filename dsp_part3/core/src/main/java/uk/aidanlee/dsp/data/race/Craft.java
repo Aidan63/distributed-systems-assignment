@@ -7,7 +7,6 @@ import uk.aidanlee.dsp.common.components.*;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.components.LocalInputComponent;
-import uk.aidanlee.dsp.data.Game;
 import uk.aidanlee.jDiffer.math.Vector;
 
 public class Craft {
@@ -21,6 +20,7 @@ public class Craft {
     }
 
     public void createCraft() {
+        /*
         remotePlayers = new Visual[Game.connections.getClients().length];
 
         for (int i = 0; i < Game.connections.getClients().length; i++) {
@@ -83,5 +83,6 @@ public class Craft {
             remotePlayers[i] = craft;
             System.out.println("Created Craft at : " + remotePlayers[i].pos.x + "x" + remotePlayers[i].pos.y);
         }
+        */
     }
 }

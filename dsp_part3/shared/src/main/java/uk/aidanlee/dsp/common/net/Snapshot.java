@@ -4,30 +4,52 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Snapshot {
-    private List<PlayerEntity> players;
+    /**
+     * The players in this snapshot.
+     */
+    private List<PlayerSet> players;
+
+    // Constructors
 
     public Snapshot() {
         players = new LinkedList<>();
     }
 
-    public List<PlayerEntity> getPlayers() {
-        return players;
-    }
-    public void addPlayer(int _id, float _x, float _y, float _angle) {
-        players.add(new PlayerEntity(_id, _x, _y, _angle));
+    // Getters and Setters
+
+    // Public API
+
+    public int getPlayers() {
+        return players.size();
     }
 
-    public class PlayerEntity {
-        public final int id;
-        public final float x;
-        public final float y;
-        public final float angle;
+    public Player getPlayer(int _index) {
+        return players.get(_index).getPlayer();
+    }
 
-        public PlayerEntity(int _id, float _x, float _y, float _angle) {
-            id = _id;
-            x  = _x;
-            y  = _y;
-            angle = _angle;
+    public int getID(int _index) {
+        return players.get(_index).getClientID();
+    }
+
+    public void addPlayer(int _id, Player _player) {
+        players.add(new PlayerSet(_id, _player));
+    }
+
+    private class PlayerSet {
+        private int clientID;
+        private Player player;
+
+        PlayerSet(int _id, Player _player) {
+            clientID = _id;
+            player   = _player;
+        }
+
+        public int getClientID() {
+            return clientID;
+        }
+
+        public Player getPlayer() {
+            return player;
         }
     }
 }

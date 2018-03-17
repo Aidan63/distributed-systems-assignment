@@ -1,80 +1,86 @@
 package uk.aidanlee.dsp.net;
 
+import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.EndPoint;
+import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.commands.Command;
-import uk.aidanlee.dsp.data.Game;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Connections {
-    /**
-     * Quick access to our client instance.
-     */
-    private Client us;
-
-    /**
-     * Array of all clients in the server, including our-self.
-     */
-    private Client[] clients;
-
     /**
      * Servers endpoint location.
      */
     private EndPoint server;
 
     /**
-     * The current connection state of this client.
+     *
      */
-    private ConnectionState state;
+    private NetChan netChan;
 
     /**
-     * 5 second timer to check if we still have a connection to the server.
+     * Timer which will reset each time we receive a heartbeat OOB packet.
+     * If it triggers we will disconnect as the server is no longer active.
      */
-    private Timer timeout;
+    private Timer heartbeat;
 
     /**
-     * Creates a new Connections instance which is "Disconnected" from the server.
+     * List of net chan commands which have been received.
      */
-    public Connections() {
-        state = ConnectionState.Connecting;
-    }
+    private List<Command> commands;
 
-    // Getters and Setters
+    /**
+     * Creates a new connection class to
+     * @param _server
+     */
+    public Connections(EndPoint _server) {
+        server   = _server;
+        netChan  = new NetChan(server);
+        commands = new LinkedList<>();
 
-    public ConnectionState getState() {
-        return state;
-    }
-    public void setState(ConnectionState state) {
-        this.state = state;
-    }
-
-    public Client[] getClients() {
-        return clients;
-    }
-    public Client getUs() {
-        return us;
-    }
-
-    public EndPoint getServer() {
-        return server;
-    }
-    public void setServer(EndPoint server) {
-        this.server = server;
+        resetTimeout();
     }
 
     // Public API
 
     /**
-     * If we are connecting or connected read and process a packet from the net manager thread.
+     *
+     * @return
      */
-    public void readPackets() {
-        Packet pck = Game.netManager.getPackets().poll();
+    public EndPoint getServer() {
+        return server;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public NetChan getNetChan() {
+        return netChan;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public List<Command> update() {
+        commands.clear();
+
+        // Read packets from the net manager
+        Packet pck = Client.netManager.getPackets().poll();
         while (pck != null) {
             processPacket(pck);
-            pck = Game.netManager.getPackets().poll();
+            pck = Client.netManager.getPackets().poll();
         }
+
+        // Generate a net chan packet and send it to the server.
+        Packet netChanPacket = netChan.send();
+        if (netChanPacket != null) {
+            Client.netManager.send(netChanPacket);
+        }
+
+        return commands;
     }
 
     /**
@@ -87,12 +93,8 @@ public class Connections {
         if (_packet.getData().readBoolean()) {
             processOOBPacket(_packet);
         } else {
-            // We cannot process net chan messages if we are not in the connected state.
-            if (state != ConnectionState.Connected) return;
-
             // Send netchan packet to the net channel and parse any commands
-            Command[] commands = Game.netChan.receive(_packet);
-            CommandProcessor.parse(commands);
+            commands.addAll(Arrays.asList(netChan.receive(_packet)));
         }
     }
 
@@ -102,12 +104,8 @@ public class Connections {
      */
     private void processOOBPacket(Packet _packet) {
         switch (_packet.getData().readByte()) {
-            case Packet.CONNECTION_RESPONSE:
-                readConnectionResponse(_packet);
-                break;
-
             case Packet.DISCONNECTION:
-                readDisconnection(_packet);
+                readDisconnection();
                 break;
 
             case Packet.HEARTBEAT:
@@ -119,89 +117,22 @@ public class Connections {
         }
     }
 
-    /**
-     * Read the connection response packet from the server.
-     * @param _packet OOB connection response data.
-     */
-    private void readConnectionResponse(Packet _packet) {
-
-        // If we are not attempting to connect, ignore any connection response packets.
-        if (state != ConnectionState.Connecting) return;
-
-        // Connection Denied
-        if (!_packet.getData().readBoolean()) {
-            System.out.println("Connection Denied");
-            Game.state.set("menu", null, null);
-
-            return;
-        }
-
-        // Connection Accepted
-
-        int ourID        = _packet.getData().readByte();
-        int maxClients   = _packet.getData().readByte();
-        int mapIndex     = _packet.getData().readByte();
-        int numConnected = _packet.getData().readByte();
-
-        // Create the client structures and add their data.
-        clients = new Client[maxClients];
-
-        for (int i = 0; i < numConnected; i++) {
-
-            // Read Basic Info
-            String  name  = _packet.getData().readString();
-            int     id    = _packet.getData().readByte();
-            int     idx   = _packet.getData().readByte();
-            boolean ready = _packet.getData().readBoolean();
-
-            // Read ship color
-            float sR = _packet.getData().readFloat();
-            float sG = _packet.getData().readFloat();
-            float sB = _packet.getData().readFloat();
-
-            // Read trail color
-            float tR = _packet.getData().readFloat();
-            float tG = _packet.getData().readFloat();
-            float tB = _packet.getData().readFloat();
-
-            // Create a new client with the read data.
-            Client c = new Client(id, name);
-            c.setShipIndex(idx);
-            c.setReady(ready);
-            c.setShipColor (new float[] { sR, sG, sB, 1 });
-            c.setTrailColor(new float[] { tR, tG, tB, 1 });
-
-            // Add the client into the array.
-            clients[id] = c;
-
-            // If this client is about us then add it to the "us" var for quick access.
-            if (id == ourID) {
-                us = c;
-            }
-        }
-
-        resetTimeout();
-
-        // Switch to the lobby state.
-        state = ConnectionState.Connected;
-        Game.state.set("lobby", null, null);
-    }
 
     /**
-     *
-     * @param _packet
+     * If we receive an OOB disconnection packet when we're connected that means we've been disconnected by the server.
      */
-    private void readDisconnection(Packet _packet) {
+    private void readDisconnection() {
         System.out.println("We have been disconnected / kicked by the server");
+        Client.clientState.set("menu", null, null);
     }
 
     /**
-     *
+     * Resets the heartbeat timer once we're received data from the server.
      */
     private void resetTimeout() {
-        if (timeout != null) {
-            timeout.cancel();
-            timeout = null;
+        if (heartbeat != null) {
+            heartbeat.cancel();
+            heartbeat = null;
         }
 
         // Start the timout timer.
@@ -209,12 +140,14 @@ public class Connections {
             @Override
             public void run() {
                 System.out.println("Server timeout.");
-
-                Game.netStop();
-                Game.state.set("menu", null, null);
+                Client.clientState.set("menu", null, null);
             }
         };
-        timeout = new Timer();
-        timeout.schedule(task, 5000);
+        heartbeat = new Timer();
+        heartbeat.schedule(task, 5000);
+    }
+
+    public void dispose() {
+        heartbeat.cancel();
     }
 }

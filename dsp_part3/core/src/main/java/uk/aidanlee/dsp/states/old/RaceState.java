@@ -1,18 +1,19 @@
-package uk.aidanlee.dsp.states;
+package uk.aidanlee.dsp.states.old;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.common.utils.MathsUtil;
-import uk.aidanlee.dsp.data.Game;
 import uk.aidanlee.dsp.data.race.Race;
+
+import java.util.LinkedList;
 
 public class RaceState extends State {
     private SpriteBatch spriteBatch;
@@ -24,7 +25,6 @@ public class RaceState extends State {
     @Override
     public void onEnter(Object _enterWith) {
         Game.race = new Race();
-        Game.race.circuit.load("/media/aidan/BAD1-1589/dsp/dsp_part2/assets/tracks/track.p2");
         Game.race.craft.createCraft();
         Game.race.view.setup();
 
@@ -32,7 +32,7 @@ public class RaceState extends State {
     }
 
     @Override
-    public void onUpdate() {
+    public void onUpdate(LinkedList<Command> _cmds) {
         // Update the viewport size
         Game.race.view.resize();
 

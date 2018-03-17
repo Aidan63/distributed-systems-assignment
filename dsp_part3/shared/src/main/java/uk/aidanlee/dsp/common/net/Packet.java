@@ -1,6 +1,7 @@
 package uk.aidanlee.dsp.common.net;
 
 import uk.aidanlee.dsp.common.data.ClientInfo;
+import uk.aidanlee.dsp.common.utils.ColorUtil;
 
 public class Packet {
 
@@ -15,9 +16,9 @@ public class Packet {
     private EndPoint endpoint;
 
     /**
-     *
-     * @param _data
-     * @param _ep
+     * Creates a packet with the specified payload and location.
+     * @param _data Bytes data.
+     * @param _ep   destination.
      */
     public Packet(BitPacker _data, EndPoint _ep) {
         data     = _data;
@@ -25,8 +26,8 @@ public class Packet {
     }
 
     /**
-     *
-     * @param _ep
+     * Creates an empty packet with just a destination.
+     * @param _ep destination.
      */
     public Packet(EndPoint _ep) {
         data     = new BitPacker();

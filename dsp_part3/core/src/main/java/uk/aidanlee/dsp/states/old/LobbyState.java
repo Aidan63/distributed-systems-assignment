@@ -1,22 +1,19 @@
-package uk.aidanlee.dsp.states;
+package uk.aidanlee.dsp.states.old;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.sun.corba.se.spi.activation.IIOP_CLEAR_TEXT;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.*;
 import imgui.internal.Rect;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.commands.CmdChatMessage;
-import uk.aidanlee.dsp.common.net.commands.CmdClientReady;
-import uk.aidanlee.dsp.common.net.commands.CmdClientUnready;
-import uk.aidanlee.dsp.common.net.commands.CmdClientUpdated;
+import uk.aidanlee.dsp.common.net.commands.CmdClientSettings;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
-import uk.aidanlee.dsp.data.Game;
-import uk.aidanlee.dsp.net.Client;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class LobbyState extends State {
@@ -38,7 +35,7 @@ public class LobbyState extends State {
     }
 
     @Override
-    public void onUpdate() {
+    public void onUpdate(LinkedList<Command> _cmds) {
         // Send a netchan update out.
         Packet packet = Game.netChan.send();
         if (packet != null) {
@@ -135,16 +132,6 @@ public class LobbyState extends State {
         changed |= ImGui.INSTANCE.colorEdit3("ship color" , Game.connections.getUs().getShipColor() , 0);
         changed |= ImGui.INSTANCE.colorEdit3("trail color", Game.connections.getUs().getTrailColor(), 0);
 
-        // If any of the controls were modified, send a reliable client update command
-        if (changed) {
-            Game.connections.getUs().setShipIndex(ourShipIndex[0]);
-            Game.netChan.addReliableCommand(new CmdClientUpdated(
-                    Game.connections.getUs().getId(),
-                    Game.connections.getUs().getShipIndex(),
-                    Game.connections.getUs().getShipColor(),
-                    Game.connections.getUs().getTrailColor()));
-        }
-
         // Remove those disable flags from the ImGui stack so the "ready" and "disconnect" are always enabled.
         if (Game.connections.getUs().isReady()) {
             ImGui.INSTANCE.popItemFlag();
@@ -152,15 +139,21 @@ public class LobbyState extends State {
         }
 
         // Toggle our ready state and send it to the server.
-        if (ImGui.INSTANCE.button("Ready", new Vec2(-1, 0))) {
+        /*
+        if (changed |= ImGui.INSTANCE.button("Ready", new Vec2(-1, 0))) {
             Game.connections.getUs().setReady(!Game.connections.getUs().isReady());
+        }
+        */
 
-            // Add reliable ready or unready commands
-            if (Game.connections.getUs().isReady()) {
-                Game.netChan.addReliableCommand(new CmdClientReady(Game.connections.getUs().getId()));
-            } else {
-                Game.netChan.addReliableCommand(new CmdClientUnready(Game.connections.getUs().getId()));
-            }
+        // If any of the controls were modified, send a reliable client settings command
+        if (changed) {
+            Game.connections.getUs().setShipIndex(ourShipIndex[0]);
+            Game.netChan.addReliableCommand(new CmdClientSettings(
+                    Game.connections.getUs().getId(),
+                    Game.connections.getUs().getShipIndex(),
+                    Game.connections.getUs().getShipColor(),
+                    Game.connections.getUs().getTrailColor(),
+                    Game.connections.getUs().isReady()));
         }
 
         // Disconnection button to cleanly disconnect from the server.

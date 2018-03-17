@@ -2,6 +2,8 @@ package uk.aidanlee.dsp.server.data;
 
 import com.badlogic.gdx.math.Vector2;
 import uk.aidanlee.dsp.common.components.*;
+import uk.aidanlee.dsp.common.data.circuit.CircuitSpawn;
+import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.server.Server;
@@ -11,31 +13,47 @@ public class Craft {
     /**
      * Array of all player ship entities.
      */
-    private Entity[] remotePlayers;
+    private final Entity[] remotePlayers;
 
-    public Entity[] getRemotePlayers() {
-        return remotePlayers;
+    /**
+     *
+     * @param _players
+     */
+    public Craft(Player[] _players, CircuitSpawn _spawns) {
+        remotePlayers = new Entity[_players.length];
+
+        createCraft(_players, _spawns);
     }
 
-    public void createCraft() {
-        remotePlayers = new Entity[Server.connections.getMaxClients()];
+    /**
+     * Returns the entity at the requested index.
+     * @param _index Client ID of the entity to get.
+     */
+    public Entity getPlayerEntity(int _index) {
+        return remotePlayers[_index];
+    }
 
-        for (int i = 0; i < Server.connections.getMaxClients(); i++) {
-            if (!Server.connections.getClientConnected()[i]) continue;
+    /**
+     * Create all of the craft in entities.
+     */
+    public void createCraft(Player[] _players, CircuitSpawn _spawns) {
+        int index = 0;
+        for (int i = 0; i < _players.length; i++) {
+            if (_players[i] != null) continue;
 
             // Get the spawn position and tangent for the initial position and rotation
-            int spawnIndex = (Server.race.circuit.getSpawn().spawns.length - 1) - i;
-            Vector2 tangent = Server.race.circuit.getSpawn().spawns[spawnIndex].tangent;
+            int spawnIndex = (_spawns.spawns.length - 1) - index;
+            Vector2 tangent = _spawns.spawns[spawnIndex].tangent;
 
             // Create and set the initial position, rotation, and origin
-            Entity craft = new Entity("local player " + i);
+            Entity craft = new Entity("Client " + i);
 
             craft.origin.x = 32;
             craft.origin.y = 32;
             craft.rotation = (float)(Math.atan2(tangent.y, tangent.x) * 180 / Math.PI);
 
-            craft.pos.x = Server.race.circuit.getSpawn().spawns[spawnIndex].position.x - (craft.origin.x);
-            craft.pos.y = Server.race.circuit.getSpawn().spawns[spawnIndex].position.y - (craft.origin.y);
+            craft.pos.x = _spawns.spawns[spawnIndex].position.x - (craft.origin.x);
+            craft.pos.y = _spawns.spawns[spawnIndex].position.y - (craft.origin.y);
 
             // Ordering is Important!
             // The order in which components are added to the entity defines the order in which they are updated.
@@ -65,7 +83,7 @@ public class Craft {
             fsm.changeState("Active");
 
             remotePlayers[i] = craft;
-            System.out.println("Created Craft at : " + remotePlayers[i].pos.x + "x" + remotePlayers[i].pos.y);
+            index++;
         }
     }
 }

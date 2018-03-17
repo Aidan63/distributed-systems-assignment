@@ -1,38 +1,166 @@
 package uk.aidanlee.dsp.server.states;
 
-import uk.aidanlee.dsp.common.net.Snapshot;
-import uk.aidanlee.dsp.common.net.commands.CmdSnapshot;
+import uk.aidanlee.dsp.common.components.AABBComponent;
+import uk.aidanlee.dsp.common.components.InputComponent;
+import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.data.circuit.Circuit;
+import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
+import uk.aidanlee.dsp.common.net.Player;
+import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
+import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
-import uk.aidanlee.dsp.server.Server;
-import uk.aidanlee.dsp.server.race.Race;
+import uk.aidanlee.dsp.server.data.Craft;
+import uk.aidanlee.jDiffer.Collision;
+import uk.aidanlee.jDiffer.data.ShapeCollision;
+import uk.aidanlee.jDiffer.shapes.Polygon;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class RaceState extends State {
-    public RaceState(String _name) {
+
+    /**
+     * The Array which stores all game information on each conected client.
+     */
+    private Player[] players;
+
+    /**
+     * Holds data about the race circuit.
+     */
+    private Circuit circuit;
+
+    /**
+     * Stores the entities used in the simulation.
+     */
+    private Craft craft;
+
+    /**
+     * Creates a new race state to be added to a machine.
+     * @param _name    The name of this race state.
+     * @param _players The players object to modify.
+     */
+    public RaceState(String _name, Player[] _players) {
         super(_name);
+
+        players = _players;
     }
 
     @Override
     public void onEnter(Object _enterWith) {
-        Server.race = new Race();
-
-        Server.race.circuit.load("/media/aidan/BAD1-1589/dsp/dsp_part2/assets/tracks/track.p2");
-        Server.race.craft.createCraft();
+        circuit = new Circuit("/media/aidan/BAD1-1589/dsp/dsp_part2/assets/tracks/track.p2");
+        craft   = new Craft(players, circuit.getSpawn());
     }
 
     @Override
-    public void onUpdate() {
-        Snapshot state = new Snapshot();
+    public void onUpdate(LinkedList<Command> _cmds) {
+        // Process any commands which have came in.
+        processCmds(_cmds);
 
-        for (int i = 0; i < Server.connections.getMaxClients(); i++) {
-            if (!Server.connections.getClientConnected()[i]) continue;
+        // Progress each player entity in the game simulation
+        simulatePlayers();
 
-            Entity e = Server.race.craft.getRemotePlayers()[i];
-            e.update(0);
+        // Resolve any wall collisions
+        resolveWallCollisions();
 
-            state.addPlayer(i, e.pos.x, e.pos.y, e.rotation);
+        // Resolve any craft - craft collisions
+        resolveCraftCollisions();
+
+        // Update the entities positions in the players array
+        updatePlayerData();
+    }
+
+    /**
+     * Processes commands which have come into the game state.
+     * In this state we are only interested in the client input command.
+     * @param _cmds List of commands to process.
+     */
+    private void processCmds(LinkedList<Command> _cmds) {
+        while (_cmds.size() > 0) {
+            System.out.println("Race CMD in");
+            Command cmd = _cmds.removeFirst();
+            if (cmd.id == Command.CLIENT_INPUT) {
+                // Apply the input to the correct player entity.
+                CmdClientInput c = (CmdClientInput) cmd;
+                InputComponent ip = (InputComponent) craft.getPlayerEntity(c.clientID).get("input");
+                ip.accelerate = c.accel;
+                ip.decelerate = c.decel;
+                ip.steerLeft  = c.steerLeft;
+                ip.steerRight = c.steerRight;
+                ip.airBrakeLeft  = c.abLeft;
+                ip.airBrakeRight = c.abRight;
+            } else {
+                System.out.println("Command " + cmd.id + " not used by the game state");
+            }
         }
+    }
 
-        Server.connections.addCommandAll(new CmdSnapshot(state));
+    /**
+     * Steps forward the game simulation my moving each player according to the inputs pressed by the remote client.
+     */
+    private void simulatePlayers() {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) continue;
+
+            Entity e = craft.getPlayerEntity(i);
+            e.update(0);
+        }
+    }
+
+    /**
+     * Resolve any wall collisions between the player craft.
+     */
+    private void resolveWallCollisions() {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) continue;
+
+            // Get the entity and ensure it has the AABB and poly components
+            Entity e = craft.getPlayerEntity(i);
+            if (!e.has("aabb") || !e.has("polygon")) continue;
+
+            // Get the components and query the circuit wall tree for collisions.
+            AABBComponent    aabb = (AABBComponent) e.get("aabb");
+            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+            List<TreeTileWall> collisions = new LinkedList<>();
+            circuit.getWallTree().getCollisions(aabb.getBox(), collisions);
+
+            // If there are no collisions skip this loop.
+            if (collisions.size() == 0) continue;
+
+            // Check each AABB collision for a precise collision.
+            for (TreeTileWall col : collisions) {
+                Polygon transformedPoly = poly.getShape();
+
+                ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.wall, null);
+                if (wallCol == null) continue;
+
+                e.pos.x += wallCol.separationX;
+                e.pos.y += wallCol.separationY;
+
+                // TODO: bounce collisions
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private void resolveCraftCollisions() {
+        // TODO: Craft collisions
+    }
+
+    /**
+     *
+     */
+    private void updatePlayerData() {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) continue;
+
+            Entity e = craft.getPlayerEntity(i);
+            players[i].setX((int) e.pos.x);
+            players[i].setY((int) e.pos.y);
+            players[i].setRotation((int) e.rotation);
+        }
     }
 }

@@ -27,6 +27,21 @@ public class Player {
     private boolean ready;
 
     /**
+     * The x position of this player.
+     */
+    private int x;
+
+    /**
+     * The y position of this player.
+     */
+    private int y;
+
+    /**
+     * The rotation of this player.
+     */
+    private int rotation;
+
+    /**
      * Creates a new player with default ship index and colors.
      * @param _name The name of this player.
      */
@@ -36,6 +51,9 @@ public class Player {
         shipColor  = new float[] { 1, 1, 1 };
         trailColor = new float[] { 1, 1, 1 };
         ready      = false;
+        x          = 0;
+        y          = 0;
+        rotation   = 0;
     }
 
     /**
@@ -82,5 +100,26 @@ public class Player {
     }
     public void setReady(boolean ready) {
         this.ready = ready;
+    }
+
+    public int getX() {
+        return x;
+    }
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getRotation() {
+        return rotation;
+    }
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
     }
 }
