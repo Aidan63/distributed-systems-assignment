@@ -11,9 +11,7 @@ import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.net.commands.CmdChatMessage;
-import uk.aidanlee.dsp.common.net.commands.CmdClientSettings;
-import uk.aidanlee.dsp.common.net.commands.Command;
+import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.states.LobbyData;
@@ -92,6 +90,8 @@ public class LobbyState extends State {
 
     @Override
     public void onUpdate(LinkedList<Command> _cmds) {
+        readCommands(_cmds);
+
         drawClientList();
         drawChatBox();
         drawPlayerSettings();
@@ -103,6 +103,53 @@ public class LobbyState extends State {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
+    }
+
+    /**
+     *
+     */
+    private void readCommands(LinkedList<Command> _cmds) {
+        while (_cmds.size() > 0) {
+            Command cmd = _cmds.removeFirst();
+            switch (cmd.id) {
+                case Command.SERVER_STATE:
+                    cmdServerState((CmdServerState) cmd);
+                    break;
+
+                case Command.SNAPSHOT:
+                    cmdSnapshot((CmdSnapshot) cmd);
+                    break;
+            }
+        }
+    }
+
+    private void cmdServerState(CmdServerState _cmd) {
+        if (_cmd.state == 1) {
+            canEdit = false;
+            players[ourID].setReady(true);
+        }
+        if (_cmd.state == 2) {
+            changeState("race", new LobbyData(netChan, chatLog, players, ourID), null);
+        }
+    }
+
+    private void cmdSnapshot(CmdSnapshot _cmd) {
+        netChan.addSnapshot(_cmd.master);
+
+        for (int i = 0; i < _cmd.master.getPlayers(); i++) {
+            Player player = _cmd.master.getPlayer(i);
+
+            int id = _cmd.master.getID(i);
+
+            players[id].setShipIndex(player.getShipIndex());
+            players[id].setShipColor(player.getShipColor());
+            players[id].setTrailColor(player.getTrailColor());
+            players[id].setReady(player.isReady());
+
+            players[id].setX(player.getX());
+            players[id].setY(player.getY());
+            players[id].setRotation(player.getRotation());
+        }
     }
 
     private void drawClientList() {
@@ -124,16 +171,17 @@ public class LobbyState extends State {
     }
 
     /**
-     * Managers the chat box.
+     * Manages the chat box.
      * Draws the chat back log and checks for the send button pressed.
      * Adds a chat net chan command when clicked.
      */
     private void drawChatBox() {
+        // Setup the position, size, and non resize properties of the chat box window
         ImGui.INSTANCE.setNextWindowPos(new Vec2(40, 480), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(440, 200), Cond.Always);
         ImGui.INSTANCE.begin("Chat", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
 
-        // Draw the char backlog
+        // Draw the chat backlog and make sure it is always scrolled to the bottom (latest message).
         ImGui.INSTANCE.beginChild("Text Log", new Vec2(-1, 140), true, 0);
         List<String> log = chatLog.getLog();
         for (int i = 0; i < log.size(); i++) {
@@ -149,6 +197,7 @@ public class LobbyState extends State {
         ImGui.INSTANCE.sameLine(0);
         if (ImGui.INSTANCE.button("send", new Vec2(-1, 0))) {
             // Send chat message to server.
+            // TODO : Check if message is not empty.
             String str = new String(inputBox).trim();
 
             netChan.addCommand(new CmdChatMessage(ourID, str));
@@ -161,6 +210,10 @@ public class LobbyState extends State {
         ImGui.INSTANCE.end();
     }
 
+    /**
+     * Draws controls to edit the local players settings.
+     * Controls will be disable if the player has clicked "ready" or if the server has started its countdown.
+     */
     private void drawPlayerSettings() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(520, 40), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(480, 280), Cond.Always);

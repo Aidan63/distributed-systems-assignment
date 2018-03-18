@@ -11,6 +11,7 @@ import uk.aidanlee.dsp.data.states.LobbyData;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.net.Connections;
 import uk.aidanlee.dsp.states.game.LobbyState;
+import uk.aidanlee.dsp.states.game.RaceState;
 
 import java.util.LinkedList;
 import java.util.Timer;
@@ -75,7 +76,7 @@ public class GameState extends State {
         // Create the game state machine.
         gameState = new StateMachine();
         gameState.add(new LobbyState("lobby"));
-        gameState.add(new GameState("game"));
+        gameState.add(new RaceState("race"));
         gameState.set("lobby", new LobbyData(connections.getNetChan(), chat, players, ourID), null);
 
         // Setup the heartbeat timer.
@@ -166,11 +167,8 @@ public class GameState extends State {
                     break;
 
                 case Command.SNAPSHOT:
-                    cmdSnapshot((CmdSnapshot) cmd);
-                    break;
-
                 case Command.SERVER_STATE:
-                    cmdServerState((CmdServerState) cmd);
+                    gameState.pushCommand(cmd);
                     break;
 
                 default:
@@ -214,38 +212,5 @@ public class GameState extends State {
      */
     private void cmdChatMessage(CmdChatMessage _cmd) {
         chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdSnapshot(CmdSnapshot _cmd) {
-        for (int i = 0; i < _cmd.master.getPlayers(); i++) {
-            Player player = _cmd.master.getPlayer(i);
-            int    id     = _cmd.master.getID(i);
-
-            players[id].setShipIndex(player.getShipIndex());
-            players[id].setShipColor(player.getShipColor());
-            players[id].setTrailColor(player.getTrailColor());
-            players[id].setReady(player.isReady());
-        }
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdServerState(CmdServerState _cmd) {
-        System.out.println("Server State");
-        if (_cmd.state == 1) {
-            System.out.println("Server countdown started");
-        }
-
-        if (_cmd.state == 2) {
-            if (gameState.getActiveStateName().equals("lobby")) {
-                System.out.println("Changing to race");
-            }
-        }
     }
 }

@@ -36,10 +36,10 @@ public class Craft {
     /**
      * Create all of the craft in entities.
      */
-    public void createCraft(Player[] _players, CircuitSpawn _spawns) {
+    private void createCraft(Player[] _players, CircuitSpawn _spawns) {
         int index = 0;
         for (int i = 0; i < _players.length; i++) {
-            if (_players[i] != null) continue;
+            if (_players[i] == null) continue;
 
             // Get the spawn position and tangent for the initial position and rotation
             int spawnIndex = (_spawns.spawns.length - 1) - index;
@@ -54,6 +54,11 @@ public class Craft {
 
             craft.pos.x = _spawns.spawns[spawnIndex].position.x - (craft.origin.x);
             craft.pos.y = _spawns.spawns[spawnIndex].position.y - (craft.origin.y);
+
+            // Update the player pos and rotation
+            _players[i].setX((int) craft.pos.x);
+            _players[i].setY((int) craft.pos.y);
+            _players[i].setRotation((int) craft.rotation);
 
             // Ordering is Important!
             // The order in which components are added to the entity defines the order in which they are updated.

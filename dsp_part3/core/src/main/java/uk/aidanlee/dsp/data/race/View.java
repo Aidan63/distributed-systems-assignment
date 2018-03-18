@@ -9,20 +9,20 @@ public class View {
     private OrthographicCamera camera;
     private Viewport viewport;
 
+    public View() {
+        camera = new OrthographicCamera();
+        camera.setToOrtho(true);
+        camera.zoom = 1.2f;
+
+        viewport = new ExtendViewport(1290, 1080, camera);
+    }
+
     public OrthographicCamera getCamera() {
         return camera;
     }
 
     public Viewport getViewport() {
         return viewport;
-    }
-
-    public void setup() {
-        camera = new OrthographicCamera();
-        camera.setToOrtho(true);
-        camera.zoom = 1.2f;
-
-        viewport = new ExtendViewport(1290, 1080, camera);
     }
 
     public void resize() {

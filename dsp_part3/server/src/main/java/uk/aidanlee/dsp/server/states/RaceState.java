@@ -48,7 +48,7 @@ public class RaceState extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        circuit = new Circuit("/media/aidan/BAD1-1589/dsp/dsp_part2/assets/tracks/track.p2");
+        circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
         craft   = new Craft(players, circuit.getSpawn());
     }
 
@@ -77,7 +77,6 @@ public class RaceState extends State {
      */
     private void processCmds(LinkedList<Command> _cmds) {
         while (_cmds.size() > 0) {
-            System.out.println("Race CMD in");
             Command cmd = _cmds.removeFirst();
             if (cmd.id == Command.CLIENT_INPUT) {
                 // Apply the input to the correct player entity.
@@ -158,9 +157,9 @@ public class RaceState extends State {
             if (players[i] == null) continue;
 
             Entity e = craft.getPlayerEntity(i);
-            players[i].setX((int) e.pos.x);
-            players[i].setY((int) e.pos.y);
-            players[i].setRotation((int) e.rotation);
+            players[i].setX(e.pos.x);
+            players[i].setY(e.pos.y);
+            players[i].setRotation(e.rotation);
         }
     }
 }

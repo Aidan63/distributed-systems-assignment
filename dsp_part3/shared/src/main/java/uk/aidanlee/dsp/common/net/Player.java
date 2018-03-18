@@ -29,17 +29,17 @@ public class Player {
     /**
      * The x position of this player.
      */
-    private int x;
+    private float x;
 
     /**
      * The y position of this player.
      */
-    private int y;
+    private float y;
 
     /**
      * The rotation of this player.
      */
-    private int rotation;
+    private float rotation;
 
     /**
      * Creates a new player with default ship index and colors.
@@ -102,24 +102,24 @@ public class Player {
         this.ready = ready;
     }
 
-    public int getX() {
+    public float getX() {
         return x;
     }
-    public void setX(int x) {
+    public void setX(float x) {
         this.x = x;
     }
 
-    public int getY() {
+    public float getY() {
         return y;
     }
-    public void setY(int y) {
+    public void setY(float y) {
         this.y = y;
     }
 
-    public int getRotation() {
+    public float getRotation() {
         return rotation;
     }
-    public void setRotation(int rotation) {
+    public void setRotation(float rotation) {
         this.rotation = rotation;
     }
 }

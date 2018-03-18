@@ -27,6 +27,13 @@ public class Snapshot {
         return players.get(_index).getPlayer();
     }
 
+    public Player getPlayerByID(int _id) {
+        return players.stream()
+                .filter(p -> p.getClientID() == _id)
+                .findFirst()
+                .get().getPlayer();
+    }
+
     public int getID(int _index) {
         return players.get(_index).getClientID();
     }

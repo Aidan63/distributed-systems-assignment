@@ -99,6 +99,14 @@ public class NetChan {
         }
     }
 
+    public Snapshot getSnapshot(int _index) {
+        if (_index < snapshots.size()) {
+            return snapshots.get(_index);
+        }
+
+        return null;
+    }
+
     /**
      *
      * @param _packet

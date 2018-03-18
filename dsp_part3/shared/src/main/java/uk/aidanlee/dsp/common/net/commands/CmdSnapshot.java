@@ -32,9 +32,9 @@ public class CmdSnapshot extends Command {
                     _packet.getData().readFloat(), 1
             });
             player.setReady(_packet.getData().readBoolean());
-            player.setX(_packet.getData().readInteger());
-            player.setY(_packet.getData().readInteger());
-            player.setRotation((_packet.getData().readByte() / 255) * 360);
+            player.setX(_packet.getData().readFloat());
+            player.setY(_packet.getData().readFloat());
+            player.setRotation(_packet.getData().readFloat());
 
             master.addPlayer(clientID, player);
         }
@@ -62,9 +62,9 @@ public class CmdSnapshot extends Command {
 
             _packet.getData().writeBoolean(player.isReady());
 
-            _packet.getData().writeInteger(player.getX());
-            _packet.getData().writeInteger(player.getY());
-            _packet.getData().writeByte((byte) ((player.getRotation() / 360) * 255));
+            _packet.getData().writeFloat(player.getX());
+            _packet.getData().writeFloat(player.getY());
+            _packet.getData().writeFloat(player.getRotation());
         }
     }
 }

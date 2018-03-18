@@ -37,7 +37,7 @@ public class Server {
 
         // Setup variables for server fixed time step.
         final float step = 1.0f / 60.0f;
-        final float tick = 1.0f / 30.0f;
+        final float tick = 1.0f / 20.0f;
 
         double currentTime = 0;
         double stepAccumulator = 0;
