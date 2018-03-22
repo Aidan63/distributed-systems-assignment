@@ -23,8 +23,8 @@ public class CmdClientInput extends Command {
         abRight    = _input.airBrakeRight;
     }
 
-    public CmdClientInput(Packet _packet) {
-        super(Command.CLIENT_INPUT);
+    public CmdClientInput(Packet _packet, int _sentTime) {
+        super(Command.CLIENT_INPUT, _sentTime);
         clientID = _packet.getData().readByte();
         accel      = _packet.getData().readBoolean();
         decel      = _packet.getData().readBoolean();

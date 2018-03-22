@@ -14,7 +14,7 @@ public class View {
         camera.setToOrtho(true);
         camera.zoom = 1.2f;
 
-        viewport = new ExtendViewport(1290, 1080, camera);
+        viewport = new ExtendViewport(1920, 1080, camera);
     }
 
     public OrthographicCamera getCamera() {

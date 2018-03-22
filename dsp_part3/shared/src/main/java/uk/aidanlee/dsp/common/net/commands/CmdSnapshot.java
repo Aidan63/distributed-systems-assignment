@@ -12,8 +12,9 @@ public class CmdSnapshot extends Command {
         master = _master;
     }
 
-    public CmdSnapshot(Packet _packet) {
-        super(Command.SNAPSHOT);
+    public CmdSnapshot(Packet _packet, int _sentTime) {
+        super(Command.SNAPSHOT, _sentTime);
+
         master = new Snapshot();
 
         int numClients = _packet.getData().readByte();

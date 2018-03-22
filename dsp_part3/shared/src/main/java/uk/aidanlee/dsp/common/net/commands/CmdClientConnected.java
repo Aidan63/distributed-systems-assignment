@@ -24,8 +24,8 @@ public class CmdClientConnected extends Command {
      *
      * @param _packet
      */
-    public CmdClientConnected(Packet _packet) {
-        super(Command.CLIENT_CONNECTED);
+    public CmdClientConnected(Packet _packet, int _sentTime) {
+        super(Command.CLIENT_CONNECTED, _sentTime);
         client = new ClientInfo(
                 _packet.getData().readByte(),
                 new Player(

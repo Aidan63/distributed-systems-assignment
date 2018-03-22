@@ -29,8 +29,8 @@ public class CmdChatMessage extends Command {
      *
      * @param _packet
      */
-    public CmdChatMessage(Packet _packet) {
-        super(Command.CHAT_MESSAGE);
+    public CmdChatMessage(Packet _packet, int _sentTime) {
+        super(Command.CHAT_MESSAGE, _sentTime);
         clientID = _packet.getData().readByte();
         message  = _packet.getData().readString();
     }

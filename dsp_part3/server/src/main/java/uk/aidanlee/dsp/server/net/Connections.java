@@ -1,6 +1,5 @@
 package uk.aidanlee.dsp.server.net;
 
-import sun.net.www.http.ChunkedOutputStream;
 import uk.aidanlee.dsp.common.data.ClientInfo;
 import uk.aidanlee.dsp.common.net.*;
 import uk.aidanlee.dsp.common.net.commands.CmdClientConnected;
@@ -9,7 +8,6 @@ import uk.aidanlee.dsp.common.net.commands.CmdSnapshot;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.server.Server;
 
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 

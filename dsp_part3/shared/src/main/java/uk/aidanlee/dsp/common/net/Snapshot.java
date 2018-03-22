@@ -12,7 +12,7 @@ public class Snapshot {
     // Constructors
 
     public Snapshot() {
-        players = new LinkedList<>();
+        players  = new LinkedList<>();
     }
 
     // Getters and Setters

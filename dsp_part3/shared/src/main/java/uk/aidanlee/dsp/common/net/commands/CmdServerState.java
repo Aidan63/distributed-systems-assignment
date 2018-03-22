@@ -10,8 +10,8 @@ public class CmdServerState extends Command {
         state    = _state;
     }
 
-    public CmdServerState(Packet _packet) {
-        super(Command.SERVER_STATE);
+    public CmdServerState(Packet _packet, int _sentTime) {
+        super(Command.SERVER_STATE, _sentTime);
         state    = _packet.getData().readByte();
     }
 

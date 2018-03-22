@@ -14,13 +14,13 @@ public class Resources {
     public final Texture checkbox;
 
     public Resources() {
-        trackAtlas = new TextureAtlas(Gdx.files.internal("assets/textures/track.atlas"));
-        craftAtlas = new TextureAtlas(Gdx.files.internal("assets/textures/craft.atlas"));
+        trackAtlas = new TextureAtlas(Gdx.files.internal("textures/track.atlas"));
+        craftAtlas = new TextureAtlas(Gdx.files.internal("textures/craft.atlas"));
 
         trackTexture = trackAtlas.getTextures().first();
         craftTexture = craftAtlas.getTextures().first();
 
-        checkbox = new Texture(Gdx.files.internal("assets/textures/checkmark.png"));
+        checkbox = new Texture(Gdx.files.internal("textures/checkmark.png"));
     }
 
     public void dispose() {

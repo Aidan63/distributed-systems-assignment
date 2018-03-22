@@ -21,8 +21,8 @@ public class CmdClientDisconnected extends Command {
      *
      * @param _packet
      */
-    public CmdClientDisconnected(Packet _packet) {
-        super(Command.CLIENT_DISCONNECTED);
+    public CmdClientDisconnected(Packet _packet, int _sentTime) {
+        super(Command.CLIENT_DISCONNECTED, _sentTime);
         clientID = _packet.getData().readByte();
     }
 

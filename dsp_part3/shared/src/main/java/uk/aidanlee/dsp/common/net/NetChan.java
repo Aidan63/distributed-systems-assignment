@@ -66,9 +66,6 @@ public class NetChan {
     public EndPoint getDestination() {
         return destination;
     }
-    public void setDestination(EndPoint destination) {
-        this.destination = destination;
-    }
 
     // Public API
 
@@ -108,15 +105,16 @@ public class NetChan {
     }
 
     /**
-     *
-     * @param _packet
-     * @return
+     * Receives a series of bytes in a packet and read them into their individual commands.
+     * @param _packet Packet containing the received byte data.
+     * @return Array of commands.
      */
     public Command[] receive(Packet _packet) {
 
         // Read sequence and ACK numbers.
         int inSeq = _packet.getData().readInteger();
         int inAck = _packet.getData().readInteger();
+        int sentT = _packet.getData().readInteger();
 
         // Set our outgoing ACK to the sequence number just received.
         ackSequence = inSeq;
@@ -131,35 +129,36 @@ public class NetChan {
         int numCmds = _packet.getData().readByte();
         Command[] cmds = new Command[numCmds];
 
+        // Read all of the commands from the packet bytes.
         for (int i = 0; i < numCmds; i++) {
             byte cmdID = _packet.getData().readByte();
             switch (cmdID) {
                 case Command.CLIENT_CONNECTED:
-                    cmds[i] = new CmdClientConnected(_packet);
+                    cmds[i] = new CmdClientConnected(_packet, sentT);
                     break;
 
                 case Command.CLIENT_DISCONNECTED:
-                    cmds[i] = new CmdClientDisconnected(_packet);
+                    cmds[i] = new CmdClientDisconnected(_packet, sentT);
                     break;
 
                 case Command.CHAT_MESSAGE:
-                    cmds[i] = new CmdChatMessage(_packet);
+                    cmds[i] = new CmdChatMessage(_packet, sentT);
                     break;
 
                 case Command.CLIENT_SETTINGS:
-                    cmds[i] = new CmdClientSettings(_packet);
+                    cmds[i] = new CmdClientSettings(_packet, sentT);
                     break;
 
                 case Command.CLIENT_INPUT:
-                    cmds[i] = new CmdClientInput(_packet);
+                    cmds[i] = new CmdClientInput(_packet, sentT);
                     break;
 
                 case Command.SNAPSHOT:
-                    cmds[i] = new CmdSnapshot(_packet);
+                    cmds[i] = new CmdSnapshot(_packet, sentT);
                     break;
 
                 case Command.SERVER_STATE:
-                    cmds[i] = new CmdServerState(_packet);
+                    cmds[i] = new CmdServerState(_packet, sentT);
                     break;
             }
         }
@@ -169,7 +168,7 @@ public class NetChan {
 
     /**
      * Builds a net chan update packet for sending over the network.
-     * @return
+     * @return Packet with commands written into it.
      */
     public Packet send() {
 
@@ -221,6 +220,9 @@ public class NetChan {
         // Write 32 bits for the ACK sequence number
         packet.getData().writeInteger(ackSequence);
 
+        // Write the current system time.
+        packet.getData().writeInteger((int) System.currentTimeMillis());
+
         // Write a byte for the number of commands in this net chan packet.
         packet.getData().writeByte((byte) _numCmds);
 
@@ -228,9 +230,9 @@ public class NetChan {
     }
 
     /**
-     *
-     * @param _val
-     * @return
+     * Gets the value of the most significant bit of an integer.
+     * @param _val The integer to read.
+     * @return Boolean representing the MSB value.
      */
     private boolean getMSB(int _val) {
         int mask = 1 << 32;
@@ -238,10 +240,10 @@ public class NetChan {
     }
 
     /**
-     *
-     * @param _val
-     * @param _bit
-     * @return
+     * Set the value of the most significant bit of an integer.
+     * @param _val The integer to write.
+     * @param _bit The new value of the MSB.
+     * @return Integer
      */
     private int setMSB(int _val, boolean _bit) {
         if (_bit) {

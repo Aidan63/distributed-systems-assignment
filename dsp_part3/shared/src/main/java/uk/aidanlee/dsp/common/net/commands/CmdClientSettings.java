@@ -20,8 +20,8 @@ public class CmdClientSettings extends Command {
         ready = _ready;
     }
 
-    public CmdClientSettings(Packet _packet) {
-        super(Command.CLIENT_SETTINGS);
+    public CmdClientSettings(Packet _packet, int _sentTime) {
+        super(Command.CLIENT_SETTINGS, _sentTime);
 
         clientID = _packet.getData().readByte();
         index    = _packet.getData().readByte();

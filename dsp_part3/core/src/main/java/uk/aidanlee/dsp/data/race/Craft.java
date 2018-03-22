@@ -10,6 +10,8 @@ import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.components.LocalInputComponent;
+import uk.aidanlee.dsp.components.ShadowComponent;
+import uk.aidanlee.dsp.components.TrailComponent;
 import uk.aidanlee.jDiffer.math.Vector;
 
 public class Craft {
@@ -54,12 +56,10 @@ public class Craft {
             craft.pos.y = _spawn.spawns[spawnIndex].position.y - (craft.origin.y);
 
             if (i == _ourID) {
-                remotePlayers[i] = createLocalPlayer(craft);
+                remotePlayers[i] = createLocalPlayer(craft, _players[i]);
             } else {
-                remotePlayers[i] = createNetworkPlayer(craft);
+                remotePlayers[i] = createNetworkPlayer(craft, _players[i]);
             }
-
-            System.out.println("Created Craft at : " + remotePlayers[i].pos.x + "x" + remotePlayers[i].pos.y);
         }
 
     }
@@ -77,16 +77,18 @@ public class Craft {
      * This entity will have all of the components needed to move and calculate collisions itself.
      * @return Visual entity.
      */
-    private Visual createLocalPlayer(Visual _visual) {
+    private Visual createLocalPlayer(Visual _visual, Player _player) {
         _visual.add(new LocalInputComponent("local-input"));
+        _visual.add(new InputComponent("input"));
         _visual.add(new StatsComponent("stats"));
         _visual.add(new VelocityComponent("velocity"));
         _visual.add(new PhysicsComponent("physics"));
-        _visual.add(new InputComponent("input"));
+        _visual.add(new ShadowComponent("shadow"));
         _visual.add(new AABBComponent("aabb", 256, 256, true));
         _visual.add(new PolygonComponent("polygon", new Vector[] {
                 new Vector(0, -16), new Vector(70, -5), new Vector(70, 5), new Vector(0, 16)
         }));
+        _visual.add(new TrailComponent("trail", new Color(_player.getTrailColor()[0], _player.getTrailColor()[1], _player.getTrailColor()[2], 1)));
 
         return _visual;
     }
@@ -96,11 +98,13 @@ public class Craft {
      * This entity will not have any of the components needed for moving by itself.
      * @return Visual entity.
      */
-    private Visual createNetworkPlayer(Visual _visual) {
+    private Visual createNetworkPlayer(Visual _visual, Player _player) {
+        _visual.add(new ShadowComponent("shadow"));
         _visual.add(new AABBComponent("aabb", 256, 256, true));
         _visual.add(new PolygonComponent("polygon", new Vector[] {
                 new Vector(0, -16), new Vector(70, -5), new Vector(70, 5), new Vector(0, 16)
         }));
+        _visual.add(new TrailComponent("trail", new Color(_player.getTrailColor()[0], _player.getTrailColor()[1], _player.getTrailColor()[2], 1)));
 
         return _visual;
     }

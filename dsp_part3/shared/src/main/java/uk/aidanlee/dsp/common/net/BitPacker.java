@@ -104,6 +104,24 @@ public class BitPacker {
         }
     }
 
+    public void writeLong(long _data) {
+        writeLong(_data, Long.SIZE);
+    }
+
+    public void writeLong(long _data, int _length) {
+        if (_length > Long.SIZE) {
+            System.exit(-1);
+        }
+
+        for (int i = 0; i < _length; i++) {
+            if (((_data >> i) & 1) == 1) {
+                data.set(numBits++, true);
+            } else {
+                data.set(numBits++, false);
+            }
+        }
+    }
+
     /**
      * Writes an entire float into the bit set.
      * @param _data The float to write.
@@ -213,6 +231,23 @@ public class BitPacker {
             }
 
             value |= (data.get(readCursor++) ? 1 : 0) << (i % Integer.SIZE);
+        }
+
+        return value;
+    }
+
+    public long readLong() {
+        return readLong(Long.SIZE);
+    }
+
+    public long readLong(int _length) {
+        long value = 0;
+        for (int i = 0; i < _length; i++) {
+            if (readCursor > numBits - 1) {
+                System.exit(-1);
+            }
+
+            value |= (data.get(readCursor++) ? 1 : 0) << (i % Long.SIZE);
         }
 
         return value;
