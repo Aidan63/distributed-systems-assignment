@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.common.data.circuit;
 
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.Rectangle;
 import com.google.gson.Gson;
 import uk.aidanlee.dsp.common.structural.Quadtree;
@@ -37,7 +38,37 @@ public class Circuit {
     // Constructors
 
     public Circuit(String _filePath) {
-        load(_filePath);
+        try {
+            Gson gson = new Gson();
+            CircuitJson json = gson.fromJson(new String(Files.readAllBytes(Paths.get(_filePath))), CircuitJson.class);
+
+            info   = json.info;
+            points = json.points;
+            tiles  = json.tiles;
+            spawn  = json.spawn;
+
+            createLinkedList();
+            createQuadTree();
+            createCheckPoints();
+            applySettings();
+        } catch (IOException _ex) {
+            System.out.println("IO Exception reading track file : " + _ex.getMessage());
+        }
+    }
+
+    public Circuit(FileHandle _handle) {
+        Gson gson = new Gson();
+        CircuitJson json = gson.fromJson(_handle.readString(), CircuitJson.class);
+
+        info   = json.info;
+        points = json.points;
+        tiles  = json.tiles;
+        spawn  = json.spawn;
+
+        createLinkedList();
+        createQuadTree();
+        createCheckPoints();
+        applySettings();
     }
 
     // Getters and Setters
@@ -69,22 +100,7 @@ public class Circuit {
     // Public API
 
     private void load(String _filePath) {
-        try {
-            Gson gson = new Gson();
-            CircuitJson json = gson.fromJson(new String(Files.readAllBytes(Paths.get(_filePath))), CircuitJson.class);
 
-            info   = json.info;
-            points = json.points;
-            tiles  = json.tiles;
-            spawn  = json.spawn;
-
-            createLinkedList();
-            createQuadTree();
-            createCheckPoints();
-            applySettings();
-        } catch (IOException _ex) {
-            System.out.println("IO Exception reading track file : " + _ex.getMessage());
-        }
     }
 
     private void createLinkedList() {

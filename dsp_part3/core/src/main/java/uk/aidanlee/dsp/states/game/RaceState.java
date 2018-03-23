@@ -117,7 +117,7 @@ public class RaceState extends State {
         players = data.players;
         ourID   = data.ourID;
 
-        circuit = new Circuit(Gdx.files.internal("tracks/track.p2").path());
+        circuit = new Circuit(Gdx.files.internal("tracks/track.p2"));
         craft   = new Craft(players, circuit.getSpawn(), ourID);
         view    = new View();
 
