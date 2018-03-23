@@ -32,14 +32,14 @@ public class CmdClientConnected extends Command {
                         _packet.getData().readString(),
                         _packet.getData().readByte(),
                         new float[] {
-                                _packet.getData().readFloat(),
-                                _packet.getData().readFloat(),
-                                _packet.getData().readFloat(), 1
+                                (_packet.getData().readByte() & 0xFF) / 255f,
+                                (_packet.getData().readByte() & 0xFF) / 255f,
+                                (_packet.getData().readByte() & 0xFF) / 255f, 1
                         },
                         new float[] {
-                                _packet.getData().readFloat(),
-                                _packet.getData().readFloat(),
-                                _packet.getData().readFloat(), 1
+                                (_packet.getData().readByte() & 0xFF) / 255f,
+                                (_packet.getData().readByte() & 0xFF) / 255f,
+                                (_packet.getData().readByte() & 0xFF) / 255f, 1
                         }
                 )
         );
@@ -53,18 +53,14 @@ public class CmdClientConnected extends Command {
         _packet.getData().writeString(client.getName());
         _packet.getData().writeByte((byte) client.getShipIndex());
 
-        float[] color;
+        // Write ship colour
+        _packet.getData().writeByte((byte) (client.getShipColor()[0] * 255));
+        _packet.getData().writeByte((byte) (client.getShipColor()[1] * 255));
+        _packet.getData().writeByte((byte) (client.getShipColor()[2] * 255));
 
-        // Write ship color
-        color = client.getShipColor();
-        _packet.getData().writeFloat(color[0]);
-        _packet.getData().writeFloat(color[1]);
-        _packet.getData().writeFloat(color[2]);
-
-        // Write trail color
-        color = client.getTrailColor();
-        _packet.getData().writeFloat(color[0]);
-        _packet.getData().writeFloat(color[1]);
-        _packet.getData().writeFloat(color[2]);
+        // write trail colour
+        _packet.getData().writeByte((byte) (client.getTrailColor()[0] * 255));
+        _packet.getData().writeByte((byte) (client.getTrailColor()[1] * 255));
+        _packet.getData().writeByte((byte) (client.getTrailColor()[2] * 255));
     }
 }
