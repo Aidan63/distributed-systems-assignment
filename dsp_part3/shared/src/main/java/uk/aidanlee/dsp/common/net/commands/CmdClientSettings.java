@@ -23,17 +23,17 @@ public class CmdClientSettings extends Command {
     public CmdClientSettings(Packet _packet, int _sentTime) {
         super(Command.CLIENT_SETTINGS, _sentTime);
 
-        clientID = _packet.getData().readByte();
-        index    = _packet.getData().readByte();
+        clientID  = _packet.getData().readByte();
+        index     = _packet.getData().readByte();
         shipColor = new float[] {
-                _packet.getData().readFloat(),
-                _packet.getData().readFloat(),
-                _packet.getData().readFloat(), 1
+                (_packet.getData().readByte() & 0xFF) / 255f,
+                (_packet.getData().readByte() & 0xFF) / 255f,
+                (_packet.getData().readByte() & 0xFF) / 255f, 1
         };
         trailColor = new float[] {
-                _packet.getData().readFloat(),
-                _packet.getData().readFloat(),
-                _packet.getData().readFloat(), 1
+                (_packet.getData().readByte() & 0xFF) / 255f,
+                (_packet.getData().readByte() & 0xFF) / 255f,
+                (_packet.getData().readByte() & 0xFF) / 255f, 1
         };
         ready = _packet.getData().readBoolean();
     }
@@ -44,13 +44,13 @@ public class CmdClientSettings extends Command {
         _packet.getData().writeByte((byte) clientID);
         _packet.getData().writeByte((byte) index);
 
-        _packet.getData().writeFloat(shipColor[0]);
-        _packet.getData().writeFloat(shipColor[1]);
-        _packet.getData().writeFloat(shipColor[2]);
+        _packet.getData().writeByte((byte) (shipColor[0] * 255));
+        _packet.getData().writeByte((byte) (shipColor[1] * 255));
+        _packet.getData().writeByte((byte) (shipColor[2] * 255));
 
-        _packet.getData().writeFloat(trailColor[0]);
-        _packet.getData().writeFloat(trailColor[1]);
-        _packet.getData().writeFloat(trailColor[2]);
+        _packet.getData().writeByte((byte) (trailColor[0] * 255));
+        _packet.getData().writeByte((byte) (trailColor[1] * 255));
+        _packet.getData().writeByte((byte) (trailColor[2] * 255));
 
         _packet.getData().writeBoolean(ready);
     }
