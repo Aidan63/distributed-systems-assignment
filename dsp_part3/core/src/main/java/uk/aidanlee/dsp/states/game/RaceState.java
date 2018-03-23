@@ -391,10 +391,6 @@ public class RaceState extends State {
         Player p = _latest.master.getPlayerByID(ourID);
         Visual v = craft.getRemotePlayers()[ourID];
 
-        // Get the current predicted position.
-        //float oldx = v.pos.x;
-        //float oldy = v.pos.y;
-
         // Set the player to the position of the server snapshot.
         v.pos.x    = p.getX();
         v.pos.y    = p.getY();
@@ -421,10 +417,6 @@ public class RaceState extends State {
                 resolveCraftCollisions();
             }
         }
-
-        // Lerp from the old prediction to the new one to avoid any harsh snapping.
-        //v.pos.x = MathUtils.lerp(oldx, v.pos.x, 1f);
-        //v.pos.y = MathUtils.lerp(oldy, v.pos.y, 1f);
 
         // Store the resulting position in the client structure.
         players[ourID].setX(v.pos.x);
