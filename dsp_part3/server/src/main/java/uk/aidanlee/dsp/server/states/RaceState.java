@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.server.states;
 
+import com.badlogic.gdx.math.Rectangle;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
@@ -146,7 +147,36 @@ public class RaceState extends State {
      *
      */
     private void resolveCraftCollisions() {
-        // TODO: Craft collisions
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) continue;
+
+            // Get the entity and ensure it has the AABB and poly components
+            Entity e = craft.getPlayerEntity(i);
+            if (!e.has("aabb") || !e.has("polygon")) continue;
+
+            // Get the components and query the circuit wall tree for collisions.
+            AABBComponent    aabb = (AABBComponent) e.get("aabb");
+            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+            for (Entity craft : craft.getRemotePlayers()) {
+                if (craft == null) continue;
+                if (craft.getName().equals(e.getName())) continue;
+
+                Rectangle otherBox = ((AABBComponent) craft.get("aabb")).getBox();
+                if (!aabb.getBox().overlaps(otherBox)) continue;
+
+                PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
+                ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+                while (col != null) {
+                    e.pos.x += (float)col.unitVectorX;
+                    e.pos.y += (float)col.unitVectorY;
+                    craft.pos.x -= (float)col.otherUnitVectorX;
+                    craft.pos.y -= (float)col.otherUnitVectorY;
+
+                    col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+                }
+            }
+        }
     }
 
     /**

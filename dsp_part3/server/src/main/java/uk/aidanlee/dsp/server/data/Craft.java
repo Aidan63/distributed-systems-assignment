@@ -34,6 +34,14 @@ public class Craft {
     }
 
     /**
+     *
+     * @return
+     */
+    public Entity[] getRemotePlayers() {
+        return remotePlayers;
+    }
+
+    /**
      * Create all of the craft in entities.
      */
     private void createCraft(Player[] _players, CircuitSpawn _spawns) {
