@@ -22,15 +22,16 @@ public class CmdSnapshot extends Command {
             int clientID  = _packet.getData().readByte();
             Player player = new Player("dummy");
             player.setShipIndex(_packet.getData().readByte());
+
             player.setShipColor(new float[] {
-                    _packet.getData().readFloat(),
-                    _packet.getData().readFloat(),
-                    _packet.getData().readFloat(), 1
+                    (_packet.getData().readByte() & 0xFF) / 255f,
+                    (_packet.getData().readByte() & 0xFF) / 255f,
+                    (_packet.getData().readByte() & 0xFF) / 255f, 1
             });
             player.setTrailColor(new float[] {
-                    _packet.getData().readFloat(),
-                    _packet.getData().readFloat(),
-                    _packet.getData().readFloat(), 1
+                    (_packet.getData().readByte() & 0xFF) / 255f,
+                    (_packet.getData().readByte() & 0xFF) / 255f,
+                    (_packet.getData().readByte() & 0xFF) / 255f, 1
             });
             player.setReady(_packet.getData().readBoolean());
             player.setX(_packet.getData().readFloat());
@@ -53,13 +54,13 @@ public class CmdSnapshot extends Command {
             _packet.getData().writeByte((byte) id);
             _packet.getData().writeByte((byte) player.getShipIndex());
 
-            _packet.getData().writeFloat(player.getShipColor()[0]);
-            _packet.getData().writeFloat(player.getShipColor()[1]);
-            _packet.getData().writeFloat(player.getShipColor()[2]);
+            _packet.getData().writeByte((byte) (player.getShipColor()[0] * 255));
+            _packet.getData().writeByte((byte) (player.getShipColor()[1] * 255));
+            _packet.getData().writeByte((byte) (player.getShipColor()[2] * 255));
 
-            _packet.getData().writeFloat(player.getTrailColor()[0]);
-            _packet.getData().writeFloat(player.getTrailColor()[1]);
-            _packet.getData().writeFloat(player.getTrailColor()[2]);
+            _packet.getData().writeByte((byte) (player.getTrailColor()[0] * 255));
+            _packet.getData().writeByte((byte) (player.getTrailColor()[1] * 255));
+            _packet.getData().writeByte((byte) (player.getTrailColor()[2] * 255));
 
             _packet.getData().writeBoolean(player.isReady());
 
