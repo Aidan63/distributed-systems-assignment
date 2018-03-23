@@ -106,6 +106,7 @@ public class Game {
             switch (cmd.id) {
                 case Command.CLIENT_INPUT:
                 case Command.CLIENT_SETTINGS:
+                case Command.CLIENT_DISCONNECTED:
                     states.pushCommand(cmd);
                     break;
             }

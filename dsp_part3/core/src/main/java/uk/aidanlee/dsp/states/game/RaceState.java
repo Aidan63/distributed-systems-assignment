@@ -18,10 +18,7 @@ import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.Snapshot;
-import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
-import uk.aidanlee.dsp.common.net.commands.CmdServerState;
-import uk.aidanlee.dsp.common.net.commands.CmdSnapshot;
-import uk.aidanlee.dsp.common.net.commands.Command;
+import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
@@ -232,8 +229,21 @@ public class RaceState extends State {
                 case Command.SNAPSHOT:
                     cmdSnapshot((CmdSnapshot) cmd);
                     break;
+
+                case Command.CLIENT_DISCONNECTED:
+                    cmdClientDisconnected((CmdClientDisconnected) cmd);
             }
         }
+    }
+
+    /**
+     *
+     * @param _cmd
+     */
+    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
+        System.out.println("Removing entity");
+        craft.getRemotePlayers()[_cmd.clientID].destroy();
+        craft.getRemotePlayers()[_cmd.clientID] = null;
     }
 
     /**

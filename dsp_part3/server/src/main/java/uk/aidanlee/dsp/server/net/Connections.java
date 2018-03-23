@@ -240,7 +240,9 @@ public class Connections {
             timeouts[clientID] = null;
 
             // Tell all other clients that another client disconnected.
-            addReliableCommandAll(new CmdClientDisconnected(clientID));
+            CmdClientDisconnected cmd = new CmdClientDisconnected(clientID);
+            addReliableCommandAll(cmd);
+            Server.game.addCommand(cmd);
         }
     }
 

@@ -25,22 +25,24 @@ public class GameState extends State {
     private Connections connections;
 
     /**
-     *
+     * Array of all players connected to this server.
+     * Length of the array is the max clients connected.
+     * Index values are the clients ID.
      */
     private Player[] players;
 
     /**
-     *
+     * The local players ID.
      */
     private int ourID;
 
     /**
-     *
+     * Chat log to store all messages.
      */
     private ChatLog chat;
 
     /**
-     *
+     * Game state machine. Has a lobby and race state.
      */
     private StateMachine gameState;
 
@@ -159,7 +161,11 @@ public class GameState extends State {
                     break;
 
                 case Command.CLIENT_DISCONNECTED:
+                    // Remove the connected client from the players structure.
+                    // Also pass the disconnect command to the game state in-case we are in a race and need to remove
+                    // the client visual.
                     cmdClientDisconnected((CmdClientDisconnected) cmd);
+                    gameState.pushCommand(cmd);
                     break;
 
                 case Command.CHAT_MESSAGE:

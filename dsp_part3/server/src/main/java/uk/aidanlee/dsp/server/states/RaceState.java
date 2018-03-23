@@ -7,6 +7,7 @@ import uk.aidanlee.dsp.common.components.PolygonComponent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.Player;
+import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
 import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
@@ -79,20 +80,32 @@ public class RaceState extends State {
     private void processCmds(LinkedList<Command> _cmds) {
         while (_cmds.size() > 0) {
             Command cmd = _cmds.removeFirst();
-            if (cmd.id == Command.CLIENT_INPUT) {
-                // Apply the input to the correct player entity.
-                CmdClientInput c = (CmdClientInput) cmd;
-                InputComponent ip = (InputComponent) craft.getPlayerEntity(c.clientID).get("input");
-                ip.accelerate = c.accel;
-                ip.decelerate = c.decel;
-                ip.steerLeft  = c.steerLeft;
-                ip.steerRight = c.steerRight;
-                ip.airBrakeLeft  = c.abLeft;
-                ip.airBrakeRight = c.abRight;
-            } else {
-                System.out.println("Command " + cmd.id + " not used by the game state");
+            switch (cmd.id) {
+                case Command.CLIENT_INPUT:
+                    cmdClientInput((CmdClientInput) cmd);
+                    break;
+
+                case Command.CLIENT_DISCONNECTED:
+                    cmdClientDisconnected((CmdClientDisconnected) cmd);
+                    break;
             }
         }
+    }
+
+    private void cmdClientInput(CmdClientInput _cmd) {
+        InputComponent ip = (InputComponent) craft.getPlayerEntity(_cmd.clientID).get("input");
+        ip.accelerate = _cmd.accel;
+        ip.decelerate = _cmd.decel;
+        ip.steerLeft  = _cmd.steerLeft;
+        ip.steerRight = _cmd.steerRight;
+        ip.airBrakeLeft  = _cmd.abLeft;
+        ip.airBrakeRight = _cmd.abRight;
+    }
+
+    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
+        System.out.println("Removing entity");
+        craft.getRemotePlayers()[_cmd.clientID].destroy();
+        craft.getRemotePlayers()[_cmd.clientID] = null;
     }
 
     /**
