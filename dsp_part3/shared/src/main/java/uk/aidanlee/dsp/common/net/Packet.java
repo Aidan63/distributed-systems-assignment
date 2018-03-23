@@ -102,19 +102,15 @@ public class Packet {
             packer.writeByte((byte) info.getShipIndex());
             packer.writeBoolean(info.isReady());
 
-            float[] color;
+            // Write ship colour
+            packer.writeByte((byte) (info.getShipColor()[0] * 255));
+            packer.writeByte((byte) (info.getShipColor()[1] * 255));
+            packer.writeByte((byte) (info.getShipColor()[2] * 255));
 
-            // Write ship color
-            color = info.getShipColor();
-            packer.writeFloat(color[0]);
-            packer.writeFloat(color[1]);
-            packer.writeFloat(color[2]);
-
-            // Write trail color
-            color = info.getTrailColor();
-            packer.writeFloat(color[0]);
-            packer.writeFloat(color[1]);
-            packer.writeFloat(color[2]);
+            // write trail colour
+            packer.writeByte((byte) (info.getTrailColor()[0] * 255));
+            packer.writeByte((byte) (info.getTrailColor()[1] * 255));
+            packer.writeByte((byte) (info.getTrailColor()[2] * 255));
         }
 
         return new Packet(packer, _to);

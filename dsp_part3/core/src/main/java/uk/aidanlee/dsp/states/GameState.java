@@ -129,14 +129,14 @@ public class GameState extends State {
             boolean ready = _packet.getData().readBoolean();
 
             // Read ship color
-            float sR = _packet.getData().readFloat();
-            float sG = _packet.getData().readFloat();
-            float sB = _packet.getData().readFloat();
+            float sR = (_packet.getData().readByte() & 0xFF) / 255f;
+            float sG = (_packet.getData().readByte() & 0xFF) / 255f;
+            float sB = (_packet.getData().readByte() & 0xFF) / 255f;
 
             // Read trail color
-            float tR = _packet.getData().readFloat();
-            float tG = _packet.getData().readFloat();
-            float tB = _packet.getData().readFloat();
+            float tR = (_packet.getData().readByte() & 0xFF) / 255f;
+            float tG = (_packet.getData().readByte() & 0xFF) / 255f;
+            float tB = (_packet.getData().readByte() & 0xFF) / 255f;
 
             // Create a new client with the read data.
             Player player = new Player(name);
