@@ -28,7 +28,12 @@ public class NetChan {
     /**
      * Sliding window of states for this client.
      */
-    private LinkedList<Snapshot> snapshots;
+    private LinkedList<SnapshotStorage> snapshots;
+
+    /**
+     *
+     */
+    private SnapshotStorage dummySnapshot;
 
     /**
      * All of the reliable commands which need to be sent.
@@ -51,10 +56,10 @@ public class NetChan {
     public NetChan(EndPoint _dest) {
         sequence    = 0;
         ackSequence = 0;
-
         destination = _dest;
 
-        snapshots = new LinkedList<>();
+        snapshots     = new LinkedList<>();
+        dummySnapshot = new SnapshotStorage(null, 0);
 
         reliableCommandQueue   = new LinkedList<>();
         unreliableCommandQueue = new LinkedList<>();
@@ -86,14 +91,20 @@ public class NetChan {
     }
 
     /**
-     *
-     * @param _snapshot
+     * Add a snapshot into the queue of latest snapshots and create a delta diffed snapshot command.
+     * @param _snapshot Latest snapshot.
      */
     public void addSnapshot(Snapshot _snapshot) {
-        snapshots.addFirst(_snapshot);
+        // Add the snapshot
+        snapshots.addFirst(new SnapshotStorage(_snapshot, sequence));
         if (snapshots.size() > SNAPSHOT_BACKUP) {
             snapshots.removeLast();
         }
+
+        // Add a delta compressed
+        SnapshotStorage master  = snapshots.getFirst();
+        SnapshotStorage lastAck = snapshots.stream().anyMatch(s -> s.ack) ? snapshots.stream().filter(s -> s.ack).findFirst().get() : dummySnapshot;
+        addCommand(new CmdSnapshot(master.snapshot, lastAck.snapshot));
     }
 
     /**
@@ -222,6 +233,16 @@ public class NetChan {
     }
 
     /**
+     *
+     * @param _master
+     * @param _latestAck
+     * @param _packet
+     */
+    private void deltaCompressSnapshot(SnapshotStorage _master, SnapshotStorage _latestAck, Packet _packet) {
+        //
+    }
+
+    /**
      * Gets the value of the most significant bit of an integer.
      * @param _val The integer to read.
      * @return Boolean representing the MSB value.
@@ -245,5 +266,36 @@ public class NetChan {
 
         int mask = 1 << 32;
         return _val & ~0x7FFFFFF;
+    }
+
+    /**
+     *
+     */
+    private class SnapshotStorage {
+        /**
+         * Snapshot with all players data inside.
+         */
+        private Snapshot snapshot;
+
+        /**
+         * The netchan sequence this snapshot was sent out at.
+         */
+        private int sequence;
+
+        /**
+         * If this snapshot has been acknowledged by the client.
+         */
+        private boolean ack;
+
+        /**
+         *
+         * @param _snap
+         * @param _seq
+         */
+        private SnapshotStorage(Snapshot _snap, int _seq) {
+            snapshot = _snap;
+            sequence = _seq;
+            ack = false;
+        }
     }
 }

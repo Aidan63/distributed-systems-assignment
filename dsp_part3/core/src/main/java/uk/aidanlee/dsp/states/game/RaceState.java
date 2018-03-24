@@ -17,6 +17,7 @@ import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Player;
+import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.Snapshot;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
@@ -264,16 +265,45 @@ public class RaceState extends State {
         predictionCorrection(_cmd);
 
         // Smooths the remote players movement.
-        for (int i = 0; i < _cmd.master.getPlayerCount(); i++) {
-            Player player = _cmd.master.getPlayer(i);
-            int    id     = _cmd.master.getID(i);
+        for (PlayerDiff player : _cmd.getDiffedPlayers()) {
 
-            // Skip our-self since our position has been decided upon in the prediction function.
-            if (id == ourID) continue;
+            if (player.id == ourID);
 
-            players[id].setX(player.getX());
-            players[id].setY(player.getY());
-            players[id].setRotation(player.getRotation());
+            if (player.diffShipIndex) {
+                players[player.id].setShipIndex(player.shipIndex);
+            }
+
+            if (player.diffShipColR) {
+                players[player.id].getShipColor()[0] = player.shipColR;
+            }
+            if (player.diffShipColG) {
+                players[player.id].getShipColor()[1] = player.shipColG;
+            }
+            if (player.diffShipColB) {
+                players[player.id].getShipColor()[2] = player.shipColB;
+            }
+
+            if (player.diffTrailColR) {
+                players[player.id].getTrailColor()[0] = player.trailColR;
+            }
+            if (player.diffTrailColG) {
+                players[player.id].getTrailColor()[1] = player.trailColG;
+            }
+            if (player.diffTrailColB) {
+                players[player.id].getTrailColor()[2] = player.trailColB;
+            }
+
+            players[player.id].setReady(player.ready);
+
+            if (player.diffX) {
+                players[player.id].setX(player.x);
+            }
+            if (player.diffY) {
+                players[player.id].setY(player.y);
+            }
+            if (player.diffRotation) {
+                players[player.id].setRotation(player.rotation);
+            }
         }
     }
 
@@ -387,6 +417,20 @@ public class RaceState extends State {
      */
     private void predictionCorrection(CmdSnapshot _latest) {
 
+        PlayerDiff p = _latest.getDiffedPlayers().stream().filter(pd -> pd.id == ourID).findFirst().get();
+        Visual     v = craft.getRemotePlayers()[ourID];
+
+        if (p.diffX) {
+            v.pos.x = p.x;
+        }
+        if (p.diffY) {
+            v.pos.y = p.y;
+        }
+        if (p.diffRotation) {
+            v.rotation = p.rotation;
+        }
+
+        /*
         // Set our-self to the position where the server says we should be.
         Player p = _latest.master.getPlayerByID(ourID);
         Visual v = craft.getRemotePlayers()[ourID];
@@ -395,6 +439,7 @@ public class RaceState extends State {
         v.pos.x    = p.getX();
         v.pos.y    = p.getY();
         v.rotation = p.getRotation();
+        */
 
         // Re-play any input commands which have been pressed since the servers snapshot time.
         // This re-calculates the client prediction based off what the server says.

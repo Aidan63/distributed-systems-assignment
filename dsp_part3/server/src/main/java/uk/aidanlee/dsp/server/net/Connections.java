@@ -100,10 +100,10 @@ public class Connections {
         for (int i = 0; i < maxClients; i++) {
             if (!isClientConnected(i)) continue;
 
-            // TODO : Generate a delta compressed snapshot for each client.
-            clients[i].addCommand(new CmdSnapshot(master));
+            // Add the latest master snapshot to each clients netchan.
+            clients[i].addSnapshot(master);
 
-            // Generate a new netchannel packet.
+            // Generate a new netchan packet.
             Packet packet = clients[i].send();
             if (packet == null) continue;
 
