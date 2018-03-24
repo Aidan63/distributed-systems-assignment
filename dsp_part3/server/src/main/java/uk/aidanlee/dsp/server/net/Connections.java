@@ -88,6 +88,7 @@ public class Connections {
      */
     public void update() {
 
+        // Generate the new master snapshot.
         Snapshot master = new Snapshot();
         for (int i = 0; i < maxClients; i++) {
             if (!isClientConnected(i)) continue;
@@ -95,13 +96,14 @@ public class Connections {
             master.addPlayer(i, Server.game.getPlayers()[i]);
         }
 
-        // Send a net chan update for each client.
+        // Add the new snapshot in each client netchan and send a netchan update.
         for (int i = 0; i < maxClients; i++) {
             if (!isClientConnected(i)) continue;
 
             // TODO : Generate a delta compressed snapshot for each client.
             clients[i].addCommand(new CmdSnapshot(master));
 
+            // Generate a new netchannel packet.
             Packet packet = clients[i].send();
             if (packet == null) continue;
 

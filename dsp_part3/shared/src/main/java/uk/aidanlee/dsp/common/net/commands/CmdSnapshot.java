@@ -45,9 +45,9 @@ public class CmdSnapshot extends Command {
     @Override
     public void add(Packet _packet) {
         _packet.getData().writeByte(Command.SNAPSHOT);
-        _packet.getData().writeByte((byte) master.getPlayers());
+        _packet.getData().writeByte((byte) master.getPlayerCount());
 
-        for (int i = 0; i < master.getPlayers(); i++) {
+        for (int i = 0; i < master.getPlayerCount(); i++) {
             Player player = master.getPlayer(i);
             int    id     = master.getID(i);
 

@@ -96,14 +96,6 @@ public class NetChan {
         }
     }
 
-    public Snapshot getSnapshot(int _index) {
-        if (_index < snapshots.size()) {
-            return snapshots.get(_index);
-        }
-
-        return null;
-    }
-
     /**
      * Receives a series of bytes in a packet and read them into their individual commands.
      * @param _packet Packet containing the received byte data.

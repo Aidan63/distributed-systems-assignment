@@ -136,7 +136,7 @@ public class LobbyState extends State {
     private void cmdSnapshot(CmdSnapshot _cmd) {
         netChan.addSnapshot(_cmd.master);
 
-        for (int i = 0; i < _cmd.master.getPlayers(); i++) {
+        for (int i = 0; i < _cmd.master.getPlayerCount(); i++) {
             Player player = _cmd.master.getPlayer(i);
 
             int id = _cmd.master.getID(i);
