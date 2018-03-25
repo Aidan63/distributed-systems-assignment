@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.GL20;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
+import imgui.SelectableFlags;
 import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.NetManager;
@@ -22,6 +23,7 @@ public class MenuState extends State {
     private char[] port;
     private char[] name;
     private ServerDiscovery discoverer;
+    private int selected;
 
     public MenuState(String _name) {
         super(_name);
@@ -33,6 +35,7 @@ public class MenuState extends State {
         port = new char[255];
         name = new char[255];
         discoverer = new ServerDiscovery();
+        selected   = -1;
     }
 
     @Override
@@ -42,8 +45,27 @@ public class MenuState extends State {
 
     @Override
     public void onUpdate(LinkedList<Command> _cmds) {
+
+        // Keep track of LAN servers.
         discoverer.update();
 
+        // Build the UI.
+        buildDirectConnect();
+        buildLANServers();
+    }
+
+    @Override
+    public void onRender() {
+        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
+    }
+
+    /**
+     * Builds the direct IP connect UI.
+     */
+    private void buildDirectConnect() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Always);
         ImGui.INSTANCE.begin("Connect to Server", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
@@ -71,19 +93,27 @@ public class MenuState extends State {
         ImGui.INSTANCE.end();
     }
 
-    @Override
-    public void onRender() {
-        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
-    }
-
     /**
-     * Read packets from the net manager.
-     * In the menu state we are interested in OOB Server Packets to builds a list of LAN lobbies.
+     * Builds the UI which will show all discovered LAN servers.
      */
-    private void readPackets() {
-        //
+    private void buildLANServers() {
+        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 187), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 130), Cond.Always);
+        ImGui.INSTANCE.begin("LAN Servers", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
+
+        for (ServerDiscovery.ServerDetails details : discoverer.getLanServers()) {
+
+            boolean selected = ImGui.INSTANCE.selectable(details.getConnected() + " / " + details.getMaxConnections(), false, 0, new Vec2(0, 0));
+            ImGui.INSTANCE.sameLine(75);
+            ImGui.INSTANCE.text(details.getName());
+            ImGui.INSTANCE.sameLine(300);
+            ImGui.INSTANCE.text(details.getIp().getCanonicalHostName());
+
+            if (selected) {
+                System.out.println("TODO : Connect to that server");
+            }
+        }
+
+        ImGui.INSTANCE.end();
     }
 }
