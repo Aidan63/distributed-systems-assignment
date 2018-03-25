@@ -20,6 +20,11 @@ public class Connections {
     private int numClientsConnected;
 
     /**
+     * The port this server is listen on.
+     */
+    private int port;
+
+    /**
      * Array of booleans indexed by the client ID to indicated if that client ID is connected.
      */
     private boolean[] clientConnected;
@@ -43,9 +48,10 @@ public class Connections {
      * Creates a new connection manager.
      * @param _maxClients Max number of clients.
      */
-    public Connections(int _maxClients) {
-        maxClients          = _maxClients;
+    public Connections(int _maxClients, int _port) {
         numClientsConnected = 0;
+        maxClients          = _maxClients;
+        port                = _port;
 
         clientConnected = new boolean[maxClients];
         clients         = new NetChan[maxClients];
@@ -119,7 +125,7 @@ public class Connections {
 
         // Send out LAN broadcast packets about our server
         if (Server.game.getState().equals("lobby-active")) {
-            Packet broadcast = Packet.Discovery("Name", numClientsConnected, maxClients);
+            Packet broadcast = Packet.Discovery("Name", port ,numClientsConnected, maxClients);
             Server.netManager.send(broadcast);
         }
     }

@@ -39,6 +39,7 @@ public class ServerDiscovery {
         if (_packet.getData().readBoolean() && _packet.getData().readByte() == Packet.DISCOVERY) {
             InetAddress ip   = _packet.getEndpoint().getAddress();
             String      name = _packet.getData().readString();
+            int         port = _packet.getData().readInteger(16);
             int         conn = _packet.getData().readByte();
             int         max  = _packet.getData().readByte();
 
@@ -48,7 +49,7 @@ public class ServerDiscovery {
                     .orElse(null);
 
             if (details == null) {
-                details = new ServerDetails(ip, name);
+                details = new ServerDetails(ip, port, name);
                 lanServers.add(details);
             }
 
@@ -59,13 +60,15 @@ public class ServerDiscovery {
 
     public class ServerDetails {
         private final InetAddress ip;
+        private final int port;
         private final String name;
         private int connected;
         private int maxConnections;
 
-        public ServerDetails(InetAddress _ip, String _name) {
-            ip             = _ip;
-            name           = _name;
+        public ServerDetails(InetAddress _ip, int _port, String _name) {
+            port = _port;
+            ip   = _ip;
+            name = _name;
         }
 
         public InetAddress getIp() {
@@ -74,6 +77,10 @@ public class ServerDiscovery {
 
         public String getName() {
             return name;
+        }
+
+        public int getPort() {
+            return port;
         }
 
         public int getConnected() {

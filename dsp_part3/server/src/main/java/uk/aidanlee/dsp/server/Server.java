@@ -27,7 +27,7 @@ public class Server {
      */
     public static void start(int _port, int _maxClients) {
         netManager  = new NetManager(_port);
-        connections = new Connections(_maxClients);
+        connections = new Connections(_maxClients, _port);
 
         // Start the socket thread for sending and receiving data.
         netManager.start();

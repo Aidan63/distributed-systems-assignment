@@ -106,8 +106,8 @@ public class MenuState extends State {
             boolean selected = ImGui.INSTANCE.selectable(details.getConnected() + " / " + details.getMaxConnections(), false, 0, new Vec2(0, 0));
             ImGui.INSTANCE.sameLine(75);
             ImGui.INSTANCE.text(details.getName());
-            ImGui.INSTANCE.sameLine(300);
-            ImGui.INSTANCE.text(details.getIp().getCanonicalHostName());
+            ImGui.INSTANCE.sameLine(250);
+            ImGui.INSTANCE.text(details.getIp().getCanonicalHostName() + ":" + details.getPort());
 
             if (selected) {
                 System.out.println("TODO : Connect to that server");
