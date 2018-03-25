@@ -70,6 +70,9 @@ public class RaceState extends State {
 
         // Update the entities positions in the players array
         updatePlayerData();
+
+        // Check if the game actually has clients connected.
+        checkIfEmpty();
     }
 
     /**
@@ -193,7 +196,7 @@ public class RaceState extends State {
     }
 
     /**
-     *
+     * Sets the player structure position and rotation info to that of the simulated entities.
      */
     private void updatePlayerData() {
         for (int i = 0; i < players.length; i++) {
@@ -203,6 +206,20 @@ public class RaceState extends State {
             players[i].setX(e.pos.x);
             players[i].setY(e.pos.y);
             players[i].setRotation(e.rotation);
+        }
+    }
+
+    /**
+     * Checks if the game is empty. If it is return to the lobby so clients can join again.
+     */
+    private void checkIfEmpty() {
+        int playerCount = 0;
+        for (Player player : players) {
+            if (player != null) playerCount++;
+        }
+
+        if (playerCount == 0) {
+            changeState("lobby-active", null, null);
         }
     }
 }
