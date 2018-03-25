@@ -7,9 +7,11 @@ import imgui.Cond;
 import imgui.ImGui;
 import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
+import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionSettings;
+import uk.aidanlee.dsp.net.ServerDiscovery;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -19,6 +21,7 @@ public class MenuState extends State {
     private char[] ip;
     private char[] port;
     private char[] name;
+    private ServerDiscovery discoverer;
 
     public MenuState(String _name) {
         super(_name);
@@ -29,10 +32,18 @@ public class MenuState extends State {
         ip   = new char[255];
         port = new char[255];
         name = new char[255];
+        discoverer = new ServerDiscovery();
+    }
+
+    @Override
+    public void onLeave(Object _leaveWith) {
+        discoverer.destroy();
     }
 
     @Override
     public void onUpdate(LinkedList<Command> _cmds) {
+        discoverer.update();
+
         ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Always);
         ImGui.INSTANCE.begin("Connect to Server", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());

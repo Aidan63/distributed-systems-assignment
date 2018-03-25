@@ -3,6 +3,9 @@ package uk.aidanlee.dsp.common.net;
 import uk.aidanlee.dsp.common.data.ClientInfo;
 import uk.aidanlee.dsp.common.utils.ColorUtil;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class Packet {
 
     /**
@@ -49,6 +52,7 @@ public class Packet {
     public static final byte CONNECTION_RESPONSE = 1;
     public static final byte DISCONNECTION = 2;
     public static final byte HEARTBEAT = 3;
+    public static final byte DISCOVERY = 4;
 
     /**
      *
@@ -139,5 +143,30 @@ public class Packet {
         packer.writeByte(HEARTBEAT);
 
         return new Packet(packer, _to);
+    }
+
+    /**
+     * Creates a server discovery packet which will be broadcast across the LAN.
+     * @param _serverName The name of the server.
+     * @param _connected  The number of clients currently connected.
+     * @param _max        The maximum number of clients
+     * @return Packet with bytes data and endpoint location.
+     */
+    public static Packet Discovery(String _serverName, int _connected, int _max) {
+        BitPacker packer = new BitPacker();
+        packer.writeBoolean(true);
+        packer.writeByte(DISCOVERY);
+
+        packer.writeString(_serverName);
+        packer.writeByte((byte) _connected);
+        packer.writeByte((byte) _max);
+
+        try {
+            return new Packet(packer, new EndPoint(InetAddress.getByName("192.168.1.255"), 7778));
+        } catch (UnknownHostException _ex) {
+            System.out.println("Unknown host exception");
+        }
+
+        return null;
     }
 }

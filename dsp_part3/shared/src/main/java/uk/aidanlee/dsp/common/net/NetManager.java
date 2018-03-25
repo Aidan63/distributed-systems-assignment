@@ -48,6 +48,8 @@ public class NetManager extends Thread {
             socket  = new DatagramSocket(_port);
             buffer  = new byte[1400];
             packets = new ConcurrentLinkedQueue<>();
+
+            setDaemon(true);
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
         }

@@ -116,6 +116,12 @@ public class Connections {
 
             Server.netManager.send(packet);
         }
+
+        // Send out LAN broadcast packets about our server
+        if (Server.game.getState().equals("lobby-active")) {
+            Packet broadcast = Packet.Discovery("Name", numClientsConnected, maxClients);
+            Server.netManager.send(broadcast);
+        }
     }
 
     public void addCommandAll(Command _c) {
