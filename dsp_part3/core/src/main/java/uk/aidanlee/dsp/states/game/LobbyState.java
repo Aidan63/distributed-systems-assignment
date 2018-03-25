@@ -225,7 +225,7 @@ public class LobbyState extends State {
             // TODO : Check if message is not empty.
             String str = new String(inputBox).trim();
 
-            netChan.addCommand(new CmdChatMessage(ourID, str));
+            netChan.addReliableCommand(new CmdChatMessage(ourID, str));
             chatLog.addPlayerMessage(players[ourID].getName(), str);
 
             // reset the input box.

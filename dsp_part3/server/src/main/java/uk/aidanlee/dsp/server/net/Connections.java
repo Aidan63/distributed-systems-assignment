@@ -2,10 +2,7 @@ package uk.aidanlee.dsp.server.net;
 
 import uk.aidanlee.dsp.common.data.ClientInfo;
 import uk.aidanlee.dsp.common.net.*;
-import uk.aidanlee.dsp.common.net.commands.CmdClientConnected;
-import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
-import uk.aidanlee.dsp.common.net.commands.CmdSnapshot;
-import uk.aidanlee.dsp.common.net.commands.Command;
+import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.server.Server;
 
 import java.util.Timer;
@@ -77,8 +74,18 @@ public class Connections {
             // If that first bit is 0 then its a net chan packet.
             // Find the right netchan based on the sender and process the packet.
             int id = findExistingClientIndex(_packet.getEndpoint());
-            if (id != -1) {
-                CommandProcessor.parse(clients[id].receive(_packet));
+            if (id == -1) return;
+
+            for (Command cmd : clients[id].receive(_packet)) {
+                switch (cmd.id) {
+                    case Command.CHAT_MESSAGE:
+                        addReliableCommandAllExcept(cmd, ((CmdChatMessage) cmd).clientID);
+                        break;
+
+                    default:
+                        Server.game.addCommand(cmd);
+                        break;
+                }
             }
         }
     }
