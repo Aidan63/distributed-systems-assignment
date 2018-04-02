@@ -24,19 +24,28 @@ public class NetManager extends Thread {
     private Queue<Packet> packets;
 
     /**
+     * If the network manager is active.
+     * This is false if a socket exception occured.
+     */
+    private boolean ready;
+
+    /**
      * Creates a network manager which will listen for packets on an automatically assigned port.
      */
     public NetManager() {
         try {
             socket  = new DatagramSocket();
             buffer  = new byte[1400];
-            packets = new ConcurrentLinkedQueue<>();
+            ready   = true;
 
             setDaemon(true);
             setName("network manager");
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
+            ready = false;
         }
+
+        packets = new ConcurrentLinkedQueue<>();
     }
 
     /**
@@ -47,12 +56,16 @@ public class NetManager extends Thread {
         try {
             socket  = new DatagramSocket(_port);
             buffer  = new byte[1400];
-            packets = new ConcurrentLinkedQueue<>();
+            ready   = true;
 
             setDaemon(true);
+            setName("network manager");
         } catch (SocketException _ex) {
             System.out.println("Network Manager : Socket Exception - " + _ex.getMessage());
+            ready = false;
         }
+
+        packets = new ConcurrentLinkedQueue<>();
     }
 
     /**
@@ -69,6 +82,8 @@ public class NetManager extends Thread {
     @Override
     public void run() {
         while (true) {
+            if (!ready) continue;
+
             try {
                 // Read data from the UDP socket
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -93,7 +108,9 @@ public class NetManager extends Thread {
     @Override
     public void interrupt() {
         System.out.println("Network Manager : Thread interrupted, shutting down.");
-        socket.close();
+        if (ready) {
+            socket.close();
+        }
 
         super.interrupt();
     }
