@@ -5,10 +5,7 @@ import com.badlogic.gdx.graphics.GL20;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
-import imgui.SelectableFlags;
-import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
-import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionSettings;
@@ -66,15 +63,15 @@ public class MenuState extends State {
      * Builds the direct IP connect UI.
      */
     private void buildDirectConnect() {
-        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Always, new Vec2());
-        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Always);
-        ImGui.INSTANCE.begin("Connect to Server", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
+        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Once, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Once);
+        ImGui.INSTANCE.begin("Connect to Server", null, 0);
 
         ImGui.INSTANCE.inputText("IP"  , ip, 0);
         ImGui.INSTANCE.inputText("Port", port, 0);
         ImGui.INSTANCE.inputText("Name", name, 0);
 
-        if (ImGui.INSTANCE.button("Connect", new Vec2(-1, 0))) {
+        if (ImGui.INSTANCE.button("Connect", new Vec2(-1, -1))) {
             try {
                 // Get the servers location.
                 String serverIP   = new String(ip).trim();
@@ -97,16 +94,18 @@ public class MenuState extends State {
      * Builds the UI which will show all discovered LAN servers.
      */
     private void buildLANServers() {
-        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 187), Cond.Always, new Vec2());
-        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 130), Cond.Always);
-        ImGui.INSTANCE.begin("LAN Servers", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
+        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 187), Cond.Once, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 130), Cond.Once);
+        ImGui.INSTANCE.begin("LAN Servers", null, 0);
 
         for (ServerDiscovery.ServerDetails details : discoverer.getLanServers()) {
+
+            float width = ImGui.INSTANCE.getContentRegionAvailWidth();
 
             boolean selected = ImGui.INSTANCE.selectable(details.getConnected() + " / " + details.getMaxConnections(), false, 0, new Vec2(0, 0));
             ImGui.INSTANCE.sameLine(75);
             ImGui.INSTANCE.text(details.getName());
-            ImGui.INSTANCE.sameLine(250);
+            ImGui.INSTANCE.sameLine((int) (width - 150));
             ImGui.INSTANCE.text(details.getIp().getCanonicalHostName() + ":" + details.getPort());
 
             if (selected) {
