@@ -5,6 +5,7 @@ import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
 import uk.aidanlee.dsp.common.components.craft.LapTracker;
+import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.Player;
@@ -39,6 +40,11 @@ public class RaceState extends State {
     private Craft craft;
 
     /**
+     * Records the lap times for all of the players in the server.
+     */
+    private Times times;
+
+    /**
      * Creates a new race state to be added to a machine.
      * @param _name    The name of this race state.
      * @param _players The players object to modify.
@@ -53,6 +59,7 @@ public class RaceState extends State {
     public void onEnter(Object _enterWith) {
         circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
         craft   = new Craft(players, circuit.getSpawn());
+        times   = new Times(craft.getRemotePlayers(), 3);
     }
 
     @Override
@@ -111,6 +118,9 @@ public class RaceState extends State {
 
     private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
         System.out.println("Removing entity");
+
+        times.playerDisconnected(craft.getRemotePlayers()[_cmd.clientID].getName());
+
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -220,7 +230,7 @@ public class RaceState extends State {
             Entity e = craft.getPlayerEntity(i);
             if (!e.has("lap_tracker")) continue;
 
-            ((LapTracker) e.get("lap_tracker")).check(circuit.getCheckpoints());
+            ((LapTracker) e.get("lap_tracker")).check(circuit.getCheckpoints(), times);
         }
     }
 
