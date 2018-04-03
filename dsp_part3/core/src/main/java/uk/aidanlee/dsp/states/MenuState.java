@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.GL20;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
+import imgui.SelectableFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
@@ -102,14 +103,24 @@ public class MenuState extends State {
 
             float width = ImGui.INSTANCE.getContentRegionAvailWidth();
 
-            boolean selected = ImGui.INSTANCE.selectable(details.getConnected() + " / " + details.getMaxConnections(), false, 0, new Vec2(0, 0));
+            boolean selected = ImGui.INSTANCE.selectable(
+                    details.getConnected() + " / " + details.getMaxConnections(),
+                    false,
+                    SelectableFlags.AllowDoubleClick.getI(),
+                    new Vec2(0, 0)
+            );
+
             ImGui.INSTANCE.sameLine(75);
             ImGui.INSTANCE.text(details.getName());
             ImGui.INSTANCE.sameLine((int) (width - 150));
             ImGui.INSTANCE.text(details.getIp().getCanonicalHostName() + ":" + details.getPort());
 
             if (selected) {
-                System.out.println("TODO : Connect to that server");
+                if (ImGui.INSTANCE.isMouseClicked(0, true)) {
+                    changeState("connecting", new ConnectionSettings(
+                            "Aidan",
+                            new EndPoint(details.getIp(), details.getPort())), null);
+                }
             }
         }
 
