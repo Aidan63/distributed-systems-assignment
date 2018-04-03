@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Rectangle;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.components.craft.LapTracker;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.Player;
@@ -70,6 +71,9 @@ public class RaceState extends State {
 
         // Update the entities positions in the players array
         updatePlayerData();
+
+        // Check for game events such as lap times, completing the race, etc.
+        checkGameEvents();
 
         // Check if the game actually has clients connected.
         checkIfEmpty();
@@ -206,6 +210,17 @@ public class RaceState extends State {
             players[i].setX(e.pos.x);
             players[i].setY(e.pos.y);
             players[i].setRotation(e.rotation);
+        }
+    }
+
+    private void checkGameEvents() {
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == null) continue;
+
+            Entity e = craft.getPlayerEntity(i);
+            if (!e.has("lap_tracker")) continue;
+
+            ((LapTracker) e.get("lap_tracker")).check(circuit.getCheckpoints());
         }
     }
 

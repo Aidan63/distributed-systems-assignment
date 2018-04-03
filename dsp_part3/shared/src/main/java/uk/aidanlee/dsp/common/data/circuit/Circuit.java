@@ -97,6 +97,10 @@ public class Circuit {
         return wallTree;
     }
 
+    public Ray[] getCheckpoints() {
+        return checkpoints;
+    }
+
     // Public API
 
     private void load(String _filePath) {
