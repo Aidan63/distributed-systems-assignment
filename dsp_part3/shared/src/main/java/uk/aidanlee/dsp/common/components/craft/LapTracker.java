@@ -33,7 +33,9 @@ public class LapTracker extends Component {
                 }
 
                 if (allCheckpointsPassed()) {
-                    System.out.println("Lap passed");
+                    System.out.println("Lap passed : " + ((LapTimer) get("lap_timer")).time);
+                    remove("lap_timer");
+
                     for (int j = 0; j < checkpointPassed.length; j++) {
                         checkpointPassed[j] = false;
                     }
@@ -41,6 +43,7 @@ public class LapTracker extends Component {
 
                 if (!checkpointPassed[0]) {
                     System.out.println("Adding new timer...");
+                    add(new LapTimer("lap_timer"));
                 }
             }
 
