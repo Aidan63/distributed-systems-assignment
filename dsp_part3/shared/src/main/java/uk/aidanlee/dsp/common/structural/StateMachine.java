@@ -56,9 +56,11 @@ public class StateMachine {
      * Adds a new state to the machine.
      * @param _state The state to add.
      */
-    public void add(State _state) {
+    public StateMachine add(State _state) {
         states.put(_state.getName(), _state);
         _state.setMachine(this);
+
+        return this;
     }
 
     /**

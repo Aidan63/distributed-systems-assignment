@@ -11,14 +11,12 @@ import com.badlogic.gdx.math.Rectangle;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
-import uk.aidanlee.dsp.common.components.PhysicsComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.PlayerDiff;
-import uk.aidanlee.dsp.common.net.Snapshot;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
@@ -37,7 +35,6 @@ import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
-import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -224,7 +221,7 @@ public class RaceState extends State {
             Command cmd = _cmds.removeFirst();
             switch (cmd.id) {
                 case Command.SERVER_STATE:
-                    cmdServerState((CmdServerState) cmd);
+                    cmdServerState((CmdServerEvent) cmd);
                     break;
 
                 case Command.SNAPSHOT:
@@ -251,7 +248,7 @@ public class RaceState extends State {
      * When the server has changed state. E.g. Switching back from game to lobby.
      * @param _cmd server state command.
      */
-    private void cmdServerState(CmdServerState _cmd) {
+    private void cmdServerState(CmdServerEvent _cmd) {
         // Does nothing fow now...
     }
 
