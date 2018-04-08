@@ -11,17 +11,17 @@ import com.badlogic.gdx.math.Rectangle;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
-import uk.aidanlee.dsp.common.components.PhysicsComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.PlayerDiff;
-import uk.aidanlee.dsp.common.net.Snapshot;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
+import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.common.utils.MathsUtil;
 import uk.aidanlee.dsp.components.ShadowComponent;
@@ -37,7 +37,6 @@ import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
-import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -224,7 +223,7 @@ public class RaceState extends State {
             Command cmd = _cmds.removeFirst();
             switch (cmd.id) {
                 case Command.SERVER_STATE:
-                    cmdServerState((CmdServerState) cmd);
+                    cmdServerState((CmdServerEvent) cmd);
                     break;
 
                 case Command.SNAPSHOT:
@@ -242,7 +241,6 @@ public class RaceState extends State {
      * @param _cmd
      */
     private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
-        System.out.println("Removing entity");
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -251,8 +249,12 @@ public class RaceState extends State {
      * When the server has changed state. E.g. Switching back from game to lobby.
      * @param _cmd server state command.
      */
-    private void cmdServerState(CmdServerState _cmd) {
-        // Does nothing fow now...
+    private void cmdServerState(CmdServerEvent _cmd) {
+        switch (_cmd.state) {
+            case ServerEvent.EVENT_RACE_START:
+                ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
+                break;
+        }
     }
 
     /**

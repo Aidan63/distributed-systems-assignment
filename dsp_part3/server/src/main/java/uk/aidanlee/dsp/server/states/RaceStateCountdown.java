@@ -8,17 +8,15 @@ import uk.aidanlee.dsp.server.Server;
 
 import java.util.LinkedList;
 
-public class LobbyCountdownState extends State {
+class RaceStateCountdown extends State {
     private int timer;
 
-    public LobbyCountdownState(String _name) {
+    RaceStateCountdown(String _name) {
         super(_name);
     }
 
     @Override
     public void onEnter(Object _enterWith) {
-        // Tell all clients the game countdown has started.
-        Server.connections.addReliableCommandAll(new CmdServerEvent(ServerEvent.EVENT_LOBBY_COUNTDOWN));
         timer = 0;
     }
 
@@ -30,7 +28,12 @@ public class LobbyCountdownState extends State {
         if (timer == 180) {
             // Change to the game and tell all clients.
             changeState("game", null, null);
-            Server.connections.addReliableCommandAll(new CmdServerEvent(ServerEvent.EVENT_RACE_ENTER));
+            Server.connections.addReliableCommandAll(new CmdServerEvent(ServerEvent.EVENT_RACE_START));
         }
+    }
+
+    @Override
+    public void onLeave(Object _leaveWith) {
+        super.onLeave(_leaveWith);
     }
 }

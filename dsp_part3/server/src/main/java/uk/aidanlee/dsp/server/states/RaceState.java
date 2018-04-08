@@ -1,26 +1,18 @@
 package uk.aidanlee.dsp.server.states;
 
-import com.badlogic.gdx.math.Rectangle;
-import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
-import uk.aidanlee.dsp.common.components.PolygonComponent;
-import uk.aidanlee.dsp.common.components.craft.LapTracker;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
-import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
 import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
+import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.server.data.Craft;
-import uk.aidanlee.jDiffer.Collision;
-import uk.aidanlee.jDiffer.data.ShapeCollision;
-import uk.aidanlee.jDiffer.shapes.Polygon;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public class RaceState extends State {
 
@@ -45,6 +37,11 @@ public class RaceState extends State {
     private Times times;
 
     /**
+     * State machine of the races sub-states.
+     */
+    private StateMachine states;
+
+    /**
      * Creates a new race state to be added to a machine.
      * @param _name    The name of this race state.
      * @param _players The players object to modify.
@@ -60,27 +57,25 @@ public class RaceState extends State {
         circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
         craft   = new Craft(players, circuit.getSpawn());
         times   = new Times(craft.getRemotePlayers(), 3);
+        states  = new StateMachine()
+                .add(new RaceStateCountdown("countdown"))
+                .add(new RaceStateGame("game", circuit, craft, times))
+                .add(new RaceStateResults("results"));
+
+        states.set("countdown", null, null);
     }
 
     @Override
     public void onUpdate(LinkedList<Command> _cmds) {
+
         // Process any commands which have came in.
         processCmds(_cmds);
 
-        // Progress each player entity in the game simulation
-        simulatePlayers();
-
-        // Resolve any wall collisions
-        resolveWallCollisions();
-
-        // Resolve any craft - craft collisions
-        resolveCraftCollisions();
+        // Update the sub state.
+        states.update();
 
         // Update the entities positions in the players array
         updatePlayerData();
-
-        // Check for game events such as lap times, completing the race, etc.
-        checkGameEvents();
 
         // Check if the game actually has clients connected.
         checkIfEmpty();
@@ -106,7 +101,14 @@ public class RaceState extends State {
         }
     }
 
+    /**
+     * Client Input Command. Contains all of the input keys for a client and if they are pressed.
+     * Copy the values into the right entity component so it can be simulated.
+     * @param _cmd Input Command.
+     */
     private void cmdClientInput(CmdClientInput _cmd) {
+        if (!craft.getPlayerEntity(_cmd.clientID).has("input")) return;
+
         InputComponent ip = (InputComponent) craft.getPlayerEntity(_cmd.clientID).get("input");
         ip.accelerate = _cmd.accel;
         ip.decelerate = _cmd.decel;
@@ -116,97 +118,15 @@ public class RaceState extends State {
         ip.airBrakeRight = _cmd.abRight;
     }
 
+    /**
+     * Received when a client has disconnected. Remove the entity from the simulation and times class.
+     * @param _cmd Disconnected command.
+     */
     private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
-        System.out.println("Removing entity");
-
         times.playerDisconnected(craft.getRemotePlayers()[_cmd.clientID].getName());
 
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
-    }
-
-    /**
-     * Steps forward the game simulation my moving each player according to the inputs pressed by the remote client.
-     */
-    private void simulatePlayers() {
-        for (int i = 0; i < players.length; i++) {
-            if (players[i] == null) continue;
-
-            Entity e = craft.getPlayerEntity(i);
-            e.update(0);
-        }
-    }
-
-    /**
-     * Resolve any wall collisions between the player craft.
-     */
-    private void resolveWallCollisions() {
-        for (int i = 0; i < players.length; i++) {
-            if (players[i] == null) continue;
-
-            // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getPlayerEntity(i);
-            if (!e.has("aabb") || !e.has("polygon")) continue;
-
-            // Get the components and query the circuit wall tree for collisions.
-            AABBComponent    aabb = (AABBComponent) e.get("aabb");
-            PolygonComponent poly = (PolygonComponent) e.get("polygon");
-
-            List<TreeTileWall> collisions = new LinkedList<>();
-            circuit.getWallTree().getCollisions(aabb.getBox(), collisions);
-
-            // If there are no collisions skip this loop.
-            if (collisions.size() == 0) continue;
-
-            // Check each AABB collision for a precise collision.
-            for (TreeTileWall col : collisions) {
-                Polygon transformedPoly = poly.getShape();
-
-                ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.wall, null);
-                if (wallCol == null) continue;
-
-                e.pos.x += wallCol.separationX;
-                e.pos.y += wallCol.separationY;
-
-                // TODO: bounce collisions
-            }
-        }
-    }
-
-    /**
-     *
-     */
-    private void resolveCraftCollisions() {
-        for (int i = 0; i < players.length; i++) {
-            if (players[i] == null) continue;
-
-            // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getPlayerEntity(i);
-            if (!e.has("aabb") || !e.has("polygon")) continue;
-
-            // Get the components and query the circuit wall tree for collisions.
-            AABBComponent    aabb = (AABBComponent) e.get("aabb");
-            PolygonComponent poly = (PolygonComponent) e.get("polygon");
-
-            for (Entity craft : craft.getRemotePlayers()) {
-                if (craft == null) continue;
-                if (craft.getName().equals(e.getName())) continue;
-
-                Rectangle otherBox = ((AABBComponent) craft.get("aabb")).getBox();
-                if (!aabb.getBox().overlaps(otherBox)) continue;
-
-                PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
-                ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                while (col != null) {
-                    e.pos.x += (float)col.unitVectorX;
-                    e.pos.y += (float)col.unitVectorY;
-                    craft.pos.x -= (float)col.otherUnitVectorX;
-                    craft.pos.y -= (float)col.otherUnitVectorY;
-
-                    col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                }
-            }
-        }
     }
 
     /**
@@ -220,17 +140,6 @@ public class RaceState extends State {
             players[i].setX(e.pos.x);
             players[i].setY(e.pos.y);
             players[i].setRotation(e.rotation);
-        }
-    }
-
-    private void checkGameEvents() {
-        for (int i = 0; i < players.length; i++) {
-            if (players[i] == null) continue;
-
-            Entity e = craft.getPlayerEntity(i);
-            if (!e.has("lap_tracker")) continue;
-
-            ((LapTracker) e.get("lap_tracker")).check(circuit.getCheckpoints(), times);
         }
     }
 

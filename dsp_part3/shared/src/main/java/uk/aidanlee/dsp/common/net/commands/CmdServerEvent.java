@@ -2,15 +2,15 @@ package uk.aidanlee.dsp.common.net.commands;
 
 import uk.aidanlee.dsp.common.net.Packet;
 
-public class CmdServerState extends Command {
+public class CmdServerEvent extends Command {
     public final byte state;
 
-    public CmdServerState(byte _state) {
+    public CmdServerEvent(byte _state) {
         super(Command.SERVER_STATE);
         state    = _state;
     }
 
-    public CmdServerState(Packet _packet, int _sentTime) {
+    public CmdServerEvent(Packet _packet, int _sentTime) {
         super(Command.SERVER_STATE, _sentTime);
         state    = _packet.getData().readByte();
     }

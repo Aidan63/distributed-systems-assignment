@@ -8,6 +8,7 @@ import glm_.vec4.Vec4;
 import imgui.*;
 import imgui.internal.Rect;
 import uk.aidanlee.dsp.Client;
+import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
@@ -16,7 +17,6 @@ import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.states.LobbyData;
-import uk.aidanlee.dsp.net.Connections;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -114,7 +114,7 @@ public class LobbyState extends State {
             Command cmd = _cmds.removeFirst();
             switch (cmd.id) {
                 case Command.SERVER_STATE:
-                    cmdServerState((CmdServerState) cmd);
+                    cmdServerEvent((CmdServerEvent) cmd);
                     break;
 
                 case Command.SNAPSHOT:
@@ -124,13 +124,16 @@ public class LobbyState extends State {
         }
     }
 
-    private void cmdServerState(CmdServerState _cmd) {
-        if (_cmd.state == 1) {
-            canEdit = false;
-            players[ourID].setReady(true);
-        }
-        if (_cmd.state == 2) {
-            changeState("race", new LobbyData(netChan, chatLog, players, ourID), null);
+    private void cmdServerEvent(CmdServerEvent _cmd) {
+        switch (_cmd.state) {
+            case ServerEvent.EVENT_LOBBY_COUNTDOWN:
+                canEdit = false;
+                players[ourID].setReady(true);
+                break;
+
+            case ServerEvent.EVENT_RACE_ENTER:
+                changeState("race", new LobbyData(netChan, chatLog, players, ourID), null);
+                break;
         }
     }
 

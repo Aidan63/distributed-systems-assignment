@@ -161,7 +161,7 @@ public class NetChan {
                     break;
 
                 case Command.SERVER_STATE:
-                    cmds[i] = new CmdServerState(_packet, sentT);
+                    cmds[i] = new CmdServerEvent(_packet, sentT);
                     break;
             }
         }
