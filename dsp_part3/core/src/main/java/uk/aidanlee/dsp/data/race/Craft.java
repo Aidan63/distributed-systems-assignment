@@ -78,7 +78,6 @@ public class Craft {
      * @return Visual entity.
      */
     private Visual createLocalPlayer(Visual _visual, Player _player) {
-        _visual.add(new LocalInputComponent("local-input"));
         _visual.add(new InputComponent("input"));
         _visual.add(new StatsComponent("stats"));
         _visual.add(new VelocityComponent("velocity"));
@@ -89,6 +88,14 @@ public class Craft {
                 new Vector(0, -16), new Vector(70, -5), new Vector(70, 5), new Vector(0, 16)
         }));
         _visual.add(new TrailComponent("trail", new Color(_player.getTrailColor()[0], _player.getTrailColor()[1], _player.getTrailColor()[2], 1)));
+
+        EntityStateMachine fsm = new EntityStateMachine("fsm");
+        fsm.createState("InActive");
+        fsm.createState("Active")
+                .add(new LocalInputComponent("local-input"));
+
+        _visual.add(fsm);
+        fsm.changeState("InActive");
 
         return _visual;
     }

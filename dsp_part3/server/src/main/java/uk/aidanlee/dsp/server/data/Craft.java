@@ -75,7 +75,6 @@ public class Craft {
             craft.add(new StatsComponent("stats"));
             craft.add(new VelocityComponent("velocity"));
             craft.add(new PhysicsComponent("physics"));
-            //craft.add(new InputComponent("input"));
             craft.add(new AABBComponent("aabb", 256, 256, true));
             craft.add(new PolygonComponent("polygon", new Vector[] {
                     new Vector(0, -16), new Vector(70, -5), new Vector(70, 5), new Vector(0, 16)
@@ -88,11 +87,10 @@ public class Craft {
             fsm.createState("InActive");
             fsm.createState("Active")
                     .add(new InputComponent("input"))
-                    //.add(new BoostPadCollisionComponent("collision_boost_pad"))
                     .add(new LapTracker("lap_tracker"));
 
             craft.add(fsm);
-            fsm.changeState("Active");
+            fsm.changeState("InActive");
 
             remotePlayers[i] = craft;
             index++;

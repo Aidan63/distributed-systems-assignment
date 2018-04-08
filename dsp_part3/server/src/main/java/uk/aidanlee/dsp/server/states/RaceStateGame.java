@@ -10,6 +10,7 @@ import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
+import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.server.data.Craft;
 import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
@@ -33,7 +34,11 @@ class RaceStateGame extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        super.onEnter(_enterWith);
+        for (Entity e : craft.getRemotePlayers()) {
+            if (e == null) continue;
+            if (!e.has("fsm")) continue;
+            ((EntityStateMachine) e.get("fsm")).changeState("Active");
+        }
     }
 
     @Override
@@ -69,7 +74,6 @@ class RaceStateGame extends State {
             craft.update(0);
         }
     }
-
 
     /**
      * Resolve any wall collisions between the player craft.

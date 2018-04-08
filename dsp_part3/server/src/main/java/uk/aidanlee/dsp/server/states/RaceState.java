@@ -107,6 +107,8 @@ public class RaceState extends State {
      * @param _cmd Input Command.
      */
     private void cmdClientInput(CmdClientInput _cmd) {
+        if (!craft.getPlayerEntity(_cmd.clientID).has("input")) return;
+
         InputComponent ip = (InputComponent) craft.getPlayerEntity(_cmd.clientID).get("input");
         ip.accelerate = _cmd.accel;
         ip.decelerate = _cmd.decel;

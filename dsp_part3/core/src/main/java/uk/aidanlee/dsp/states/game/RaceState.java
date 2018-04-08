@@ -12,6 +12,7 @@ import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.NetChan;
@@ -20,6 +21,7 @@ import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
+import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.common.utils.MathsUtil;
 import uk.aidanlee.dsp.components.ShadowComponent;
@@ -239,7 +241,6 @@ public class RaceState extends State {
      * @param _cmd
      */
     private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
-        System.out.println("Removing entity");
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -249,7 +250,11 @@ public class RaceState extends State {
      * @param _cmd server state command.
      */
     private void cmdServerState(CmdServerEvent _cmd) {
-        // Does nothing fow now...
+        switch (_cmd.state) {
+            case ServerEvent.EVENT_RACE_START:
+                ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
+                break;
+        }
     }
 
     /**
