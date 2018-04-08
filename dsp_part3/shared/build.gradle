@@ -3,6 +3,6 @@ eclipse.project.name = appName + '-shared'
 dependencies {
     compile "com.badlogicgames.gdx:gdx:$gdxVersion"
     compile "com.google.code.gson:gson:2.8.2"
-    compile "com.google.guava:guava:24-1-jre"
+    compile "com.google.guava:guava:24.1-jre"
     compile files("lib/jDiffer.jar")
 }
