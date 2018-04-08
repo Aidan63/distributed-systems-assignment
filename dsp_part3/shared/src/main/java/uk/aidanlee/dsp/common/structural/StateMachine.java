@@ -88,7 +88,12 @@ public class StateMachine {
      */
     public void set(String _stateName, Object _enterWith, Object _leaveWith)
     {
-        if (!states.containsKey(_stateName)) return;
+        if (!states.containsKey(_stateName)) {
+            return;
+        }
+        if (activeState != null && activeState.getName().equals(_stateName)) {
+            return;
+        }
 
         unset(_leaveWith);
 

@@ -1,8 +1,10 @@
 package uk.aidanlee.dsp.server.states;
 
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
+import uk.aidanlee.dsp.common.data.events.EvLapTime;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.commands.CmdClientDisconnected;
 import uk.aidanlee.dsp.common.net.commands.CmdClientInput;
@@ -55,7 +57,7 @@ public class RaceState extends State {
     @Override
     public void onEnter(Object _enterWith) {
         circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
-        craft   = new Craft(players, circuit.getSpawn());
+        craft   = new Craft(players, circuit);
         times   = new Times(craft.getRemotePlayers(), 3);
         states  = new StateMachine()
                 .add(new RaceStateCountdown("countdown"))
@@ -63,6 +65,12 @@ public class RaceState extends State {
                 .add(new RaceStateResults("results"));
 
         states.set("countdown", null, null);
+
+        // Register ourselves for events from the entities.
+        for (Entity e : craft.getRemotePlayers()) {
+            if (e == null) continue;
+            e.getEvents().register(this);
+        }
     }
 
     @Override
@@ -125,6 +133,7 @@ public class RaceState extends State {
     private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
         times.playerDisconnected(craft.getRemotePlayers()[_cmd.clientID].getName());
 
+        craft.getRemotePlayers()[_cmd.clientID].getEvents().unregister(this);
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -155,5 +164,12 @@ public class RaceState extends State {
         if (playerCount == 0) {
             changeState("lobby-active", null, null);
         }
+    }
+
+    // Event Functions
+
+    @Subscribe
+    public void eventLapTime(EvLapTime _event) {
+        times.addTime(_event.name, _event.time);
     }
 }

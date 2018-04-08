@@ -1,7 +1,7 @@
 package uk.aidanlee.dsp.common.components.craft;
 
 import uk.aidanlee.dsp.common.components.PolygonComponent;
-import uk.aidanlee.dsp.common.data.Times;
+import uk.aidanlee.dsp.common.data.events.EvLapTime;
 import uk.aidanlee.dsp.common.structural.ec.Component;
 import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.shapes.Ray;
@@ -12,15 +12,20 @@ public class LapTracker extends Component {
      */
     private boolean[] checkpointPassed;
 
-    public LapTracker(String _name) {
+    /**
+     * All of the checkpoint rays.
+     */
+    private Ray[] checkpoints;
+
+    public LapTracker(String _name, Ray[] _checkpoints) {
         super(_name);
+
+        checkpoints      = _checkpoints;
+        checkpointPassed = new boolean[checkpoints.length];
     }
 
-    public void check(Ray[] _checkpoints, Times _times) {
-        // Create the checkpoint array if we don't have one.
-        if (checkpointPassed == null) {
-            checkpointPassed = new boolean[_checkpoints.length];
-        }
+    @Override
+    public void update(float _dt) {
 
         // Get this entities polygon and check for checkpoint collisions
         if (!has("polygon")) return;
@@ -29,14 +34,14 @@ public class LapTracker extends Component {
         for (int i = 0; i < checkpointPassed.length; i++) {
             // Specific case for start / finish line.
             if (i == 0) {
-                if (Collision.rayWithShape(_checkpoints[i], poly.getShape(), null) == null) {
+                if (Collision.rayWithShape(checkpoints[i], poly.getShape(), null) == null) {
                     continue;
                 }
 
-                // If we've completed a lap then add the current lap time into the times class.
+                // If we've completed a lap then fire an event with the entity name and time float.
                 // then remove the timer and reset the checkpoint status.
                 if (allCheckpointsPassed()) {
-                    _times.addTime(entity.getName(), ((LapTimer) get("lap_timer")).time);
+                    entity.getEvents().post(new EvLapTime(entity.getName(), ((LapTimer) get("lap_timer")).time));
                     remove("lap_timer");
 
                     for (int j = 0; j < checkpointPassed.length; j++) {
@@ -51,11 +56,10 @@ public class LapTracker extends Component {
             }
 
             // Set the checkpoint to passed after passing it.
-            if (Collision.rayWithShape(_checkpoints[i], poly.getShape(), null) != null) {
+            if (Collision.rayWithShape(checkpoints[i], poly.getShape(), null) != null) {
                 checkpointPassed[i] = true;
             }
         }
-
     }
 
     private boolean allCheckpointsPassed() {

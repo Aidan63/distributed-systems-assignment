@@ -3,11 +3,10 @@ package uk.aidanlee.dsp.server.data;
 import com.badlogic.gdx.math.Vector2;
 import uk.aidanlee.dsp.common.components.*;
 import uk.aidanlee.dsp.common.components.craft.LapTracker;
-import uk.aidanlee.dsp.common.data.circuit.CircuitSpawn;
+import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
-import uk.aidanlee.dsp.server.Server;
 import uk.aidanlee.jDiffer.math.Vector;
 
 public class Craft {
@@ -20,39 +19,16 @@ public class Craft {
      *
      * @param _players
      */
-    public Craft(Player[] _players, CircuitSpawn _spawns) {
+    public Craft(Player[] _players, Circuit _circuit) {
         remotePlayers = new Entity[_players.length];
 
-        createCraft(_players, _spawns);
-    }
-
-    /**
-     * Returns the entity at the requested index.
-     * @param _index Client ID of the entity to get.
-     */
-    public Entity getPlayerEntity(int _index) {
-        return remotePlayers[_index];
-    }
-
-    /**
-     *
-     * @return
-     */
-    public Entity[] getRemotePlayers() {
-        return remotePlayers;
-    }
-
-    /**
-     * Create all of the craft in entities.
-     */
-    private void createCraft(Player[] _players, CircuitSpawn _spawns) {
         int index = 0;
         for (int i = 0; i < _players.length; i++) {
             if (_players[i] == null) continue;
 
             // Get the spawn position and tangent for the initial position and rotation
-            int spawnIndex = (_spawns.spawns.length - 1) - index;
-            Vector2 tangent = _spawns.spawns[spawnIndex].tangent;
+            int spawnIndex = (_circuit.getSpawn().spawns.length - 1) - index;
+            Vector2 tangent = _circuit.getSpawn().spawns[spawnIndex].tangent;
 
             // Create and set the initial position, rotation, and origin
             Entity craft = new Entity("Client " + i);
@@ -61,8 +37,8 @@ public class Craft {
             craft.origin.y = 32;
             craft.rotation = (float)(Math.atan2(tangent.y, tangent.x) * 180 / Math.PI);
 
-            craft.pos.x = _spawns.spawns[spawnIndex].position.x - (craft.origin.x);
-            craft.pos.y = _spawns.spawns[spawnIndex].position.y - (craft.origin.y);
+            craft.pos.x = _circuit.getSpawn().spawns[spawnIndex].position.x - (craft.origin.x);
+            craft.pos.y = _circuit.getSpawn().spawns[spawnIndex].position.y - (craft.origin.y);
 
             // Update the player pos and rotation
             _players[i].setX((int) craft.pos.x);
@@ -87,7 +63,7 @@ public class Craft {
             fsm.createState("InActive");
             fsm.createState("Active")
                     .add(new InputComponent("input"))
-                    .add(new LapTracker("lap_tracker"));
+                    .add(new LapTracker("lap_tracker", _circuit.getCheckpoints()));
 
             craft.add(fsm);
             fsm.changeState("InActive");
@@ -95,5 +71,21 @@ public class Craft {
             remotePlayers[i] = craft;
             index++;
         }
+    }
+
+    /**
+     * Returns the entity at the requested index.
+     * @param _index Client ID of the entity to get.
+     */
+    public Entity getPlayerEntity(int _index) {
+        return remotePlayers[_index];
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Entity[] getRemotePlayers() {
+        return remotePlayers;
     }
 }

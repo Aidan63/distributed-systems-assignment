@@ -52,9 +52,6 @@ class RaceStateGame extends State {
 
         // Resolve any craft - craft collisions
         resolveCraftCollisions();
-
-        // Checks for laps and records times.
-        checkLapTimes();
     }
 
     @Override
@@ -144,21 +141,6 @@ class RaceStateGame extends State {
                     col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
                 }
             }
-        }
-    }
-
-    /**
-     *
-     */
-    private void checkLapTimes() {
-        // Check and update all players lap times info.
-        for (int i = 0; i < craft.getRemotePlayers().length; i++) {
-
-            Entity e = craft.getPlayerEntity(i);
-            if (e == null) continue;
-            if (!e.has("lap_tracker")) continue;
-
-            ((LapTracker) e.get("lap_tracker")).check(circuit.getCheckpoints(), times);
         }
     }
 }
