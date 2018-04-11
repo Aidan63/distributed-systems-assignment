@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.net;
 
+import com.google.common.eventbus.EventBus;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.NetChan;
@@ -28,16 +29,16 @@ public class Connections {
     /**
      * List of net chan commands which have been received.
      */
-    private List<Command> commands;
+    private EventBus events;
 
     /**
      * Creates a new connection class to
      * @param _server
      */
-    public Connections(EndPoint _server) {
-        server   = _server;
-        netChan  = new NetChan(server);
-        commands = new LinkedList<>();
+    public Connections(EndPoint _server, EventBus _events) {
+        server  = _server;
+        netChan = new NetChan(server);
+        events  = _events;
 
         resetTimeout();
     }
@@ -64,9 +65,7 @@ public class Connections {
      *
      * @return
      */
-    public List<Command> update() {
-        commands.clear();
-
+    public void update() {
         // Read packets from the net manager
         Packet pck = Client.netManager.getPackets().poll();
         while (pck != null) {
@@ -79,8 +78,6 @@ public class Connections {
         if (netChanPacket != null) {
             Client.netManager.send(netChanPacket);
         }
-
-        return commands;
     }
 
     /**
@@ -94,7 +91,10 @@ public class Connections {
             processOOBPacket(_packet);
         } else {
             // Send netchan packet to the net channel and parse any commands
-            commands.addAll(Arrays.asList(netChan.receive(_packet)));
+            //commands.addAll(Arrays.asList(netChan.receive(_packet)));
+            for (Command cmd : netChan.receive(_packet)) {
+                events.post(cmd);
+            }
         }
     }
 

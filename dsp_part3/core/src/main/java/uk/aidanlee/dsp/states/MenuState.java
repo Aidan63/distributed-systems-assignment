@@ -42,7 +42,7 @@ public class MenuState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
 
         // Keep track of LAN servers.
         discoverer.update();

@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.states;
 
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
@@ -13,7 +14,6 @@ import uk.aidanlee.dsp.net.Connections;
 import uk.aidanlee.dsp.states.game.LobbyState;
 import uk.aidanlee.dsp.states.game.RaceState;
 
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -67,7 +67,7 @@ public class GameState extends State {
         int numConnected = response.getPacket().getData().readByte();
 
         // Setup all of the game needed classes
-        connections = new Connections(response.getEp());
+        connections = new Connections(response.getEp(), machine.getEvents());
         players     = new Player[maxClients];
         chat        = new ChatLog();
 
@@ -101,9 +101,9 @@ public class GameState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
         // Read and process and commands from the server.
-        readCommands();
+        connections.update();
         gameState.update();
 
     }
@@ -150,46 +150,8 @@ public class GameState extends State {
         }
     }
 
-    /**
-     *
-     */
-    private void readCommands() {
-        for (Command cmd : connections.update()) {
-            switch (cmd.id) {
-                case Command.CLIENT_CONNECTED:
-                    cmdClientConnected((CmdClientConnected) cmd);
-                    break;
-
-                case Command.CLIENT_DISCONNECTED:
-                    // Remove the connected client from the players structure.
-                    // Also pass the disconnect command to the game state in-case we are in a race and need to remove
-                    // the client visual.
-                    cmdClientDisconnected((CmdClientDisconnected) cmd);
-                    gameState.pushCommand(cmd);
-                    break;
-
-                case Command.CHAT_MESSAGE:
-                    cmdChatMessage((CmdChatMessage) cmd);
-                    break;
-
-                case Command.SNAPSHOT:
-                case Command.SERVER_STATE:
-                    gameState.pushCommand(cmd);
-                    break;
-
-                default:
-                    System.out.println("Unknown net chan command");
-            }
-        }
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientConnected(CmdClientConnected _cmd) {
-        System.out.println("Client Connected");
-
+    @Subscribe
+    public void eventClientConnected(CmdClientConnected _cmd) {
         Player player = new Player(_cmd.client.getName());
         player.setShipIndex(_cmd.client.getShipIndex());
         player.setShipColor(_cmd.client.getShipColor());
@@ -199,24 +161,29 @@ public class GameState extends State {
         chat.addServerMessage(_cmd.client.getName() + " has joined");
     }
 
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
-        System.out.println("Client Disconnected");
-
+    @Subscribe
+    public void eventClientDisconnected(CmdClientDisconnected _cmd) {
         if (players[_cmd.clientID] == null) return;
 
         chat.addServerMessage(players[_cmd.clientID].getName() + " has left");
         players[_cmd.clientID] = null;
+
+        gameState.getEvents().post(_cmd);
     }
 
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdChatMessage(CmdChatMessage _cmd) {
+    @Subscribe
+    public void eventChatMessage(CmdChatMessage _cmd) {
         chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
+    }
+
+    @Subscribe
+    public void eventSnapshot(CmdSnapshot _cmd) {
+        System.out.println("event snapshot");
+        gameState.getEvents().post(_cmd);
+    }
+
+    @Subscribe
+    public void eventServerState(CmdServerEvent _cmd) {
+        gameState.getEvents().post(_cmd);
     }
 }

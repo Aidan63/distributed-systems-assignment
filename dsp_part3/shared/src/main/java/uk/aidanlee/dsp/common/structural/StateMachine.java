@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.common.structural;
 
+import com.google.common.eventbus.EventBus;
 import uk.aidanlee.dsp.common.net.commands.Command;
 
 import java.util.HashMap;
@@ -18,38 +19,26 @@ public class StateMachine {
     private State activeState;
 
     /**
-     * List of commands to pass to the active state next update
+     * Event bus to sent events to the individual states.
      */
-    private LinkedList<Command> commands;
+    private EventBus events;
 
     /**
      * Create a new empty state machine.
      */
     public StateMachine() {
-        states   = new HashMap<>();
-        commands = new LinkedList<>();
+        states = new HashMap<>();
+        events = new EventBus();
     }
 
     // Public API
 
-    public void pushCommand(Command _cmd) {
-        commands.addLast(_cmd);
-    }
-
-    /**
-     * Returns the name of the active state.
-     * @return State name string.
-     */
-    public String getActiveStateName() {
-        return activeState.getName();
-    }
-
-    /**
-     *
-     * @return
-     */
     public State getActiveState() {
         return activeState;
+    }
+
+    public EventBus getEvents() {
+        return events;
     }
 
     /**
@@ -99,6 +88,8 @@ public class StateMachine {
 
         activeState = states.get(_stateName);
         activeState.onEnter(_enterWith);
+
+        events.register(activeState);
     }
 
     /**
@@ -108,16 +99,28 @@ public class StateMachine {
     public void unset(Object _leaveWith)
     {
         if (activeState != null) {
+            events.unregister(activeState);
+
             activeState.onLeave(_leaveWith);
             activeState = null;
         }
     }
 
+    /**
+     *
+     */
     public void update() {
-        if (activeState != null) activeState.onUpdate(commands);
-        commands.clear();
+        if (activeState != null) {
+            activeState.onUpdate();
+        }
     }
+
+    /**
+     *
+     */
     public void render() {
-        if (activeState != null) activeState.onRender();
+        if (activeState != null) {
+            activeState.onRender();
+        }
     }
 }

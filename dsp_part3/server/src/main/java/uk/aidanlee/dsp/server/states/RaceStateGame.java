@@ -3,11 +3,9 @@ package uk.aidanlee.dsp.server.states;
 import com.badlogic.gdx.math.Rectangle;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
-import uk.aidanlee.dsp.common.components.craft.LapTracker;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
@@ -34,15 +32,14 @@ class RaceStateGame extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        for (Entity e : craft.getRemotePlayers()) {
-            if (e == null) continue;
+        for (Entity e : craft.getRemotePlayers().values()) {
             if (!e.has("fsm")) continue;
             ((EntityStateMachine) e.get("fsm")).changeState("Active");
         }
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
 
         // Progress each player entity in the game simulation
         simulatePlayers();
@@ -65,9 +62,7 @@ class RaceStateGame extends State {
      * Steps forward the game simulation my moving each player according to the inputs pressed by the remote client.
      */
     private void simulatePlayers() {
-        for (Entity craft : craft.getRemotePlayers()) {
-            if (craft == null) continue;
-
+        for (Entity craft : craft.getRemotePlayers().values()) {
             craft.update(0);
         }
     }
@@ -76,11 +71,9 @@ class RaceStateGame extends State {
      * Resolve any wall collisions between the player craft.
      */
     private void resolveWallCollisions() {
-        for (int i = 0; i < craft.getRemotePlayers().length; i++) {
+        for (Entity e : craft.getRemotePlayers().values()) {
 
             // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getPlayerEntity(i);
-            if (e == null) continue;
             if (!e.has("aabb") || !e.has("polygon")) continue;
 
             // Get the components and query the circuit wall tree for collisions.
@@ -112,18 +105,16 @@ class RaceStateGame extends State {
      *
      */
     private void resolveCraftCollisions() {
-        for (int i = 0; i < craft.getRemotePlayers().length; i++) {
+        for (Entity e : craft.getRemotePlayers().values()) {
 
             // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getPlayerEntity(i);
-            if (e == null) continue;
             if (!e.has("aabb") || !e.has("polygon")) continue;
 
             // Get the components and query the circuit wall tree for collisions.
             AABBComponent    aabb = (AABBComponent) e.get("aabb");
             PolygonComponent poly = (PolygonComponent) e.get("polygon");
 
-            for (Entity craft : craft.getRemotePlayers()) {
+            for (Entity craft : craft.getRemotePlayers().values()) {
                 if (craft == null) continue;
                 if (craft.getName().equals(e.getName())) continue;
 

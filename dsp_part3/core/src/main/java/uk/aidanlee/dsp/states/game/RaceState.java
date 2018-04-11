@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
@@ -151,9 +152,7 @@ public class RaceState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-
-        readCommands(_cmds);
+    public void onUpdate() {
 
         simulatePlayer();
 
@@ -214,33 +213,8 @@ public class RaceState extends State {
         spriteBatch.end();
     }
 
-    /**
-     * Processes commands which have came in from the server.
-     * @param _cmds Commands to read.
-     */
-    private void readCommands(LinkedList<Command> _cmds) {
-        while (_cmds.size() > 0) {
-            Command cmd = _cmds.removeFirst();
-            switch (cmd.id) {
-                case Command.SERVER_STATE:
-                    cmdServerState((CmdServerEvent) cmd);
-                    break;
-
-                case Command.SNAPSHOT:
-                    cmdSnapshot((CmdSnapshot) cmd);
-                    break;
-
-                case Command.CLIENT_DISCONNECTED:
-                    cmdClientDisconnected((CmdClientDisconnected) cmd);
-            }
-        }
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
+    @Subscribe
+    public void eventClientDisconnected(CmdClientDisconnected _cmd) {
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -249,7 +223,8 @@ public class RaceState extends State {
      * When the server has changed state. E.g. Switching back from game to lobby.
      * @param _cmd server state command.
      */
-    private void cmdServerState(CmdServerEvent _cmd) {
+    @Subscribe
+    public void eventServerEvent(CmdServerEvent _cmd) {
         switch (_cmd.state) {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
@@ -261,7 +236,8 @@ public class RaceState extends State {
      * Sets the players position to the new one which came in from the server.
      * @param _cmd snapshot command.
      */
-    private void cmdSnapshot(CmdSnapshot _cmd) {
+    @Subscribe
+    public void eventSnapshot(CmdSnapshot _cmd) {
 
         // Fixes any predictions errors.
         predictionCorrection(_cmd);

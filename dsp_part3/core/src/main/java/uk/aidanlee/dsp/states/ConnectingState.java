@@ -4,12 +4,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.net.Packet;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.net.ConnectionSettings;
-
-import java.util.LinkedList;
 
 public class ConnectingState extends State {
     private ConnectionSettings settings;
@@ -24,7 +21,7 @@ public class ConnectingState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
         readPackets();
 
         // Send a connection request each step if we haven't heard anything back.

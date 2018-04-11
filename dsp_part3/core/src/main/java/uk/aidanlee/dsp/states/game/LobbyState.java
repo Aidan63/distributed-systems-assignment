@@ -3,6 +3,7 @@ package uk.aidanlee.dsp.states.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.google.common.eventbus.Subscribe;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.*;
@@ -18,7 +19,6 @@ import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.states.LobbyData;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class LobbyState extends State {
@@ -90,9 +90,7 @@ public class LobbyState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-        readCommands(_cmds);
-
+    public void onUpdate() {
         drawClientList();
         drawChatBox();
         drawPlayerSettings();
@@ -106,25 +104,8 @@ public class LobbyState extends State {
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
     }
 
-    /**
-     *
-     */
-    private void readCommands(LinkedList<Command> _cmds) {
-        while (_cmds.size() > 0) {
-            Command cmd = _cmds.removeFirst();
-            switch (cmd.id) {
-                case Command.SERVER_STATE:
-                    cmdServerEvent((CmdServerEvent) cmd);
-                    break;
-
-                case Command.SNAPSHOT:
-                    cmdSnapshot((CmdSnapshot) cmd);
-                    break;
-            }
-        }
-    }
-
-    private void cmdServerEvent(CmdServerEvent _cmd) {
+    @Subscribe
+    public void eventServerEvent(CmdServerEvent _cmd) {
         switch (_cmd.state) {
             case ServerEvent.EVENT_LOBBY_COUNTDOWN:
                 canEdit = false;
@@ -137,7 +118,8 @@ public class LobbyState extends State {
         }
     }
 
-    private void cmdSnapshot(CmdSnapshot _cmd) {
+    @Subscribe
+    public void eventSnapshot(CmdSnapshot _cmd) {
         for (PlayerDiff player : _cmd.getDiffedPlayers()) {
 
             if (player.id == ourID);
