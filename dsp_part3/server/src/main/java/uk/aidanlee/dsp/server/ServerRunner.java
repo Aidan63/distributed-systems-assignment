@@ -3,7 +3,7 @@ package uk.aidanlee.dsp.server;
 import com.badlogic.gdx.utils.TimeUtils;
 
 /** Launches the server application. */
-public class ServerLauncher {
+public class ServerRunner {
     public static void main(String[] args) {
 
         // Create the server.
