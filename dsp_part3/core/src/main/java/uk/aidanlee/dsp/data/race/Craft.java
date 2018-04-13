@@ -3,7 +3,7 @@ package uk.aidanlee.dsp.data.race;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
-import uk.aidanlee.dsp.Client;
+import uk.aidanlee.dsp.ClientRunner;
 import uk.aidanlee.dsp.common.components.*;
 import uk.aidanlee.dsp.common.data.circuit.CircuitSpawn;
 import uk.aidanlee.dsp.common.net.Player;
@@ -12,6 +12,7 @@ import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.components.LocalInputComponent;
 import uk.aidanlee.dsp.components.ShadowComponent;
 import uk.aidanlee.dsp.components.TrailComponent;
+import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.jDiffer.math.Vector;
 
 public class Craft {
@@ -26,7 +27,7 @@ public class Craft {
      * @param _spawn
      * @param _ourID
      */
-    public Craft(Player[] _players, CircuitSpawn _spawn, int _ourID) {
+    public Craft(Resources _resources, Player[] _players, CircuitSpawn _spawn, int _ourID) {
 
         remotePlayers = new Visual[_players.length];
 
@@ -38,7 +39,7 @@ public class Craft {
             Vector2 tangent = _spawn.spawns[spawnIndex].tangent;
 
             // Find the correct atlas region for this player.
-            TextureAtlas.AtlasRegion texture = Client.resources.craftAtlas.findRegion("craft", _players[i].getShipIndex());
+            TextureAtlas.AtlasRegion texture = _resources.craftAtlas.findRegion("craft", _players[i].getShipIndex());
 
             // Create and set the initial position, rotation, and origin
             Visual craft = new Visual("local player " + i);

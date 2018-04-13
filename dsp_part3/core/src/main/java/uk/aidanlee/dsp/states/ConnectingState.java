@@ -2,30 +2,41 @@ package uk.aidanlee.dsp.states;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
-import uk.aidanlee.dsp.Client;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.structural.State;
+import uk.aidanlee.dsp.data.events.EvOOBData;
+import uk.aidanlee.dsp.data.events.EvSendPacket;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.net.ConnectionSettings;
 
 public class ConnectingState extends State {
+
     private ConnectionSettings settings;
 
-    public ConnectingState(String _name) {
+    private EventBus events;
+
+    public ConnectingState(String _name, EventBus _events) {
         super(_name);
+        events = _events;
     }
 
     @Override
     public void onEnter(Object _enterWith) {
         settings = (ConnectionSettings) _enterWith;
+        events.register(this);
+    }
+
+    @Override
+    public void onLeave(Object _leaveWith) {
+        events.unregister(this);
     }
 
     @Override
     public void onUpdate() {
-        readPackets();
-
         // Send a connection request each step if we haven't heard anything back.
-        Client.netManager.send(Packet.Connection(settings.getName(), settings.getEp()));
+        events.post(new EvSendPacket(Packet.Connection(settings.getName(), settings.getEp())));
     }
 
     @Override
@@ -36,35 +47,16 @@ public class ConnectingState extends State {
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
     }
 
-    /**
-     * Reads packets from the net manager.
-     * In the connecting state we are interested in Connection Response packets.
-     */
-    private void readPackets() {
-        Packet pck = Client.netManager.getPackets().poll();
-        while (pck != null) {
-            processPacket(pck);
-            pck = Client.netManager.getPackets().poll();
-        }
-    }
+    // Event Functions
 
-    /**
-     *
-     * @param _packet
-     */
-    private void processPacket(Packet _packet) {
-        // If the packet is not OOB or a connection response we don't care about it.
-        if (!_packet.getData().readBoolean()) return;
-        if (!(_packet.getData().readByte() == Packet.CONNECTION_RESPONSE)) return;
-
-        if (_packet.getData().readBoolean()) {
-            // Connection Accepted
-            System.out.println("Connection Accepted");
-            changeState("game", new ConnectionResponse(settings.getEp(), _packet), null);
-        } else {
-            // Connection Denied
-            System.out.println("Connection Denied");
-            changeState("menu", null, null);
+    @Subscribe
+    public void onOOBPacket(EvOOBData _event) {
+        if (_event.packet.getData().readByte() == Packet.CONNECTION_RESPONSE) {
+            if (_event.packet.getData().readBoolean()) {
+                changeState("game", new ConnectionResponse(settings.getEp(), _event.packet), null);
+            } else {
+                changeState("menu", null, null);
+            }
         }
     }
 }

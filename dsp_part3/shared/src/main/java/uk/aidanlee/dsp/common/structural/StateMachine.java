@@ -1,10 +1,6 @@
 package uk.aidanlee.dsp.common.structural;
 
-import com.google.common.eventbus.EventBus;
-import uk.aidanlee.dsp.common.net.commands.Command;
-
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class StateMachine {
@@ -19,26 +15,16 @@ public class StateMachine {
     private State activeState;
 
     /**
-     * Event bus to sent events to the individual states.
-     */
-    private EventBus events;
-
-    /**
      * Create a new empty state machine.
      */
     public StateMachine() {
         states = new HashMap<>();
-        events = new EventBus();
     }
 
     // Public API
 
     public State getActiveState() {
         return activeState;
-    }
-
-    public EventBus getEvents() {
-        return events;
     }
 
     /**
@@ -88,8 +74,6 @@ public class StateMachine {
 
         activeState = states.get(_stateName);
         activeState.onEnter(_enterWith);
-
-        events.register(activeState);
     }
 
     /**
@@ -99,8 +83,6 @@ public class StateMachine {
     public void unset(Object _leaveWith)
     {
         if (activeState != null) {
-            events.unregister(activeState);
-
             activeState.onLeave(_leaveWith);
             activeState = null;
         }
