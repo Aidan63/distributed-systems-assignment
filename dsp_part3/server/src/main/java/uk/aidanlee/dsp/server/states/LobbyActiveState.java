@@ -1,50 +1,77 @@
 package uk.aidanlee.dsp.server.states;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.commands.CmdClientSettings;
 import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
+import uk.aidanlee.dsp.server.data.events.EvClientSettings;
 
 import java.util.LinkedList;
+import java.util.Map;
 
 public class LobbyActiveState extends State {
-    private Player[] players;
 
-    public LobbyActiveState(String _name, Player[] _players) {
+    /**
+     * Access to the games player structure.
+     */
+    private Map<Integer, Player> players;
+
+    /**
+     * Access to the games event bus.
+     */
+    private EventBus events;
+
+    /**
+     * //
+     * @param _name    //
+     * @param _events  //
+     * @param _players //
+     */
+    public LobbyActiveState(String _name, EventBus _events, Map<Integer, Player> _players) {
         super(_name);
 
+        events  = _events;
         players = _players;
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-        processCommands(_cmds);
+    public void onEnter(Object _enterWith) {
+        events.register(this);
+    }
 
+    @Override
+    public void onLeave(Object _leaveWith) {
+        events.unregister(this);
+    }
+
+    @Override
+    public void onUpdate() {
         if (numPlayers() > 0 && allPlayersReady()) {
             changeState("lobby-countdown", null, null);
         }
     }
 
-    private void processCommands(LinkedList<Command> _cmds) {
-        while (_cmds.size() > 0) {
-            Command cmd = _cmds.removeFirst();
-            if (cmd.id == Command.CLIENT_SETTINGS) {
-                CmdClientSettings c = (CmdClientSettings) cmd;
-                players[c.clientID].setShipIndex(c.index);
-                players[c.clientID].setShipColor(c.shipColor);
-                players[c.clientID].setTrailColor(c.trailColor);
-                players[c.clientID].setReady(c.ready);
-            }
-        }
+    // Event Functions.
+
+    @Subscribe
+    public void onClientSettings(EvClientSettings _event) {
+        players.get(_event.cmd.clientID).setShipIndex(_event.cmd.index);
+        players.get(_event.cmd.clientID).setShipColor(_event.cmd.shipColor);
+        players.get(_event.cmd.clientID).setTrailColor(_event.cmd.trailColor);
+        players.get(_event.cmd.clientID).setReady(_event.cmd.ready);
     }
+
+    // Private Helper Functions
+
     /**
      * Returns if all connected players are ready.
      * Will also return true if no players are connected.
      * @return true / false if all players are ready.
      */
     private boolean allPlayersReady() {
-        for (Player plyr : players) {
-            if (plyr == null) continue;
+        for (Player plyr : players.values()) {
             if (!plyr.isReady()) return false;
         }
 
@@ -56,12 +83,6 @@ public class LobbyActiveState extends State {
      * @return int of connected players
      */
     private int numPlayers() {
-        int count = 0;
-
-        for (Player plyr : players) {
-            if (plyr != null) count++;
-        }
-
-        return count;
+        return players.size();
     }
 }

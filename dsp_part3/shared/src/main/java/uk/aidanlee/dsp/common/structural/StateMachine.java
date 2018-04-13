@@ -1,9 +1,6 @@
 package uk.aidanlee.dsp.common.structural;
 
-import uk.aidanlee.dsp.common.net.commands.Command;
-
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 public class StateMachine {
@@ -18,36 +15,14 @@ public class StateMachine {
     private State activeState;
 
     /**
-     * List of commands to pass to the active state next update
-     */
-    private LinkedList<Command> commands;
-
-    /**
      * Create a new empty state machine.
      */
     public StateMachine() {
-        states   = new HashMap<>();
-        commands = new LinkedList<>();
+        states = new HashMap<>();
     }
 
     // Public API
 
-    public void pushCommand(Command _cmd) {
-        commands.addLast(_cmd);
-    }
-
-    /**
-     * Returns the name of the active state.
-     * @return State name string.
-     */
-    public String getActiveStateName() {
-        return activeState.getName();
-    }
-
-    /**
-     *
-     * @return
-     */
     public State getActiveState() {
         return activeState;
     }
@@ -88,7 +63,12 @@ public class StateMachine {
      */
     public void set(String _stateName, Object _enterWith, Object _leaveWith)
     {
-        if (!states.containsKey(_stateName)) return;
+        if (!states.containsKey(_stateName)) {
+            return;
+        }
+        if (activeState != null && activeState.getName().equals(_stateName)) {
+            return;
+        }
 
         unset(_leaveWith);
 
@@ -108,11 +88,21 @@ public class StateMachine {
         }
     }
 
+    /**
+     *
+     */
     public void update() {
-        if (activeState != null) activeState.onUpdate(commands);
-        commands.clear();
+        if (activeState != null) {
+            activeState.onUpdate();
+        }
     }
+
+    /**
+     *
+     */
     public void render() {
-        if (activeState != null) activeState.onRender();
+        if (activeState != null) {
+            activeState.onRender();
+        }
     }
 }

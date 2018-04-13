@@ -1,110 +1,116 @@
 package uk.aidanlee.dsp.states;
 
-import uk.aidanlee.dsp.Client;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import uk.aidanlee.dsp.common.net.EndPoint;
+import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.ChatLog;
+import uk.aidanlee.dsp.data.Resources;
+import uk.aidanlee.dsp.data.events.*;
 import uk.aidanlee.dsp.data.states.LobbyData;
 import uk.aidanlee.dsp.net.ConnectionResponse;
-import uk.aidanlee.dsp.net.Connections;
 import uk.aidanlee.dsp.states.game.LobbyState;
 import uk.aidanlee.dsp.states.game.RaceState;
 
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class GameState extends State {
-    /**
-     * Manages the connection to the server.
-     * Will send and read OOB and netchan commands.
-     */
-    private Connections connections;
 
-    /**
-     * Array of all players connected to this server.
-     * Length of the array is the max clients connected.
-     * Index values are the clients ID.
-     */
+    private EventBus events;
+
+    private EndPoint server;
+
+    //
+
+    private NetChan netChan;
+
     private Player[] players;
 
-    /**
-     * The local players ID.
-     */
-    private int ourID;
-
-    /**
-     * Chat log to store all messages.
-     */
     private ChatLog chat;
 
-    /**
-     * Game state machine. Has a lobby and race state.
-     */
+    private Resources resources;
+
+    //
+
     private StateMachine gameState;
 
-    /**
-     * Repeatedly triggering timer to send an OOB heartbeat to the server.
-     */
-    private Timer heartbeat;
+    private Timer heartbeatSender;
 
-    public GameState(String _name) {
+    private Timer heartbeatTimeout;
+
+
+    public GameState(String _name, EventBus _events) {
         super(_name);
+        events = _events;
     }
 
     @Override
     public void onEnter(Object _enterWith) {
+        events.register(this);
+
         // Cast the entered object to the connection response class
         ConnectionResponse response = (ConnectionResponse) _enterWith;
 
         // Read some basic data from the response
+        server           = response.getEp();
         int id           = response.getPacket().getData().readByte();
         int maxClients   = response.getPacket().getData().readByte();
         int mapIndex     = response.getPacket().getData().readByte();
         int numConnected = response.getPacket().getData().readByte();
 
         // Setup all of the game needed classes
-        connections = new Connections(response.getEp());
-        players     = new Player[maxClients];
-        chat        = new ChatLog();
+        netChan   = new NetChan(server);
+        players   = new Player[maxClients];
+        chat      = new ChatLog();
+        resources = new Resources();
 
         // Read all of the other connected player information
         readPlayers(response.getPacket(), numConnected);
-        ourID = id;
 
         // Create the game state machine.
         gameState = new StateMachine();
-        gameState.add(new LobbyState("lobby"));
-        gameState.add(new RaceState("race"));
-        gameState.set("lobby", new LobbyData(connections.getNetChan(), chat, players, ourID), null);
+        gameState.add(new LobbyState("lobby", resources, events, server));
+        gameState.add(new RaceState("race", resources, events));
+        gameState.set("lobby", new LobbyData(chat, players, id), null);
 
         // Setup the heartbeat timer.
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                Client.netManager.send(Packet.Heartbeat(connections.getServer()));
+                events.post(new EvSendPacket(Packet.Heartbeat(server)));
             }
         };
 
-        heartbeat = new Timer();
-        heartbeat.scheduleAtFixedRate(task, 1000, 1000);
+        heartbeatSender = new Timer();
+        heartbeatSender.scheduleAtFixedRate(task, 1000, 1000);
+
+        // Setup the server timeout checker.
+        resetHeartbeatTimeout();
     }
 
     @Override
     public void onLeave(Object _leaveWith) {
-        super.onLeave(_leaveWith);
-        heartbeat.cancel();
-        connections.dispose();
+        events.unregister(this);
+        heartbeatTimeout.cancel();
+        heartbeatSender.cancel();
+        resources.dispose();
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
         // Read and process and commands from the server.
-        readCommands();
         gameState.update();
+
+        Packet netchanPacket = netChan.send();
+        if (netchanPacket != null) {
+            events.post(new EvSendPacket(netchanPacket));
+        }
 
     }
 
@@ -113,13 +119,66 @@ public class GameState extends State {
         gameState.render();
     }
 
+    // Event Functions
+
+    @Subscribe
+    public void onNetChanMessage(EvNetChanData _event) {
+        for (Command cmd : netChan.receive(_event.packet)) {
+            events.post(cmd);
+        }
+    }
+
+    @Subscribe
+    public void onOOBMessage(EvOOBData _event) {
+        switch (_event.packet.getData().readByte()) {
+            case Packet.HEARTBEAT:
+                resetHeartbeatTimeout();
+                break;
+
+            case Packet.DISCONNECTION:
+                changeState("menu", null, null);
+                break;
+        }
+    }
+
+    @Subscribe
+    public void onReliableCommand(EvAddReliableCommand _event) {
+        netChan.addCommand(_event.cmd);
+    }
+
+    @Subscribe
+    public void onUnreliableCommand(EvAddUnreliableCommand _event) {
+        netChan.addReliableCommand(_event.cmd);
+    }
+
+    @Subscribe
+    public void onClientConnected(CmdClientConnected _cmd) {
+        Player player = new Player(_cmd.client.getName());
+        player.setShipIndex(_cmd.client.getShipIndex());
+        player.setShipColor(_cmd.client.getShipColor());
+        player.setTrailColor(_cmd.client.getTrailColor());
+
+        players[_cmd.client.getId()] = player;
+        chat.addServerMessage(_cmd.client.getName() + " has joined");
+    }
+
+    @Subscribe
+    public void onClientDisconnected(CmdClientDisconnected _cmd) {
+        if (players[_cmd.clientID] == null) return;
+
+        chat.addServerMessage(players[_cmd.clientID].getName() + " has left");
+        players[_cmd.clientID] = null;
+
+        //gameState.getEvents().post(_cmd);
+    }
+
+    @Subscribe
+    public void onChatMessage(CmdChatMessage _cmd) {
+        chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
+    }
+
     // Internal Functions
 
-    /**
-     * Reads about about all of the existing players in the game.
-     * @param _packet     Packet to read data from.
-     * @param _numPlayers The number of clients currently connected.
-     */
     private void readPlayers(Packet _packet, int _numPlayers) {
         for (int i = 0; i < _numPlayers; i++) {
             // Read Basic Info
@@ -150,73 +209,21 @@ public class GameState extends State {
         }
     }
 
-    /**
-     *
-     */
-    private void readCommands() {
-        for (Command cmd : connections.update()) {
-            switch (cmd.id) {
-                case Command.CLIENT_CONNECTED:
-                    cmdClientConnected((CmdClientConnected) cmd);
-                    break;
-
-                case Command.CLIENT_DISCONNECTED:
-                    // Remove the connected client from the players structure.
-                    // Also pass the disconnect command to the game state in-case we are in a race and need to remove
-                    // the client visual.
-                    cmdClientDisconnected((CmdClientDisconnected) cmd);
-                    gameState.pushCommand(cmd);
-                    break;
-
-                case Command.CHAT_MESSAGE:
-                    cmdChatMessage((CmdChatMessage) cmd);
-                    break;
-
-                case Command.SNAPSHOT:
-                case Command.SERVER_STATE:
-                    gameState.pushCommand(cmd);
-                    break;
-
-                default:
-                    System.out.println("Unknown net chan command");
-            }
+    private void resetHeartbeatTimeout() {
+        if (heartbeatTimeout != null) {
+            heartbeatTimeout.cancel();
+            heartbeatTimeout = null;
         }
-    }
 
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientConnected(CmdClientConnected _cmd) {
-        System.out.println("Client Connected");
-
-        Player player = new Player(_cmd.client.getName());
-        player.setShipIndex(_cmd.client.getShipIndex());
-        player.setShipColor(_cmd.client.getShipColor());
-        player.setTrailColor(_cmd.client.getTrailColor());
-
-        players[_cmd.client.getId()] = player;
-        chat.addServerMessage(_cmd.client.getName() + " has joined");
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
-        System.out.println("Client Disconnected");
-
-        if (players[_cmd.clientID] == null) return;
-
-        chat.addServerMessage(players[_cmd.clientID].getName() + " has left");
-        players[_cmd.clientID] = null;
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdChatMessage(CmdChatMessage _cmd) {
-        chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
+        // Start the timout timer.
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Server timeout");
+                changeState("menu", null, null);
+            }
+        };
+        heartbeatTimeout = new Timer();
+        heartbeatTimeout.schedule(task, 5000);
     }
 }

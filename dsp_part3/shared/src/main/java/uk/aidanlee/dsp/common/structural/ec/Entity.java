@@ -1,6 +1,7 @@
 package uk.aidanlee.dsp.common.structural.ec;
 
 import com.badlogic.gdx.math.Vector2;
+import com.google.common.eventbus.EventBus;
 import uk.aidanlee.dsp.common.structural.ModList;
 
 import java.util.*;
@@ -21,6 +22,11 @@ public class Entity {
      * Mod list is used since component will want to add and remove other component while the components are being iterated over.
      */
     private ModList<Component> components;
+
+    /**
+     * Events for this entity.
+     */
+    private final EventBus events;
 
     /**
      * Position of this entity.
@@ -50,6 +56,7 @@ public class Entity {
         rotation = 0;
 
         components = new ModList<>();
+        events     = new EventBus();
     }
 
     // Getters and Setters
@@ -64,6 +71,10 @@ public class Entity {
 
     public String getId() {
         return id;
+    }
+
+    public EventBus getEvents() {
+        return events;
     }
 
     // Public API

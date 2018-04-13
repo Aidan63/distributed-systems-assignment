@@ -1,18 +1,23 @@
 package uk.aidanlee.dsp.server.data;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.StateMachine;
+import uk.aidanlee.dsp.server.data.events.EvClientConnected;
+import uk.aidanlee.dsp.server.data.events.EvClientDisconnected;
 import uk.aidanlee.dsp.server.states.LobbyActiveState;
 import uk.aidanlee.dsp.server.states.LobbyCountdownState;
 import uk.aidanlee.dsp.server.states.RaceState;
-import java.util.LinkedList;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Game {
     /**
      * All of the players data in this game.
      */
-    private final Player[] players;
+    private final Map<Integer, Player> players;
 
     /**
      * The state machine for the game.
@@ -20,67 +25,62 @@ public class Game {
     private final StateMachine states;
 
     /**
-     * Queue of all commands which come into the game simulation.
+     *
      */
-    private final LinkedList<Command> commands;
+    private final EventBus events;
 
     // Constructors
 
     /**
-     *
-     * @param _maxPlayers
+     * Creates a new game simulation with a maximum number of players.
      */
-    public Game(int _maxPlayers) {
-        players = new Player[_maxPlayers];
+    public Game() {
+        players = new HashMap<>();
 
-        commands = new LinkedList<>();
+        events = new EventBus();
+        events.register(this);
 
         // Setup the game state machine.
         states = new StateMachine();
-        states.add(new LobbyActiveState("lobby-active", players));
-        states.add(new LobbyCountdownState("lobby-countdown"));
-        states.add(new RaceState("game", players));
+        states.add(new LobbyActiveState("lobby-active", events, players));
+        states.add(new LobbyCountdownState("lobby-countdown", events));
+        states.add(new RaceState("game", events, players));
         states.set("lobby-active", null, null);
+    }
+
+    // Events Functions
+
+    /**
+     * Gets the games main event bus.
+     * @return EventBus.
+     */
+    public EventBus getEvents() {
+        return events;
+    }
+
+    @Subscribe
+    public void eventPlayerConnected(EvClientConnected _event) {
+        players.put(_event.clientID, new Player(_event.name));
+    }
+
+    @Subscribe
+    public void eventPlayerDisconnected(EvClientDisconnected _event) {
+        players.remove(_event.clientID);
     }
 
     // Public API
 
     /**
-     * Adds a new command for the game to process.
-     * @param _cmd The command to add
-     */
-    public void addCommand(Command _cmd) {
-        commands.addLast(_cmd);
-    }
-
-    /**
-     * Adds a new player to the game simulation.
-     * @param _clientID The remote client ID.
-     * @param _name     The name of this player.
-     */
-    public void addPlayer(int _clientID, String _name) {
-        players[_clientID] = new Player(_name);
-    }
-
-    /**
-     * Removes a player from the game simulation.
-     * @param _clientID ID of the player to remove.
-     */
-    public void removePlayer(int _clientID) {
-        players[_clientID] = null;
-    }
-
-    /**
      * Returns info on all players in the game.
-     * @return
+     * @return Player
      */
-    public Player[] getPlayers() {
-        return players;
+    public Player getPlayer(int _clientID) {
+        return players.get(_clientID);
     }
 
     /**
      * Returns the name of the active state.
-     * @return
+     * @return String
      */
     public String getState() {
         return states.getActiveState().getName();
@@ -90,26 +90,6 @@ public class Game {
      * Process and commands and step forward the game simulation.
      */
     public void update() {
-        processCmds();
         states.update();
-    }
-
-    // Internal Helpers
-
-    /**
-     * Process every command the game simulation has received since the last update.
-     */
-    private void processCmds() {
-        while (commands.size() > 0) {
-            // While there are still commands read them and push them to the state machine.
-            Command cmd = commands.removeFirst();
-            switch (cmd.id) {
-                case Command.CLIENT_INPUT:
-                case Command.CLIENT_SETTINGS:
-                case Command.CLIENT_DISCONNECTED:
-                    states.pushCommand(cmd);
-                    break;
-            }
-        }
     }
 }

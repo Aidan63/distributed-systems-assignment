@@ -2,10 +2,7 @@ package uk.aidanlee.dsp.common.data;
 
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Times {
     /**
@@ -23,12 +20,11 @@ public class Times {
      * @param _entities //
      * @param _maxLaps  //
      */
-    public Times(Entity[] _entities, int _maxLaps) {
+    public Times(Collection<Entity> _entities, int _maxLaps) {
         times   = new HashMap<>();
         maxLaps = _maxLaps;
 
         for (Entity e : _entities) {
-            if (e == null) continue;
             times.put(e.getName(), new ArrayList<>());
         }
     }

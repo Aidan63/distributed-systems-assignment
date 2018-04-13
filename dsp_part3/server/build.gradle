@@ -1,7 +1,7 @@
 apply plugin: 'application'
 
 sourceCompatibility = 1.8
-mainClassName = 'uk.aidanlee.dsp.server.ServerLauncher'
+mainClassName = 'uk.aidanlee.dsp.server.ServerRunner'
 eclipse.project.name = appName + '-server'
 
 dependencies {

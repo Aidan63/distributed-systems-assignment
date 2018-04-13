@@ -3,74 +3,58 @@ package uk.aidanlee.dsp.states.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.*;
 import imgui.internal.Rect;
-import uk.aidanlee.dsp.Client;
 import uk.aidanlee.dsp.common.data.ServerEvent;
-import uk.aidanlee.dsp.common.net.NetChan;
+import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.ChatLog;
+import uk.aidanlee.dsp.data.Resources;
+import uk.aidanlee.dsp.data.events.EvAddReliableCommand;
+import uk.aidanlee.dsp.data.events.EvSendPacket;
 import uk.aidanlee.dsp.data.states.LobbyData;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class LobbyState extends State {
 
-    // Data received when entering this state.
+    private EventBus events;
 
-    /**
-     * Connection to the server.
-     */
-    private NetChan netChan;
+    private EndPoint server;
 
-    /**
-     * Chat log for this game.
-     */
+    private Resources resources;
+
+    //
+
     private ChatLog chatLog;
 
-    /**
-     * All of the players in the server.
-     */
     private Player[] players;
 
-    /**
-     * Client ID of our player.
-     */
     private int ourID;
 
-    // Data local to this state only.
+    //
 
-    /**
-     * If we can edit our ship settings or the ready state.
-     * Set to false once the server has started its countdown.
-     */
     private boolean canEdit;
 
-    /**
-     * Character array for the chat box input.
-     */
     private char[] inputBox;
 
-    /**
-     * Array with one entry which will be our ship index.
-     * Array needed by ImGui.
-     */
     private int[] ourShipIndex;
 
-    /**
-     * If we are currently ready.
-     */
     private boolean isReady;
 
-    public LobbyState(String _name) {
+    public LobbyState(String _name, Resources _resources, EventBus _events, EndPoint _server) {
         super(_name);
+        resources = _resources;
+        events    = _events;
+        server    = _server;
     }
 
     @Override
@@ -78,7 +62,6 @@ public class LobbyState extends State {
 
         // Read the required data from the game state.
         LobbyData data = (LobbyData) _enterWith;
-        netChan = data.chan;
         chatLog = data.chat;
         players = data.players;
         ourID   = data.ourID;
@@ -87,12 +70,17 @@ public class LobbyState extends State {
         inputBox     = new char[255];
         ourShipIndex = new int[] { players[ourID].getShipIndex() };
         isReady      = false;
+
+        events.register(this);
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-        readCommands(_cmds);
+    public void onLeave(Object _leaveWith) {
+        events.unregister(this);
+    }
 
+    @Override
+    public void onUpdate() {
         drawClientList();
         drawChatBox();
         drawPlayerSettings();
@@ -106,25 +94,10 @@ public class LobbyState extends State {
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
     }
 
-    /**
-     *
-     */
-    private void readCommands(LinkedList<Command> _cmds) {
-        while (_cmds.size() > 0) {
-            Command cmd = _cmds.removeFirst();
-            switch (cmd.id) {
-                case Command.SERVER_STATE:
-                    cmdServerEvent((CmdServerEvent) cmd);
-                    break;
+    // Event Functions
 
-                case Command.SNAPSHOT:
-                    cmdSnapshot((CmdSnapshot) cmd);
-                    break;
-            }
-        }
-    }
-
-    private void cmdServerEvent(CmdServerEvent _cmd) {
+    @Subscribe
+    public void onServerEvent(CmdServerEvent _cmd) {
         switch (_cmd.state) {
             case ServerEvent.EVENT_LOBBY_COUNTDOWN:
                 canEdit = false;
@@ -132,12 +105,13 @@ public class LobbyState extends State {
                 break;
 
             case ServerEvent.EVENT_RACE_ENTER:
-                changeState("race", new LobbyData(netChan, chatLog, players, ourID), null);
+                changeState("race", new LobbyData(chatLog, players, ourID), null);
                 break;
         }
     }
 
-    private void cmdSnapshot(CmdSnapshot _cmd) {
+    @Subscribe
+    public void onSnapshot(CmdSnapshot _cmd) {
         for (PlayerDiff player : _cmd.getDiffedPlayers()) {
 
             if (player.id == ourID);
@@ -180,13 +154,15 @@ public class LobbyState extends State {
         }
     }
 
+    // Private Functions
+
     private void drawClientList() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(40, 40), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(440, 420), Cond.Always);
         ImGui.INSTANCE.begin("Clients Connected", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI());
 
         // Draws players names or "free slot" for all the clients.
-        // Client ID is pushed as an ID for ImGui in-case two clients have the same name.
+        // ClientRunner ID is pushed as an ID for ImGui in-case two clients have the same name.
         for (int i = 0; i < players.length; i++) {
             if (players[i] == null) continue;
 
@@ -228,7 +204,8 @@ public class LobbyState extends State {
             // TODO : Check if message is not empty.
             String str = new String(inputBox).trim();
 
-            netChan.addReliableCommand(new CmdChatMessage(ourID, str));
+            //netChan.addReliableCommand(new CmdChatMessage(ourID, str));
+            events.post(new EvAddReliableCommand(new CmdChatMessage(ourID, str)));
             chatLog.addPlayerMessage(players[ourID].getName(), str);
 
             // reset the input box.
@@ -258,7 +235,7 @@ public class LobbyState extends State {
         Vec4 ourTcol = new Vec4(players[ourID].getTrailColor()[0], players[ourID].getTrailColor()[1], players[ourID].getTrailColor()[2], 1);
 
         // Draw the currently selected ship tinted to the colour.
-        TextureRegion region = Client.resources.craftAtlas.findRegion("craft", players[ourID].getShipIndex());
+        TextureRegion region = resources.craftAtlas.findRegion("craft", players[ourID].getShipIndex());
         ImGui.INSTANCE.image(region.getTexture().getTextureObjectHandle(), new Vec2(128, 64), new Vec2(region.getU(), region.getV()), new Vec2(region.getU2(), region.getV2()), ourCcol, ourTcol);
 
         // Draw the player settings controls.
@@ -294,12 +271,15 @@ public class LobbyState extends State {
         // If any of the controls were modified, send a reliable client settings command
         if (changed) {
             players[ourID].setShipIndex(ourShipIndex[0]);
-            netChan.addReliableCommand(new CmdClientSettings(
-                    ourID,
-                    players[ourID].getShipIndex(),
-                    players[ourID].getShipColor(),
-                    players[ourID].getTrailColor(),
-                    players[ourID].isReady()));
+            events.post(new EvAddReliableCommand(
+                    new CmdClientSettings(
+                        ourID,
+                        players[ourID].getShipIndex(),
+                        players[ourID].getShipColor(),
+                        players[ourID].getTrailColor(),
+                        players[ourID].isReady())
+                    )
+            );
         }
 
         // Disconnection button to cleanly disconnect from the server.
@@ -307,11 +287,12 @@ public class LobbyState extends State {
 
             // Send 10 disconnect packets, hope one gets through.
             for (int i = 0; i < 10; i++) {
-                Client.netManager.send(Packet.Disconnection(netChan.getDestination()));
+                //ClientRunner.netManager.send(Packet.Disconnection(netChan.getDestination()));
+                events.post(new EvSendPacket(Packet.Disconnection(server)));
             }
 
             // Return to the main menu.
-            Client.clientState.set("menu", null, null);
+            changeState("menu", null, null);
         }
 
         ImGui.INSTANCE.end();
@@ -347,7 +328,7 @@ public class LobbyState extends State {
         p1 = new Vec2((total_bb.getMax().x - dim) - 2, (total_bb.getMax().y - dim) - 2);
         p2 = new Vec2(p1.x + dim, p1.y  + dim);
         d.addImage(
-                Client.resources.checkbox.getTextureObjectHandle(),
+                resources.checkbox.getTextureObjectHandle(),
                 p1,
                 p2,
                 new Vec2(0, 0),
@@ -358,7 +339,7 @@ public class LobbyState extends State {
         // Draw ship preview with the clients colour.
         p1.x -= ((dim * 2) + pad);
         p2.x -= (dim + pad);
-        TextureRegion region = Client.resources.craftAtlas.findRegion("craft", _player.getShipIndex());
+        TextureRegion region = resources.craftAtlas.findRegion("craft", _player.getShipIndex());
         d.addImage(
                 region.getTexture().getTextureObjectHandle(),
                 p1,

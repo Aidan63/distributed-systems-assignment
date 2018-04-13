@@ -7,14 +7,12 @@ import imgui.Cond;
 import imgui.ImGui;
 import imgui.SelectableFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionSettings;
 import uk.aidanlee.dsp.net.ServerDiscovery;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.LinkedList;
 
 public class MenuState extends State {
     private char[] ip;
@@ -42,7 +40,7 @@ public class MenuState extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
+    public void onUpdate() {
 
         // Keep track of LAN servers.
         discoverer.update();

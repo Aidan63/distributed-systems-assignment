@@ -8,14 +8,14 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
-import uk.aidanlee.dsp.Client;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
 import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
-import uk.aidanlee.dsp.common.net.NetChan;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.commands.*;
@@ -27,6 +27,8 @@ import uk.aidanlee.dsp.common.utils.MathsUtil;
 import uk.aidanlee.dsp.components.ShadowComponent;
 import uk.aidanlee.dsp.components.TrailComponent;
 import uk.aidanlee.dsp.data.ChatLog;
+import uk.aidanlee.dsp.data.Resources;
+import uk.aidanlee.dsp.data.events.EvAddUnreliableCommand;
 import uk.aidanlee.dsp.data.race.Craft;
 import uk.aidanlee.dsp.data.race.InputBuffer;
 import uk.aidanlee.dsp.data.race.View;
@@ -42,95 +44,64 @@ import java.util.List;
 
 public class RaceState extends State {
 
-    // Data received when entering the state.
+    private EventBus events;
 
-    /**
-     * Connection to the server.
-     */
-    private NetChan netChan;
+    private Resources resources;
 
-    /**
-     * Chat log for this game.
-     */
+    //
+
     private ChatLog chatLog;
 
-    /**
-     * All of the players in the server.
-     */
     private Player[] players;
 
-    /**
-     * Client ID of our player.
-     */
     private int ourID;
 
-    // Data local to this state.
+    //
 
-    /**
-     * Holds all data on the circuit.
-     * Does not hold any rendering information.
-     */
     private Circuit circuit;
 
-    /**
-     * Holds and creates the visual entities for each player.
-     */
     private Craft craft;
 
-    /**
-     * Manages the view for the local player.
-     */
     private View view;
 
-    /**
-     * Batcher for efficiently drawing all players.
-     */
     private SpriteBatch spriteBatch;
 
-    /**
-     * Batcher for drawing the track and trail meshes.
-     */
     private MeshBatch meshBatch;
 
-    /**
-     * Track quad data.
-     */
     private QuadMesh trackMesh;
 
-    /**
-     *
-     */
     private InputBuffer inpBuff;
 
-    public RaceState(String _name) {
+    public RaceState(String _name, Resources _resources, EventBus _events) {
         super(_name);
+        resources = _resources;
+        events    = _events;
     }
 
     @Override
     public void onEnter(Object _enterWith) {
-        super.onEnter(_enterWith);
+        events.register(this);
 
         // Read the required data from the game state.
         LobbyData data = (LobbyData) _enterWith;
-        netChan = data.chan;
         chatLog = data.chat;
         players = data.players;
         ourID   = data.ourID;
 
         circuit = new Circuit(Gdx.files.internal("tracks/track.p2"));
-        craft   = new Craft(players, circuit.getSpawn(), ourID);
+        craft   = new Craft(resources, players, circuit.getSpawn(), ourID);
         view    = new View();
 
         inpBuff = new InputBuffer(64);
 
         // Create the batchers
         spriteBatch = new SpriteBatch();
-        meshBatch   = new MeshBatch(Client.resources.trackTexture);
+        meshBatch   = new MeshBatch(resources.trackTexture);
         meshBatch.addShader("track", new ShaderProgram(Gdx.files.internal("shaders/mesh.vert"), Gdx.files.internal("shaders/mesh.frag")));
         meshBatch.addShader("trail", new ShaderProgram(Gdx.files.internal("shaders/trail.vert"), Gdx.files.internal("shaders/trail.frag")));
 
         // Build the track mesh.
-        trackMesh = new QuadMesh(false, circuit.getTiles().length, Client.resources.trackAtlas);
+        trackMesh = new QuadMesh(false, circuit.getTiles().length, resources.trackAtlas);
 
         for (int i = 0; i < circuit.getTiles().length; i++) {
             trackMesh.addQuad(
@@ -147,13 +118,11 @@ public class RaceState extends State {
 
     @Override
     public void onLeave(Object _leaveWith) {
-        super.onLeave(_leaveWith);
+        events.unregister(this);
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-
-        readCommands(_cmds);
+    public void onUpdate() {
 
         simulatePlayer();
 
@@ -165,7 +134,7 @@ public class RaceState extends State {
 
         // Send our currently pressed inputs to the server and add it to the input buffer.
         CmdClientInput input = new CmdClientInput(ourID, (InputComponent) craft.getRemotePlayers()[ourID].get("input"));
-        netChan.addCommand(input);
+        events.post(new EvAddUnreliableCommand(input));
         inpBuff.addEntry(input);
     }
 
@@ -214,33 +183,10 @@ public class RaceState extends State {
         spriteBatch.end();
     }
 
-    /**
-     * Processes commands which have came in from the server.
-     * @param _cmds Commands to read.
-     */
-    private void readCommands(LinkedList<Command> _cmds) {
-        while (_cmds.size() > 0) {
-            Command cmd = _cmds.removeFirst();
-            switch (cmd.id) {
-                case Command.SERVER_STATE:
-                    cmdServerState((CmdServerEvent) cmd);
-                    break;
+    // Event Functions
 
-                case Command.SNAPSHOT:
-                    cmdSnapshot((CmdSnapshot) cmd);
-                    break;
-
-                case Command.CLIENT_DISCONNECTED:
-                    cmdClientDisconnected((CmdClientDisconnected) cmd);
-            }
-        }
-    }
-
-    /**
-     *
-     * @param _cmd
-     */
-    private void cmdClientDisconnected(CmdClientDisconnected _cmd) {
+    @Subscribe
+    public void onClientDisconnected(CmdClientDisconnected _cmd) {
         craft.getRemotePlayers()[_cmd.clientID].destroy();
         craft.getRemotePlayers()[_cmd.clientID] = null;
     }
@@ -249,7 +195,8 @@ public class RaceState extends State {
      * When the server has changed state. E.g. Switching back from game to lobby.
      * @param _cmd server state command.
      */
-    private void cmdServerState(CmdServerEvent _cmd) {
+    @Subscribe
+    public void onServerEvent(CmdServerEvent _cmd) {
         switch (_cmd.state) {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
@@ -261,7 +208,8 @@ public class RaceState extends State {
      * Sets the players position to the new one which came in from the server.
      * @param _cmd snapshot command.
      */
-    private void cmdSnapshot(CmdSnapshot _cmd) {
+    @Subscribe
+    public void onSnapshot(CmdSnapshot _cmd) {
 
         // Fixes any predictions errors.
         predictionCorrection(_cmd);
@@ -308,6 +256,8 @@ public class RaceState extends State {
             }
         }
     }
+
+    // Private Functions
 
     /**
      *

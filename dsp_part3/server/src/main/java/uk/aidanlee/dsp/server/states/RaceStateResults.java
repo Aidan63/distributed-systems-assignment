@@ -1,9 +1,6 @@
 package uk.aidanlee.dsp.server.states;
 
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
-
-import java.util.LinkedList;
 
 class RaceStateResults extends State {
     RaceStateResults(String _name) {
@@ -16,8 +13,8 @@ class RaceStateResults extends State {
     }
 
     @Override
-    public void onUpdate(LinkedList<Command> _cmds) {
-        super.onUpdate(_cmds);
+    public void onUpdate() {
+        super.onUpdate();
     }
 
     @Override
