@@ -13,6 +13,7 @@ import com.google.common.eventbus.Subscribe;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
+import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
@@ -441,9 +442,9 @@ public class RaceState extends State {
     private void showResults() {
         if (!showTimes) return;
 
-        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 75, (Gdx.graphics.getHeight() / 2) - 50), Cond.Always, new Vec2());
-        ImGui.INSTANCE.setNextWindowSize(new Vec2(150, 100), Cond.Always);
-        ImGui.INSTANCE.begin("Results", null, 0);
+        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(600, 400), Cond.Always);
+        ImGui.INSTANCE.begin("Results", null, WindowFlags.NoResize.getI());
 
         for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
             float timeSum = 0;
@@ -451,7 +452,7 @@ public class RaceState extends State {
                 timeSum += t;
             }
 
-            ImGui.INSTANCE.text(craft.getRemotePlayers()[entry.getKey()].getName() + " : " + timeSum + " seconds");
+            ImGui.INSTANCE.text(players[entry.getKey()].getName() + " : " + timeSum + " seconds");
         }
 
         ImGui.INSTANCE.end();
