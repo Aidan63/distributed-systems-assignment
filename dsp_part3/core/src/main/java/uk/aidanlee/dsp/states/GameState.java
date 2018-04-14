@@ -151,6 +151,8 @@ public class GameState extends State {
         netChan.addReliableCommand(_event.cmd);
     }
 
+    //
+
     @Subscribe
     public void onClientConnected(CmdClientConnected _cmd) {
         Player player = new Player(_cmd.client.getName());
@@ -175,6 +177,16 @@ public class GameState extends State {
     @Subscribe
     public void onChatMessage(CmdChatMessage _cmd) {
         chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
+    }
+
+    @Subscribe
+    public void onPlayerFinished(CmdPlayerFinished _cmd) {
+        System.out.println(_cmd.clientID + " finished");
+    }
+
+    @Subscribe
+    public void onRaceResults(CmdRaceResults _cmd) {
+        System.out.println("Results : " + _cmd.times);
     }
 
     // Internal Functions

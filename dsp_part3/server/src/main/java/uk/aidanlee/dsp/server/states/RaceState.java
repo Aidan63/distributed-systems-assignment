@@ -12,9 +12,10 @@ import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.server.data.Craft;
-import uk.aidanlee.dsp.server.data.events.EvClientDisconnected;
-import uk.aidanlee.dsp.server.data.events.EvClientInput;
+import uk.aidanlee.dsp.server.data.events.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RaceState extends State {
@@ -67,7 +68,7 @@ public class RaceState extends State {
         times  = new Times(craft.getRemotePlayers().values(), 3);
         states = new StateMachine()
                 .add(new RaceStateCountdown("countdown", events))
-                .add(new RaceStateGame("game", circuit, craft, times))
+                .add(new RaceStateGame("game", circuit, events, craft, times))
                 .add(new RaceStateResults("results"));
 
         states.set("countdown", null, null);
@@ -96,9 +97,6 @@ public class RaceState extends State {
 
         // Update the entities positions in the players array
         updatePlayerData();
-
-        //
-        checkLapStatus();
 
         // Check if the game actually has clients connected.
         checkIfEmpty();
@@ -161,20 +159,6 @@ public class RaceState extends State {
     private void checkIfEmpty() {
         if (players.size() == 0) {
             changeState("lobby-active", null, null);
-        }
-    }
-
-    private void checkLapStatus() {
-        for (Entity entity : craft.getRemotePlayers().values()) {
-            if (times.playerFinished(entity.getName())) {
-                ((EntityStateMachine) entity.get("fsm")).changeState("InActive");
-                System.out.println(entity.getName() + " completed race");
-            }
-        }
-
-        if (times.allPlayersFinished()) {
-            states.set("results", null, null);
-            System.out.println("All players completed");
         }
     }
 }

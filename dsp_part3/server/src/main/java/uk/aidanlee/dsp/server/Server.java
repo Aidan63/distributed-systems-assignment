@@ -97,6 +97,18 @@ public class Server {
         sendReliableCommandAll(new CmdServerEvent(_event.event));
     }
 
+    @Subscribe
+    public void onPlayerFinished(EvPlayerFinished _event) {
+        System.out.println("Sending player finished CMD");
+        sendReliableCommandAll(new CmdPlayerFinished(_event.clientID));
+    }
+
+    @Subscribe
+    public void onRaceResults(EvRaceResults _event) {
+        System.out.println("Sending race results CMD");
+        sendReliableCommandAll(new CmdRaceResults(_event.times, 3));
+    }
+
     // Packet Functions
 
     private void onPacket(Packet _packet) {

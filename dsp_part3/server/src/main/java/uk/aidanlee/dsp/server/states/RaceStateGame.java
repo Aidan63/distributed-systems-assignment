@@ -1,32 +1,39 @@
 package uk.aidanlee.dsp.server.states;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
-import uk.aidanlee.dsp.common.data.events.EvLapTime;
+import uk.aidanlee.dsp.common.net.commands.CmdPlayerFinished;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.server.data.Craft;
+import uk.aidanlee.dsp.server.data.events.EvPlayerFinished;
+import uk.aidanlee.dsp.server.data.events.EvRaceResults;
 import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 class RaceStateGame extends State {
+    private EventBus events;
     private Circuit circuit;
     private Craft craft;
     private Times times;
 
-    RaceStateGame(String _name, Circuit _circuit, Craft _craft, Times _times) {
+    RaceStateGame(String _name, Circuit _circuit, EventBus _events, Craft _craft, Times _times) {
         super(_name);
 
+        events  = _events;
         circuit = _circuit;
         craft   = _craft;
         times   = _times;
@@ -51,6 +58,9 @@ class RaceStateGame extends State {
 
         // Resolve any craft - craft collisions
         resolveCraftCollisions();
+
+        //
+        checkLapStatus();
     }
 
     @Override
@@ -135,5 +145,40 @@ class RaceStateGame extends State {
                 }
             }
         }
+    }
+
+    private void checkLapStatus() {
+        for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
+            if (times.playerFinished(entry.getValue().getName())) {
+                if (((EntityStateMachine) entry.getValue().get("fsm")).getState().equals("Active")) {
+                    ((EntityStateMachine) entry.getValue().get("fsm")).changeState("InActive");
+                    events.post(new EvPlayerFinished(entry.getKey()));
+                }
+            }
+        }
+
+        if (times.allPlayersFinished()) {
+            events.post(new EvRaceResults(getTimes()));
+            changeState("results", null, null);
+        }
+    }
+
+    private Map<Integer, List<Float>> getTimes() {
+
+        Map<Integer, List<Float>> structure = new HashMap<>();
+
+        for (Map.Entry<String, List<Float>> entry : times.getTimes().entrySet()) {
+            structure.put(findCraftClientID(entry.getKey()), entry.getValue());
+        }
+
+        return structure;
+    }
+
+    private int findCraftClientID(String _entityName) {
+        for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
+            if (entry.getValue().getName().equals(_entityName)) return entry.getKey();
+        }
+
+        return -1;
     }
 }
