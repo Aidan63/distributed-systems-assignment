@@ -10,6 +10,9 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import glm_.vec2.Vec2;
+import imgui.Cond;
+import imgui.ImGui;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
@@ -41,6 +44,7 @@ import uk.aidanlee.jDiffer.shapes.Polygon;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class RaceState extends State {
 
@@ -71,6 +75,12 @@ public class RaceState extends State {
     private QuadMesh trackMesh;
 
     private InputBuffer inpBuff;
+
+    // Times
+
+    private boolean showTimes;
+
+    private Map<Integer, List<Float>> timesData;
 
     public RaceState(String _name, Resources _resources, EventBus _events) {
         super(_name);
@@ -136,6 +146,8 @@ public class RaceState extends State {
         CmdClientInput input = new CmdClientInput(ourID, (InputComponent) craft.getRemotePlayers()[ourID].get("input"));
         events.post(new EvAddUnreliableCommand(input));
         inpBuff.addEntry(input);
+
+        showResults();
     }
 
     @Override
@@ -255,6 +267,22 @@ public class RaceState extends State {
                 players[player.id].setRotation(player.rotation);
             }
         }
+    }
+
+    @Subscribe
+    public void onPlayerFinished(CmdPlayerFinished _cmd) {
+        Entity entity = craft.getRemotePlayers()[_cmd.clientID];
+        if (!entity.has("fsm")) return;
+
+        if (((EntityStateMachine) entity.get("fsm")).getState().equals("Active")) {
+            ((EntityStateMachine) entity.get("fsm")).changeState("InActive");
+        }
+    }
+
+    @Subscribe
+    public void onRaceResults(CmdRaceResults _cmd) {
+        showTimes = true;
+        timesData = _cmd.times;
     }
 
     // Private Functions
@@ -382,17 +410,6 @@ public class RaceState extends State {
             v.rotation = p.rotation;
         }
 
-        /*
-        // Set our-self to the position where the server says we should be.
-        Player p = _latest.master.getPlayerByID(ourID);
-        Visual v = craft.getRemotePlayers()[ourID];
-
-        // Set the player to the position of the server snapshot.
-        v.pos.x    = p.getX();
-        v.pos.y    = p.getY();
-        v.rotation = p.getRotation();
-        */
-
         // Re-play any input commands which have been pressed since the servers snapshot time.
         // This re-calculates the client prediction based off what the server says.
         for (InputBuffer.InputRecord cmd : inpBuff.getInputs()) {
@@ -419,5 +436,24 @@ public class RaceState extends State {
         players[ourID].setX(v.pos.x);
         players[ourID].setY(v.pos.y);
         players[ourID].setRotation(v.rotation);
+    }
+
+    private void showResults() {
+        if (!showTimes) return;
+
+        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 75, (Gdx.graphics.getHeight() / 2) - 50), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(150, 100), Cond.Always);
+        ImGui.INSTANCE.begin("Results", null, 0);
+
+        for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
+            float timeSum = 0;
+            for (float t : entry.getValue()) {
+                timeSum += t;
+            }
+
+            ImGui.INSTANCE.text(craft.getRemotePlayers()[entry.getKey()].getName() + " : " + timeSum + " seconds");
+        }
+
+        ImGui.INSTANCE.end();
     }
 }

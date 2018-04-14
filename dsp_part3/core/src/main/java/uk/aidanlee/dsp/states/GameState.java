@@ -170,23 +170,11 @@ public class GameState extends State {
 
         chat.addServerMessage(players[_cmd.clientID].getName() + " has left");
         players[_cmd.clientID] = null;
-
-        //gameState.getEvents().post(_cmd);
     }
 
     @Subscribe
     public void onChatMessage(CmdChatMessage _cmd) {
         chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
-    }
-
-    @Subscribe
-    public void onPlayerFinished(CmdPlayerFinished _cmd) {
-        System.out.println(_cmd.clientID + " finished");
-    }
-
-    @Subscribe
-    public void onRaceResults(CmdRaceResults _cmd) {
-        System.out.println("Results : " + _cmd.times);
     }
 
     // Internal Functions

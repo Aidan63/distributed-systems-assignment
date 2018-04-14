@@ -22,4 +22,17 @@ public class LocalInputComponent extends Component {
         ip.airBrakeLeft  = Gdx.input.isKeyPressed(Input.Keys.Q);
         ip.airBrakeRight = Gdx.input.isKeyPressed(Input.Keys.E);
     }
+
+    @Override
+    public void onremoved() {
+        if (!has("input")) return;
+
+        InputComponent ip = (InputComponent) get("input");
+        ip.accelerate = false;
+        ip.decelerate = false;
+        ip.steerLeft  = false;
+        ip.steerRight = false;
+        ip.airBrakeLeft  = false;
+        ip.airBrakeRight = false;
+    }
 }
