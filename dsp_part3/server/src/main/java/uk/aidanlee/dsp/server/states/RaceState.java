@@ -3,6 +3,7 @@ package uk.aidanlee.dsp.server.states;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.InputComponent;
+import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.events.EvLapTime;
@@ -10,12 +11,9 @@ import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
-import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.server.data.Craft;
 import uk.aidanlee.dsp.server.data.events.*;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class RaceState extends State {
@@ -69,7 +67,7 @@ public class RaceState extends State {
         states = new StateMachine()
                 .add(new RaceStateCountdown("countdown", events))
                 .add(new RaceStateGame("game", circuit, events, craft, times))
-                .add(new RaceStateResults("results"));
+                .add(new RaceStateResults("results", events));
 
         states.set("countdown", null, null);
 
@@ -143,6 +141,13 @@ public class RaceState extends State {
     @Subscribe
     public void onLapTime(EvLapTime _event) {
         times.addTime(_event.name, _event.time);
+    }
+
+    @Subscribe
+    public void onGameEvent(EvGameEvent _event) {
+        if (_event.event == ServerEvent.EVENT_LOBBY_ENTER) {
+            changeState("lobby-active", null, null);
+        }
     }
 
     // Private Functions

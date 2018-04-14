@@ -43,6 +43,7 @@ import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +126,9 @@ public class RaceState extends State {
         }
 
         trackMesh.rebuild();
+
+        showTimes = false;
+        timesData = new HashMap<>();
     }
 
     @Override
@@ -213,6 +217,10 @@ public class RaceState extends State {
         switch (_cmd.state) {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
+                break;
+
+            case ServerEvent.EVENT_LOBBY_ENTER:
+                changeState("lobby", new LobbyData(chatLog, players, ourID), null);
                 break;
         }
     }
