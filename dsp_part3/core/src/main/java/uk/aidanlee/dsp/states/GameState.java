@@ -122,6 +122,11 @@ public class GameState extends State {
     // Event Functions
 
     @Subscribe
+    public void onStateChange(EvStateChange _stateData) {
+        changeState(_stateData.state, _stateData.enterWith, _stateData.leaveWith);
+    }
+
+    @Subscribe
     public void onNetChanMessage(EvNetChanData _event) {
         for (Command cmd : netChan.receive(_event.packet)) {
             events.post(cmd);
@@ -150,8 +155,6 @@ public class GameState extends State {
     public void onUnreliableCommand(EvAddUnreliableCommand _event) {
         netChan.addReliableCommand(_event.cmd);
     }
-
-    //
 
     @Subscribe
     public void onClientConnected(CmdClientConnected _cmd) {

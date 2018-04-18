@@ -1,6 +1,7 @@
 package uk.aidanlee.dsp.states.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.google.common.eventbus.EventBus;
@@ -20,6 +21,7 @@ import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.dsp.data.events.EvAddReliableCommand;
 import uk.aidanlee.dsp.data.events.EvSendPacket;
+import uk.aidanlee.dsp.data.events.EvStateChange;
 import uk.aidanlee.dsp.data.states.LobbyData;
 
 import java.util.List;
@@ -196,20 +198,27 @@ public class LobbyState extends State {
         ImGui.INSTANCE.setScrollHere(0.5f);
         ImGui.INSTANCE.endChild();
 
-        // Create a text input box and send button.
-        ImGui.INSTANCE.inputText("", inputBox, 0);
-        ImGui.INSTANCE.sameLine(0);
-        if (ImGui.INSTANCE.button("send", new Vec2(-1, 0))) {
+        // Create a text input box.
+        boolean reclaimFocus = false;
+        ImGui.INSTANCE.inputTextEx("", inputBox, new Vec2(-1, 0), 0);
+
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
             // Send chat message to server.
-            // TODO : Check if message is not empty.
             String str = new String(inputBox).trim();
+            if (str.length() != 0) {
 
-            //netChan.addReliableCommand(new CmdChatMessage(ourID, str));
-            events.post(new EvAddReliableCommand(new CmdChatMessage(ourID, str)));
-            chatLog.addPlayerMessage(players[ourID].getName(), str);
+                events.post(new EvAddReliableCommand(new CmdChatMessage(ourID, str)));
+                chatLog.addPlayerMessage(players[ourID].getName(), str);
 
-            // reset the input box.
-            inputBox  = new char[255];
+                // reset the input box.
+                inputBox = new char[255];
+                reclaimFocus = true;
+            }
+        }
+
+        ImGui.INSTANCE.setItemDefaultFocus();
+        if (reclaimFocus) {
+            ImGui.INSTANCE.setKeyboardFocusHere(-1);
         }
 
         ImGui.INSTANCE.end();
@@ -287,12 +296,11 @@ public class LobbyState extends State {
 
             // Send 10 disconnect packets, hope one gets through.
             for (int i = 0; i < 10; i++) {
-                //ClientRunner.netManager.send(Packet.Disconnection(netChan.getDestination()));
                 events.post(new EvSendPacket(Packet.Disconnection(server)));
             }
 
             // Return to the main menu.
-            changeState("menu", null, null);
+            events.post(new EvStateChange("menu", null, null));
         }
 
         ImGui.INSTANCE.end();
