@@ -17,6 +17,7 @@ import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.components.StatsComponent;
 import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
@@ -285,6 +286,7 @@ public class RaceState extends State {
 
         if (((EntityStateMachine) entity.get("fsm")).getState().equals("Active")) {
             ((EntityStateMachine) entity.get("fsm")).changeState("InActive");
+            ((StatsComponent) entity.get("stats")).stop();
         }
     }
 
@@ -348,34 +350,37 @@ public class RaceState extends State {
     }
 
     private void resolveCraftCollisions() {
+        // Get the entity and ensure it has the AABB and poly components
+        Entity e = craft.getRemotePlayers()[ourID];
+        if (!e.has("aabb") || !e.has("polygon")) return;
+
+        // Get the components and query the circuit wall tree for collisions.
+        AABBComponent    aabb = (AABBComponent) e.get("aabb");
+        PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+        //for (Entity craft : craft.getRemotePlayers()) {
         for (int i = 0; i < players.length; i++) {
             if (players[i] == null) continue;
+            Entity c = craft.getRemotePlayers()[i];
 
-            // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getRemotePlayers()[i];
-            if (!e.has("aabb") || !e.has("polygon")) continue;
+            if (c== null) continue;
+            if (c.getName().equals(e.getName())) continue;
 
-            // Get the components and query the circuit wall tree for collisions.
-            AABBComponent    aabb = (AABBComponent) e.get("aabb");
-            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+            Rectangle otherBox = ((AABBComponent) c.get("aabb")).getBox();
+            if (!aabb.getBox().overlaps(otherBox)) continue;
 
-            for (Entity craft : craft.getRemotePlayers()) {
-                if (craft == null) continue;
-                if (craft.getName().equals(e.getName())) continue;
+            PolygonComponent otherPoly = (PolygonComponent) c.get("polygon");
+            ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+            while (col != null) {
+                e.pos.x += (float)col.unitVectorX;
+                e.pos.y += (float)col.unitVectorY;
+                c.pos.x -= (float)col.otherUnitVectorX;
+                c.pos.y -= (float)col.otherUnitVectorY;
 
-                Rectangle otherBox = ((AABBComponent) craft.get("aabb")).getBox();
-                if (!aabb.getBox().overlaps(otherBox)) continue;
+                players[i].setX(c.pos.x);
+                players[i].setY(c.pos.y);
 
-                PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
-                ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                while (col != null) {
-                    e.pos.x += (float)col.unitVectorX;
-                    e.pos.y += (float)col.unitVectorY;
-                    craft.pos.x -= (float)col.otherUnitVectorX;
-                    craft.pos.y -= (float)col.otherUnitVectorY;
-
-                    col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                }
+                col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
             }
         }
     }
@@ -392,9 +397,9 @@ public class RaceState extends State {
             if (i == ourID) continue;
 
             Visual p   = craft.getRemotePlayers()[i];
-            p.pos.x    = MathUtils.lerp(p.pos.x, players[i].getX(), 0.5f);
-            p.pos.y    = MathUtils.lerp(p.pos.y, players[i].getY(), 0.5f);
-            p.rotation = MathUtils.lerp(p.rotation, players[i].getRotation(), 0.5f);
+            p.pos.x    = MathUtils.lerp(p.pos.x, players[i].getX(), 0.25f);
+            p.pos.y    = MathUtils.lerp(p.pos.y, players[i].getY(), 0.25f);
+            p.rotation = MathUtils.lerp(p.rotation, players[i].getRotation(), 0.25f);
         }
     }
 
@@ -409,14 +414,21 @@ public class RaceState extends State {
         PlayerDiff p = _latest.getDiffedPlayers().stream().filter(pd -> pd.id == ourID).findFirst().get();
         Visual     v = craft.getRemotePlayers()[ourID];
 
+        float curX = 0;
+        float curY = 0;
+        float curR = 0;
+
         if (p.diffX) {
             v.pos.x = p.x;
+            curX = p.x;
         }
         if (p.diffY) {
             v.pos.y = p.y;
+            curY = p.y;
         }
         if (p.diffRotation) {
             v.rotation = p.rotation;
+            curR = p.rotation;
         }
 
         // Re-play any input commands which have been pressed since the servers snapshot time.
@@ -436,8 +448,8 @@ public class RaceState extends State {
                 v.get("velocity").update(0);
 
                 // Re-figure out any collisions.
-                resolveWallCollisions();
-                resolveCraftCollisions();
+                //resolveWallCollisions();
+                //resolveCraftCollisions();
             }
         }
 
@@ -445,6 +457,10 @@ public class RaceState extends State {
         players[ourID].setX(v.pos.x);
         players[ourID].setY(v.pos.y);
         players[ourID].setRotation(v.rotation);
+
+        //v.pos.x = MathUtils.lerp(curX, v.pos.x, 0.25f);
+        //v.pos.y = MathUtils.lerp(curY, v.pos.y, 0.25f);
+        //v.rotation = MathUtils.lerp(curR, v.rotation, 0.25f);
     }
 
     private void showResults() {
@@ -460,7 +476,15 @@ public class RaceState extends State {
                 timeSum += t;
             }
 
-            ImGui.INSTANCE.text(players[entry.getKey()].getName() + " : " + timeSum + " seconds");
+            // Create a collapsible header with all of that players times.
+            // The header text contains the player name and total time, label under the header is a lap time.
+            ImGui.INSTANCE.pushId(entry.getKey());
+            if (ImGui.INSTANCE.collapsingHeader(players[entry.getKey()].getName() + " : " + timeSum + " seconds", 0)) {
+                for (float t : entry.getValue()) {
+                    ImGui.INSTANCE.text(String.valueOf(t));
+                }
+            }
+            ImGui.INSTANCE.popId();
         }
 
         ImGui.INSTANCE.end();

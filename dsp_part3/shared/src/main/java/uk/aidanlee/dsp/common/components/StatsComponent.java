@@ -25,4 +25,10 @@ public class StatsComponent extends Component {
     public StatsComponent(String _name) {
         super(_name);
     }
+
+    public void stop() {
+        engineSpeed = 0;
+        skid = 0;
+        acceleration = 0;
+    }
 }
