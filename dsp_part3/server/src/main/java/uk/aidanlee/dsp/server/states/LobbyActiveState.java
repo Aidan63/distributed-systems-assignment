@@ -39,6 +39,9 @@ public class LobbyActiveState extends State {
     @Override
     public void onEnter(Object _enterWith) {
         events.register(this);
+        for (Player player : players.values()) {
+            player.setReady(false);
+        }
     }
 
     @Override

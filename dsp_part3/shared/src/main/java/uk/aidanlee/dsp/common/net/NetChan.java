@@ -163,6 +163,14 @@ public class NetChan {
                 case Command.SERVER_STATE:
                     cmds[i] = new CmdServerEvent(_packet, sentT);
                     break;
+
+                case Command.PLAYER_FINISHED:
+                    cmds[i] = new CmdPlayerFinished(_packet, sentT);
+                    break;
+
+                case Command.RACE_RESULTS:
+                    cmds[i] = new CmdRaceResults(_packet, sentT);
+                    break;
             }
         }
 

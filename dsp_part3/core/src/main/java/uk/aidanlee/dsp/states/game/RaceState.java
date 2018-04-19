@@ -10,9 +10,14 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import glm_.vec2.Vec2;
+import imgui.Cond;
+import imgui.ImGui;
+import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
+import uk.aidanlee.dsp.common.components.StatsComponent;
 import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
@@ -39,8 +44,10 @@ import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class RaceState extends State {
 
@@ -71,6 +78,12 @@ public class RaceState extends State {
     private QuadMesh trackMesh;
 
     private InputBuffer inpBuff;
+
+    // Times
+
+    private boolean showTimes;
+
+    private Map<Integer, List<Float>> timesData;
 
     public RaceState(String _name, Resources _resources, EventBus _events) {
         super(_name);
@@ -114,6 +127,9 @@ public class RaceState extends State {
         }
 
         trackMesh.rebuild();
+
+        showTimes = false;
+        timesData = new HashMap<>();
     }
 
     @Override
@@ -136,6 +152,8 @@ public class RaceState extends State {
         CmdClientInput input = new CmdClientInput(ourID, (InputComponent) craft.getRemotePlayers()[ourID].get("input"));
         events.post(new EvAddUnreliableCommand(input));
         inpBuff.addEntry(input);
+
+        showResults();
     }
 
     @Override
@@ -201,6 +219,10 @@ public class RaceState extends State {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
                 break;
+
+            case ServerEvent.EVENT_LOBBY_ENTER:
+                changeState("lobby", new LobbyData(chatLog, players, ourID), null);
+                break;
         }
     }
 
@@ -257,6 +279,23 @@ public class RaceState extends State {
         }
     }
 
+    @Subscribe
+    public void onPlayerFinished(CmdPlayerFinished _cmd) {
+        Entity entity = craft.getRemotePlayers()[_cmd.clientID];
+        if (!entity.has("fsm")) return;
+
+        if (((EntityStateMachine) entity.get("fsm")).getState().equals("Active")) {
+            ((EntityStateMachine) entity.get("fsm")).changeState("InActive");
+            ((StatsComponent) entity.get("stats")).stop();
+        }
+    }
+
+    @Subscribe
+    public void onRaceResults(CmdRaceResults _cmd) {
+        showTimes = true;
+        timesData = _cmd.times;
+    }
+
     // Private Functions
 
     /**
@@ -311,34 +350,37 @@ public class RaceState extends State {
     }
 
     private void resolveCraftCollisions() {
+        // Get the entity and ensure it has the AABB and poly components
+        Entity e = craft.getRemotePlayers()[ourID];
+        if (!e.has("aabb") || !e.has("polygon")) return;
+
+        // Get the components and query the circuit wall tree for collisions.
+        AABBComponent    aabb = (AABBComponent) e.get("aabb");
+        PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+        //for (Entity craft : craft.getRemotePlayers()) {
         for (int i = 0; i < players.length; i++) {
             if (players[i] == null) continue;
+            Entity c = craft.getRemotePlayers()[i];
 
-            // Get the entity and ensure it has the AABB and poly components
-            Entity e = craft.getRemotePlayers()[i];
-            if (!e.has("aabb") || !e.has("polygon")) continue;
+            if (c== null) continue;
+            if (c.getName().equals(e.getName())) continue;
 
-            // Get the components and query the circuit wall tree for collisions.
-            AABBComponent    aabb = (AABBComponent) e.get("aabb");
-            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+            Rectangle otherBox = ((AABBComponent) c.get("aabb")).getBox();
+            if (!aabb.getBox().overlaps(otherBox)) continue;
 
-            for (Entity craft : craft.getRemotePlayers()) {
-                if (craft == null) continue;
-                if (craft.getName().equals(e.getName())) continue;
+            PolygonComponent otherPoly = (PolygonComponent) c.get("polygon");
+            ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+            while (col != null) {
+                e.pos.x += (float)col.unitVectorX;
+                e.pos.y += (float)col.unitVectorY;
+                c.pos.x -= (float)col.otherUnitVectorX;
+                c.pos.y -= (float)col.otherUnitVectorY;
 
-                Rectangle otherBox = ((AABBComponent) craft.get("aabb")).getBox();
-                if (!aabb.getBox().overlaps(otherBox)) continue;
+                players[i].setX(c.pos.x);
+                players[i].setY(c.pos.y);
 
-                PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
-                ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                while (col != null) {
-                    e.pos.x += (float)col.unitVectorX;
-                    e.pos.y += (float)col.unitVectorY;
-                    craft.pos.x -= (float)col.otherUnitVectorX;
-                    craft.pos.y -= (float)col.otherUnitVectorY;
-
-                    col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
-                }
+                col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
             }
         }
     }
@@ -355,9 +397,9 @@ public class RaceState extends State {
             if (i == ourID) continue;
 
             Visual p   = craft.getRemotePlayers()[i];
-            p.pos.x    = MathUtils.lerp(p.pos.x, players[i].getX(), 0.5f);
-            p.pos.y    = MathUtils.lerp(p.pos.y, players[i].getY(), 0.5f);
-            p.rotation = MathUtils.lerp(p.rotation, players[i].getRotation(), 0.5f);
+            p.pos.x    = MathUtils.lerp(p.pos.x, players[i].getX(), 0.25f);
+            p.pos.y    = MathUtils.lerp(p.pos.y, players[i].getY(), 0.25f);
+            p.rotation = MathUtils.lerp(p.rotation, players[i].getRotation(), 0.25f);
         }
     }
 
@@ -372,26 +414,22 @@ public class RaceState extends State {
         PlayerDiff p = _latest.getDiffedPlayers().stream().filter(pd -> pd.id == ourID).findFirst().get();
         Visual     v = craft.getRemotePlayers()[ourID];
 
+        float curX = 0;
+        float curY = 0;
+        float curR = 0;
+
         if (p.diffX) {
             v.pos.x = p.x;
+            curX = p.x;
         }
         if (p.diffY) {
             v.pos.y = p.y;
+            curY = p.y;
         }
         if (p.diffRotation) {
             v.rotation = p.rotation;
+            curR = p.rotation;
         }
-
-        /*
-        // Set our-self to the position where the server says we should be.
-        Player p = _latest.master.getPlayerByID(ourID);
-        Visual v = craft.getRemotePlayers()[ourID];
-
-        // Set the player to the position of the server snapshot.
-        v.pos.x    = p.getX();
-        v.pos.y    = p.getY();
-        v.rotation = p.getRotation();
-        */
 
         // Re-play any input commands which have been pressed since the servers snapshot time.
         // This re-calculates the client prediction based off what the server says.
@@ -410,8 +448,8 @@ public class RaceState extends State {
                 v.get("velocity").update(0);
 
                 // Re-figure out any collisions.
-                resolveWallCollisions();
-                resolveCraftCollisions();
+                //resolveWallCollisions();
+                //resolveCraftCollisions();
             }
         }
 
@@ -419,5 +457,36 @@ public class RaceState extends State {
         players[ourID].setX(v.pos.x);
         players[ourID].setY(v.pos.y);
         players[ourID].setRotation(v.rotation);
+
+        //v.pos.x = MathUtils.lerp(curX, v.pos.x, 0.25f);
+        //v.pos.y = MathUtils.lerp(curY, v.pos.y, 0.25f);
+        //v.rotation = MathUtils.lerp(curR, v.rotation, 0.25f);
+    }
+
+    private void showResults() {
+        if (!showTimes) return;
+
+        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(600, 400), Cond.Always);
+        ImGui.INSTANCE.begin("Results", null, WindowFlags.NoResize.getI());
+
+        for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
+            float timeSum = 0;
+            for (float t : entry.getValue()) {
+                timeSum += t;
+            }
+
+            // Create a collapsible header with all of that players times.
+            // The header text contains the player name and total time, label under the header is a lap time.
+            ImGui.INSTANCE.pushId(entry.getKey());
+            if (ImGui.INSTANCE.collapsingHeader(players[entry.getKey()].getName() + " : " + timeSum + " seconds", 0)) {
+                for (float t : entry.getValue()) {
+                    ImGui.INSTANCE.text(String.valueOf(t));
+                }
+            }
+            ImGui.INSTANCE.popId();
+        }
+
+        ImGui.INSTANCE.end();
     }
 }

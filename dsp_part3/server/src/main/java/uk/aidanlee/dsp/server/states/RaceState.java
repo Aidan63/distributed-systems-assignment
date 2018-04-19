@@ -3,6 +3,7 @@ package uk.aidanlee.dsp.server.states;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.InputComponent;
+import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.Times;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.events.EvLapTime;
@@ -11,8 +12,7 @@ import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.server.data.Craft;
-import uk.aidanlee.dsp.server.data.events.EvClientDisconnected;
-import uk.aidanlee.dsp.server.data.events.EvClientInput;
+import uk.aidanlee.dsp.server.data.events.*;
 
 import java.util.Map;
 
@@ -27,11 +27,6 @@ public class RaceState extends State {
      * The Array which stores all game information on each conected client.
      */
     private Map<Integer, Player> players;
-
-    /**
-     * Holds data about the race circuit.
-     */
-    private Circuit circuit;
 
     /**
      * Stores the entities used in the simulation.
@@ -66,13 +61,13 @@ public class RaceState extends State {
 
         events.register(this);
 
-        circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
-        craft   = new Craft(players, circuit);
-        times   = new Times(craft.getRemotePlayers().values(), 3);
-        states  = new StateMachine()
+        Circuit circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
+        craft  = new Craft(players, circuit);
+        times  = new Times(craft.getRemotePlayers().values(), 3);
+        states = new StateMachine()
                 .add(new RaceStateCountdown("countdown", events))
-                .add(new RaceStateGame("game", circuit, craft, times))
-                .add(new RaceStateResults("results"));
+                .add(new RaceStateGame("game", circuit, events, craft, times))
+                .add(new RaceStateResults("results", events));
 
         states.set("countdown", null, null);
 
@@ -85,6 +80,11 @@ public class RaceState extends State {
     @Override
     public void onLeave(Object _leaveWith) {
         events.unregister(this);
+
+        // Unregister ourselves for events from the entities.
+        for (Entity e : craft.getRemotePlayers().values()) {
+            e.getEvents().unregister(this);
+        }
     }
 
     @Override
@@ -143,11 +143,15 @@ public class RaceState extends State {
         times.addTime(_event.name, _event.time);
     }
 
+    @Subscribe
+    public void onGameEvent(EvGameEvent _event) {
+        if (_event.event == ServerEvent.EVENT_LOBBY_ENTER) {
+            changeState("lobby-active", null, null);
+        }
+    }
+
     // Private Functions
 
-    /**
-     * Sets the player structure position and rotation info to that of the simulated entities.
-     */
     private void updatePlayerData() {
         for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
             Entity e = craft.getPlayerEntity(entry.getKey());
@@ -157,9 +161,6 @@ public class RaceState extends State {
         }
     }
 
-    /**
-     * Checks if the game is empty. If it is return to the lobby so clients can join again.
-     */
     private void checkIfEmpty() {
         if (players.size() == 0) {
             changeState("lobby-active", null, null);

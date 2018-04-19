@@ -1,27 +1,58 @@
 package uk.aidanlee.dsp.net;
 
+import uk.aidanlee.dsp.common.net.BitPacker;
+import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.NetManager;
 import uk.aidanlee.dsp.common.net.Packet;
 
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
+import static uk.aidanlee.dsp.common.net.Packet.DISCOVERY_REQUEST;
+import static uk.aidanlee.dsp.common.net.Packet.DISCOVERY_RESPONSE;
+
+/**
+ *
+ */
 public class ServerDiscovery {
+
+    /**
+     * Thread which receives and sends discovery requests and responses.
+     */
     private NetManager listener;
+
+    /**
+     * List of all found LAN servers.
+     */
     private List<ServerDetails> lanServers;
 
+    /**
+     * Returns a list of all of the LAN servers
+     * @return List of servers
+     */
     public List<ServerDetails> getLanServers() {
         return lanServers;
     }
 
+    /**
+     * Starts a discovery thread and an empty list of servers.
+     */
     public ServerDiscovery() {
-        listener   = new NetManager(7778);
+        listener   = new NetManager();
         lanServers = new LinkedList<>();
 
         listener.start();
     }
 
+    /**
+     * Checks for any response packets from servers and sends out a discovery request out the broadcast of all network interfaces.
+     */
     public void update() {
         // Read any packets from the server listener.
         Packet pck = listener.getPackets().poll();
@@ -29,14 +60,39 @@ public class ServerDiscovery {
             readPacket(pck);
             pck = listener.getPackets().poll();
         }
+
+        // Build the discovery request data.
+        BitPacker packer = new BitPacker();
+        packer.writeBoolean(true);
+        packer.writeByte(DISCOVERY_REQUEST);
+
+        // Send it out every interfaces broadcast address.
+        try {
+            for (InetAddress address : getBroadcastAddresses()) {
+                Packet packet = new Packet(packer, new EndPoint(address, 7778));
+                listener.send(packet);
+            }
+        } catch (SocketException _ex) {
+            System.out.println("Socket Exception : " + _ex.getMessage());
+        }
     }
 
+    /**
+     * Stops the network thread.
+     */
     public void destroy() {
         listener.interrupt();
     }
 
+    /**
+     * Reads a discovery response packet.
+     * Updates an existing LAN server entry with the new data if one with the same IP and port exists.
+     * If no existing server entry exists add a new one.
+     * @param _packet Packet data and endpoint.
+     */
     private void readPacket(Packet _packet) {
-        if (_packet.getData().readBoolean() && _packet.getData().readByte() == Packet.DISCOVERY) {
+        // Is an OOB Packet and a discovery type.
+        if (_packet.getData().readBoolean() && _packet.getData().readByte() == DISCOVERY_RESPONSE) {
             InetAddress ip   = _packet.getEndpoint().getAddress();
             String      name = _packet.getData().readString();
             int         port = _packet.getData().readInteger(16);
@@ -58,14 +114,67 @@ public class ServerDiscovery {
         }
     }
 
+    /**
+     * Gets a list of all of the broadcast addesses on this computer.
+     * @return List of all broadcast addresses.
+     * @throws SocketException Getting interfaces.
+     */
+    private List<InetAddress> getBroadcastAddresses() throws SocketException {
+        List<InetAddress> broadcastList = new LinkedList<>();
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = interfaces.nextElement();
+
+            if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                continue;
+            }
+
+            networkInterface.getInterfaceAddresses().stream()
+                    .map(InterfaceAddress::getBroadcast)
+                    .filter(Objects::nonNull)
+                    .forEach(broadcastList::add);
+        }
+
+        return broadcastList;
+    }
+
+    /**
+     * Class which stores details of a discovered LAN server.
+     */
     public class ServerDetails {
+
+        /**
+         * IP address of the server.
+         */
         private final InetAddress ip;
+
+        /**
+         * Port the server is listening on.
+         */
         private final int port;
+
+        /**
+         * Name of the server.
+         */
         private final String name;
+
+        /**
+         * Number of currently connected clients.
+         */
         private int connected;
+
+        /**
+         * Max number of clients.
+         */
         private int maxConnections;
 
-        public ServerDetails(InetAddress _ip, int _port, String _name) {
+        /**
+         * Creates a new LAN server entry
+         * @param _ip   IP of the server.
+         * @param _port Port the server is listening on.
+         * @param _name Name of the server.
+         */
+        ServerDetails(InetAddress _ip, int _port, String _name) {
             port = _port;
             ip   = _ip;
             name = _name;
@@ -91,11 +200,11 @@ public class ServerDiscovery {
             return maxConnections;
         }
 
-        public void setConnected(int connected) {
+        void setConnected(int connected) {
             this.connected = connected;
         }
 
-        public void setMaxConnections(int maxConnections) {
+        void setMaxConnections(int maxConnections) {
             this.maxConnections = maxConnections;
         }
     }

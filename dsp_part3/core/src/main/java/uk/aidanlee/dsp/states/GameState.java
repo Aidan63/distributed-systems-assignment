@@ -122,6 +122,11 @@ public class GameState extends State {
     // Event Functions
 
     @Subscribe
+    public void onStateChange(EvStateChange _stateData) {
+        changeState(_stateData.state, _stateData.enterWith, _stateData.leaveWith);
+    }
+
+    @Subscribe
     public void onNetChanMessage(EvNetChanData _event) {
         for (Command cmd : netChan.receive(_event.packet)) {
             events.post(cmd);
@@ -168,8 +173,6 @@ public class GameState extends State {
 
         chat.addServerMessage(players[_cmd.clientID].getName() + " has left");
         players[_cmd.clientID] = null;
-
-        //gameState.getEvents().post(_cmd);
     }
 
     @Subscribe

@@ -29,6 +29,10 @@ public class Times {
         }
     }
 
+    public Map<String, List<Float>> getTimes() {
+        return times;
+    }
+
     public void playerDisconnected(String _name) {
         if (!times.containsKey(_name)) return;
 

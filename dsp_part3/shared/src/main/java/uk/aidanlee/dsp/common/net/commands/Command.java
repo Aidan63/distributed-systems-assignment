@@ -10,6 +10,8 @@ public abstract class Command {
     public static final byte SNAPSHOT            = 4;
     public static final byte CHAT_MESSAGE = 5;
     public static final byte SERVER_STATE = 6;
+    public static final byte PLAYER_FINISHED = 7;
+    public static final byte RACE_RESULTS    = 8;
 
     // Command Variables.
 

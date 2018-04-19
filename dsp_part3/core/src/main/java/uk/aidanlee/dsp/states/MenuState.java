@@ -89,7 +89,7 @@ public class MenuState extends State {
         ImGui.INSTANCE.end();
     }
 
-    /**
+    /*
      * Builds the UI which will show all discovered LAN servers.
      */
     private void buildLANServers() {

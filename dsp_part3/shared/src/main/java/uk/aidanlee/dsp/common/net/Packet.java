@@ -52,7 +52,8 @@ public class Packet {
     public static final byte CONNECTION_RESPONSE = 1;
     public static final byte DISCONNECTION = 2;
     public static final byte HEARTBEAT = 3;
-    public static final byte DISCOVERY = 4;
+    public static final byte DISCOVERY_REQUEST = 4;
+    public static final byte DISCOVERY_RESPONSE = 5;
 
     /**
      *
@@ -153,23 +154,16 @@ public class Packet {
      * @param _max        The maximum number of clients
      * @return Packet with bytes data and endpoint location.
      */
-    public static Packet Discovery(String _serverName, int _port, int _connected, int _max) {
+    public static Packet Discovery(String _serverName, int _port, int _connected, int _max, EndPoint _to) {
         BitPacker packer = new BitPacker();
         packer.writeBoolean(true);
-        packer.writeByte(DISCOVERY);
+        packer.writeByte(DISCOVERY_RESPONSE);
 
         packer.writeString(_serverName);
         packer.writeInteger(_port, 16);
         packer.writeByte((byte) _connected);
         packer.writeByte((byte) _max);
 
-        // TODO : Try and find the broadcast address.
-        try {
-            return new Packet(packer, new EndPoint(InetAddress.getByName("192.168.1.255"), 7778));
-        } catch (UnknownHostException _ex) {
-            System.out.println("Unknown host exception");
-        }
-
-        return null;
+        return new Packet(packer, _to);
     }
 }
