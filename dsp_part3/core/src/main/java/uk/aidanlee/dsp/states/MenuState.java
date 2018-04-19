@@ -18,7 +18,7 @@ public class MenuState extends State {
     private char[] ip;
     private char[] port;
     private char[] name;
-    //private ServerDiscovery discoverer;
+    private ServerDiscovery discoverer;
     private int selected;
 
     public MenuState(String _name) {
@@ -30,26 +30,24 @@ public class MenuState extends State {
         ip   = new char[255];
         port = new char[255];
         name = new char[255];
-        //discoverer = new ServerDiscovery();
+        discoverer = new ServerDiscovery();
         selected   = -1;
     }
 
-    /*
     @Override
     public void onLeave(Object _leaveWith) {
         discoverer.destroy();
     }
-    */
 
     @Override
     public void onUpdate() {
 
         // Keep track of LAN servers.
-        //discoverer.update();
+        discoverer.update();
 
         // Build the UI.
         buildDirectConnect();
-        //buildLANServers();
+        buildLANServers();
     }
 
     @Override
@@ -94,7 +92,6 @@ public class MenuState extends State {
     /*
      * Builds the UI which will show all discovered LAN servers.
      */
-    /*
     private void buildLANServers() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 187), Cond.Once, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 130), Cond.Once);
@@ -127,5 +124,4 @@ public class MenuState extends State {
 
         ImGui.INSTANCE.end();
     }
-    */
 }

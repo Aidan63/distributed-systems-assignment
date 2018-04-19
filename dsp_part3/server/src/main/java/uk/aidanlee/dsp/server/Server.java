@@ -14,23 +14,38 @@ public class Server {
 
     private final NetManager netManager;
 
+    private final NetManager netDiscover;
+
     private final Game game;
 
     private final NetChan[] clients;
 
     private final Timer[] timeouts;
 
+    private final int port;
+
+    private final int discoveryPort;
+
+    private final String name;
+
     private final int maxClients;
 
     private int numClients;
 
-    public Server(int _port, int _clients) {
+    public Server(String _name, int _port, int _discoveryPort, int _clients) {
 
         netManager = new NetManager(_port);
         netManager.start();
 
+        netDiscover = new NetManager(_discoveryPort);
+        netDiscover.start();
+
         game = new Game();
         game.getEvents().register(this);
+
+        name          = _name;
+        port          = _port;
+        discoveryPort = _discoveryPort;
 
         maxClients = _clients;
         numClients = 0;
@@ -46,10 +61,18 @@ public class Server {
      * Checks the network listener thread for any messages.
      */
     public void onLoop() {
-        Packet packet = netManager.getPackets().poll();
+        Packet packet;
+
+        packet = netManager.getPackets().poll();
         while (packet != null) {
             onPacket(packet);
             packet = netManager.getPackets().poll();
+        }
+
+        packet = netDiscover.getPackets().poll();
+        while (packet != null) {
+            onPacket(packet);
+            packet = netDiscover.getPackets().poll();
         }
     }
 
@@ -131,6 +154,10 @@ public class Server {
 
             case Packet.HEARTBEAT:
                 onClientHeartbeat(_packet);
+                break;
+
+            case Packet.DISCOVERY_REQUEST:
+                onDiscoveryRequest(_packet);
                 break;
         }
     }
@@ -244,6 +271,10 @@ public class Server {
             resetTimeout(_packet);
             netManager.send(Packet.Heartbeat(_packet.getEndpoint()));
         }
+    }
+
+    private void onDiscoveryRequest(Packet _packet) {
+        netDiscover.send(Packet.Discovery(name, port, numClients, maxClients, _packet.getEndpoint()));
     }
 
     // Client Helper Functions.
