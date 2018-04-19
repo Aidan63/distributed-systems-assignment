@@ -4,14 +4,21 @@ import com.badlogic.gdx.utils.TimeUtils;
 
 /** Launches the server application. */
 public class ServerRunner {
-    public static void main(String[] args) {
+    public static void main(String[] _args) {
+
+        // Reads server CLI args
+        String name          = _args[0];
+        int    port          = Integer.parseInt(_args[1]);
+        int    discoveryPort = Integer.parseInt(_args[2]);
+        int    maxClients    = Integer.parseInt(_args[3]);
+        float  tickRate      = Float.parseFloat(_args[4]);
 
         // Create the server.
-        Server server = new Server(7777, 8);
+        Server server = new Server(name, port, discoveryPort, maxClients);
 
         // Setup variables for server fixed time step.
         final float step = 1.0f / 60.0f;
-        final float tick = 1.0f / 20.0f;
+        final float tick = 1.0f / tickRate;
 
         double currentTime = 0;
         double stepAccumulator = 0;
