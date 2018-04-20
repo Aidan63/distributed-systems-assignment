@@ -35,6 +35,7 @@ import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.dsp.data.events.EvAddUnreliableCommand;
 import uk.aidanlee.dsp.data.race.Craft;
+import uk.aidanlee.dsp.data.race.HUD;
 import uk.aidanlee.dsp.data.race.InputBuffer;
 import uk.aidanlee.dsp.data.race.View;
 import uk.aidanlee.dsp.data.states.LobbyData;
@@ -78,6 +79,8 @@ public class RaceState extends State {
     private QuadMesh trackMesh;
 
     private InputBuffer inpBuff;
+
+    private HUD hud;
 
     // Times
 
@@ -127,6 +130,9 @@ public class RaceState extends State {
         }
 
         trackMesh.rebuild();
+
+        // Create a new HUD to draw game information
+        hud = new HUD(resources);
 
         showTimes = false;
         timesData = new HashMap<>();
@@ -199,6 +205,8 @@ public class RaceState extends State {
             v.draw(spriteBatch);
         }
         spriteBatch.end();
+
+        hud.render();
     }
 
     // Event Functions
@@ -304,6 +312,7 @@ public class RaceState extends State {
     private void simulatePlayer() {
         // Update the viewport size
         view.resize();
+        hud.resize();
 
         // Process all entities
         for (Visual v : craft.getRemotePlayers()) {

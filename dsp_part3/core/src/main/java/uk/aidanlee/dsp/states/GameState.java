@@ -12,6 +12,7 @@ import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.dsp.data.events.*;
+import uk.aidanlee.dsp.data.race.HUD;
 import uk.aidanlee.dsp.data.states.LobbyData;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.states.game.LobbyState;
@@ -43,7 +44,6 @@ public class GameState extends State {
     private Timer heartbeatSender;
 
     private Timer heartbeatTimeout;
-
 
     public GameState(String _name, EventBus _events) {
         super(_name);
