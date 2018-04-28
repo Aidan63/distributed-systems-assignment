@@ -22,9 +22,7 @@ import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.data.Resources;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * HUD class displays game data for the player on the screen during the actual game.
@@ -85,19 +83,14 @@ public class HUD {
     private Entity entity;
 
     /**
-     * The total time of the ship.
-     */
-    private float totalTime;
-
-    /**
      * The current lap of the ship.
      */
     private int currentLap;
 
     /**
-     * The final time results from the server.
+     * Ordered time data from the server.
      */
-    private Map<Integer, List<Float>> timesData;
+    private List<PlayerTimes> timesData;
 
     /**
      * Creates a new HUD for the game client.
@@ -125,7 +118,6 @@ public class HUD {
         countdownValue = 3;
 
         // Setup race variables
-        totalTime  = 0;
         currentLap = 1;
 
         // Setup results variables
@@ -172,11 +164,17 @@ public class HUD {
     }
 
     /**
-     * Show the race results.
+     * Show the race results. Sorts time data received from the server.
+     * @param _times Time data to sort.
      */
     public void showResults(Map<Integer, List<Float>> _times) {
         state     = HudState.Results;
-        timesData = _times;
+        timesData = new ArrayList<>();
+        for (Map.Entry<Integer, List<Float>> entry : _times.entrySet()) {
+            timesData.add(new PlayerTimes(entry.getKey(), entry.getValue()));
+        }
+
+        timesData.sort((_t1, _t2) -> Float.compare(_t1.totalTime, _t2.totalTime));
     }
 
     /**
@@ -312,17 +310,12 @@ public class HUD {
         ImGui.INSTANCE.setNextWindowSize(new Vec2(600, 400), Cond.Always);
         ImGui.INSTANCE.begin("Results", null, WindowFlags.NoResize.getI());
 
-        for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
-            float timeSum = 0;
-            for (float t : entry.getValue()) {
-                timeSum += t;
-            }
-
+        for (PlayerTimes time : timesData) {
             // Create a collapsible header with all of that players times.
             // The header text contains the player name and total time, label under the header is a lap time.
-            ImGui.INSTANCE.pushId(entry.getKey());
-            if (ImGui.INSTANCE.collapsingHeader(players[entry.getKey()].getName() + " : " + formatTime(timeSum), 0)) {
-                for (float t : entry.getValue()) {
+            ImGui.INSTANCE.pushId(time.clientID);
+            if (ImGui.INSTANCE.collapsingHeader(players[time.clientID].getName() + " : " + formatTime(time.totalTime), 0)) {
+                for (float t : time.lapTimes) {
                     ImGui.INSTANCE.text(formatTime(t));
                 }
             }
@@ -341,6 +334,32 @@ public class HUD {
         Date date = new Date((long) (_time * 1000));
         String formatted = new SimpleDateFormat("mm:ss:SS").format(date);
         return formatted.substring(0, Math.min(formatted.length(), 8));
+    }
+
+    /**
+     * Simple class which holds all time data on a particular client.
+     */
+    private class PlayerTimes {
+        /**
+         * The clientID.
+         */
+        final int clientID;
+
+        /**
+         * The total time for this race.
+         */
+        final float totalTime;
+
+        /**
+         * All individual lap times.
+         */
+        final List<Float> lapTimes;
+
+        private PlayerTimes(int _id, List<Float> _times) {
+            clientID  = _id;
+            lapTimes  = _times;
+            totalTime = _times.stream().mapToInt(Float::intValue).sum();
+        }
     }
 
     /**
