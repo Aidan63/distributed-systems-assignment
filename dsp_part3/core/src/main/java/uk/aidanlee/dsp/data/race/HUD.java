@@ -9,9 +9,14 @@ import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.StatsComponent;
+import uk.aidanlee.dsp.common.components.craft.LapTimer;
+import uk.aidanlee.dsp.common.data.events.EvLapTime;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.data.Resources;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class HUD {
 
@@ -27,10 +32,11 @@ public class HUD {
 
     //
 
+    private Entity entity;
     private float totalTime;
     private int currentLap;
 
-    public HUD(Resources _resources) {
+    public HUD(Resources _resources, Entity _entity) {
         resources = _resources;
         batch     = new SpriteBatch();
         camera    = new OrthographicCamera();
@@ -41,16 +47,28 @@ public class HUD {
 
         uiArrow = new TextureRegion(resources.hudElements, 0, 40, 40, 40);
         lapBox  = new NinePatchDrawable(new NinePatch(patchSprite, 12, 12, 12, 12));
+
+        entity     = _entity;
+        totalTime  = 0;
+        currentLap = 1;
+
+        entity.getEvents().register(this);
     }
 
     public void resize() {
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
     }
 
-    public void render(Entity _entity) {
+    public void render() {
 
         // Get the stats component for the local player.
-        StatsComponent stats = (StatsComponent) _entity.get("stats");
+        StatsComponent stats = (StatsComponent) entity.get("stats");
+
+        // Update the total time
+        if (entity.has("lap_timer")) {
+            LapTimer timer = (LapTimer) entity.get("lap_timer");
+            totalTime += (timer.time - totalTime);
+        }
 
         viewport.apply();
 
@@ -64,13 +82,6 @@ public class HUD {
         // Speed bar
         lapBox.draw(batch, 1060, 960, 820, 80);
 
-        // Lap time backgrounds
-        lapBox.draw(batch, 60  , 900, 332, 40);
-        lapBox.draw(batch, 432 , 900, 332, 40);
-        lapBox.draw(batch, 804 , 900, 332, 40);
-        lapBox.draw(batch, 1176, 900, 332, 40);
-        lapBox.draw(batch, 1548, 900, 332, 40);
-
         // Draw solid grey speed bar.
         batch.setColor(0.84f, 0.84f, 0.84f, 1.0f);
         lapBox.draw(batch, 1100, 960, (stats.engineSpeed / stats.maxSpeed) * 780, 80);
@@ -83,16 +94,8 @@ public class HUD {
         lapBox.draw(batch, 40  , 960, 280, 80);
         lapBox.draw(batch, 1000, 960, 120, 80);
 
-        // Lap time markers
-        lapBox.draw(batch, 40  , 900, 40, 40);
-        lapBox.draw(batch, 412 , 900, 40, 40);
-        lapBox.draw(batch, 784 , 900, 40, 40);
-        lapBox.draw(batch, 1156, 900, 40, 40);
-        lapBox.draw(batch, 1528, 900, 40, 40);
-
         // Draw ui arrow motifs
         batch.draw(uiArrow, 40, 120, 20, 20, 40, 40, 1, 1, 270);
-        batch.draw(uiArrow, 40, 860, 20, 20, 40, 40, 1, 1, 90);
         batch.draw(uiArrow, 320, 960, 20, 20, 40, 40, 1, 1, 180);
         batch.draw(uiArrow, 960, 960);
 
@@ -100,16 +103,26 @@ public class HUD {
         resources.helvetica19.setColor(0.16f, 0.59f, 1, 1);
 
         // Draw motif text
-        resources.helvetica19.draw(batch, "laps", 80, 134, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "lap", 80, 134, 0, Align.topLeft, false);
         resources.helvetica19.draw(batch, "total time", 366, 971, 0, Align.topLeft, false);
         resources.helvetica19.draw(batch, "mph", 922, 971, 0, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "lap times", 80, 871, 0, Align.topLeft, false);
 
         // Draw time, speed, and current lap counter.
-        resources.helvetica48.draw(batch, "00:00:00", 180 , 982, 0, Align.center, true);
+        resources.helvetica48.draw(batch, formatTime(totalTime), 180 , 982, 0, Align.center, true);
         resources.helvetica48.draw(batch, String.valueOf(Math.round(stats.engineSpeed * 7)), 1060, 982, 0, Align.center, true);
+        resources.helvetica48.draw(batch, String.valueOf(currentLap), 100, 62, 0, Align.center, true);
 
         batch.disableBlending();
         batch.end();
+    }
+
+    @Subscribe
+    public void onCraftLap(EvLapTime _lap) {
+        currentLap++;
+    }
+
+    private String formatTime(float _time) {
+        Date date = new Date((long) (totalTime * 1000));
+        return new SimpleDateFormat("mm:ss:SS").format(date);
     }
 }

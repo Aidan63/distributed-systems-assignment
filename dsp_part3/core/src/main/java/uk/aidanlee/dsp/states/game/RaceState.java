@@ -105,7 +105,7 @@ public class RaceState extends State {
         ourID   = data.ourID;
 
         circuit = new Circuit(Gdx.files.internal("tracks/track.p2"));
-        craft   = new Craft(resources, players, circuit.getSpawn(), ourID);
+        craft   = new Craft(resources, players, circuit.getSpawn(), circuit.getCheckpoints(), ourID);
         view    = new View();
 
         inpBuff = new InputBuffer(64);
@@ -132,7 +132,7 @@ public class RaceState extends State {
         trackMesh.rebuild();
 
         // Create a new HUD to draw game information
-        hud = new HUD(resources);
+        hud = new HUD(resources, craft.getRemotePlayers()[ourID]);
 
         showTimes = false;
         timesData = new HashMap<>();
@@ -207,7 +207,7 @@ public class RaceState extends State {
         spriteBatch.end();
 
         // Draw the HUD
-        hud.render(craft.getRemotePlayers()[ourID]);
+        hud.render();
     }
 
     // Event Functions
