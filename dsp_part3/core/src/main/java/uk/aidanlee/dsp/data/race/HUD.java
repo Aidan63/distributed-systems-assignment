@@ -212,7 +212,7 @@ public class HUD {
         batch.begin();
         batch.enableBlending();
 
-        resources.helvetica48.draw(batch, String.valueOf(countdownValue), Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 4, 0, Align.center, true);
+        resources.helvetica48.draw(batch, String.valueOf(countdownValue), 960, 270, 0, Align.center, true);
 
         batch.disableBlending();
         batch.end();
@@ -290,8 +290,8 @@ public class HUD {
         resources.helvetica48.draw(
                 batch,
                 "Race Complete!\nWaiting for all other players to finish",
-                Gdx.graphics.getWidth() / 2,
-                Gdx.graphics.getHeight() / 4,
+                960,
+                270,
                 0,
                 Align.center,
                 true
