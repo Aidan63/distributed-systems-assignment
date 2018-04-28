@@ -206,7 +206,8 @@ public class RaceState extends State {
         }
         spriteBatch.end();
 
-        hud.render();
+        // Draw the HUD
+        hud.render(craft.getRemotePlayers()[ourID]);
     }
 
     // Event Functions

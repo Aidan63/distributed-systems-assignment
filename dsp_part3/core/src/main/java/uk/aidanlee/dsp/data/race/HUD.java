@@ -1,15 +1,16 @@
 package uk.aidanlee.dsp.data.race;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import uk.aidanlee.dsp.common.components.StatsComponent;
+import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.data.Resources;
 
 public class HUD {
@@ -23,6 +24,8 @@ public class HUD {
 
     private final TextureRegion uiArrow;
     private final NinePatchDrawable lapBox;
+
+    //
 
     public HUD(Resources _resources) {
         resources = _resources;
@@ -41,7 +44,7 @@ public class HUD {
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
     }
 
-    public void render() {
+    public void render(Entity _entity) {
         viewport.apply();
 
         batch.setProjectionMatrix(camera.combined);
@@ -60,6 +63,12 @@ public class HUD {
         lapBox.draw(batch, 804 , 900, 332, 40);
         lapBox.draw(batch, 1176, 900, 332, 40);
         lapBox.draw(batch, 1548, 900, 332, 40);
+
+        // Draw solid grey speed bar.
+        StatsComponent stats = (StatsComponent) _entity.get("stats");
+
+        batch.setColor(0.84f, 0.84f, 0.84f, 1.0f);
+        lapBox.draw(batch, 1100, 960, (stats.engineSpeed / stats.maxSpeed) * 780, 80);
 
         // Draw solid blue elements.
         batch.setColor(0.16f, 0.59f, 1, 1);
@@ -81,6 +90,17 @@ public class HUD {
         batch.draw(uiArrow, 40, 860, 20, 20, 40, 40, 1, 1, 90);
         batch.draw(uiArrow, 320, 960, 20, 20, 40, 40, 1, 1, 180);
         batch.draw(uiArrow, 960, 960);
+
+        // Draw Text
+
+        // Draw motif text
+        resources.helvetica19.setColor(0.16f, 0.59f, 1, 1);
+        resources.helvetica19.draw(batch, "laps", 80, 134, 100, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "total time", 366, 971, 100, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "mph", 922, 971, 100, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "lap times", 80, 871, 100, Align.topLeft, false);
+
+        //
 
         batch.disableBlending();
         batch.end();
