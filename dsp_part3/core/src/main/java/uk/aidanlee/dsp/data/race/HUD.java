@@ -11,13 +11,20 @@ import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.google.common.eventbus.Subscribe;
+import glm_.vec2.Vec2;
+import imgui.Cond;
+import imgui.ImGui;
+import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.components.StatsComponent;
 import uk.aidanlee.dsp.common.components.craft.LapTimer;
 import uk.aidanlee.dsp.common.data.events.EvLapTime;
+import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
 import uk.aidanlee.dsp.data.Resources;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * HUD class displays game data for the player on the screen during the actual game.
@@ -29,6 +36,11 @@ public class HUD {
      * Resources instance which holds bitmap fonts and UI textures.
      */
     private final Resources resources;
+
+    /**
+     * Craft entity array.
+     */
+    private final Player[] players;
 
     /**
      * Orthographic camera for the HUD.
@@ -83,11 +95,19 @@ public class HUD {
     private int currentLap;
 
     /**
+     * The final time results from the server.
+     */
+    private Map<Integer, List<Float>> timesData;
+
+    /**
      * Creates a new HUD for the game client.
      * @param _resources Resource instance.
+     * @param _players   Player structure for getting player names.
      */
-    public HUD(Resources _resources) {
+    public HUD(Resources _resources, Player[] _players) {
+        players   = _players;
         resources = _resources;
+
         batch     = new SpriteBatch();
         camera    = new OrthographicCamera();
         camera.setToOrtho(true);
@@ -147,8 +167,9 @@ public class HUD {
     /**
      * Show the race results.
      */
-    public void showResults() {
-        state = HudState.Results;
+    public void showResults(Map<Integer, List<Float>> _times) {
+        state     = HudState.Results;
+        timesData = _times;
     }
 
     /**
@@ -254,7 +275,28 @@ public class HUD {
      *
      */
     private void drawResults() {
-        //
+        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(600, 400), Cond.Always);
+        ImGui.INSTANCE.begin("Results", null, WindowFlags.NoResize.getI());
+
+        for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
+            float timeSum = 0;
+            for (float t : entry.getValue()) {
+                timeSum += t;
+            }
+
+            // Create a collapsible header with all of that players times.
+            // The header text contains the player name and total time, label under the header is a lap time.
+            ImGui.INSTANCE.pushId(entry.getKey());
+            if (ImGui.INSTANCE.collapsingHeader(players[entry.getKey()].getName() + " : " + formatTime(timeSum), 0)) {
+                for (float t : entry.getValue()) {
+                    ImGui.INSTANCE.text(formatTime(t));
+                }
+            }
+            ImGui.INSTANCE.popId();
+        }
+
+        ImGui.INSTANCE.end();
     }
 
     /**

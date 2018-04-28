@@ -82,12 +82,6 @@ public class RaceState extends State {
 
     private HUD hud;
 
-    // Times
-
-    private boolean showTimes;
-
-    private Map<Integer, List<Float>> timesData;
-
     public RaceState(String _name, Resources _resources, EventBus _events) {
         super(_name);
         resources = _resources;
@@ -132,11 +126,8 @@ public class RaceState extends State {
         trackMesh.rebuild();
 
         // Create a new HUD to draw game information
-        hud = new HUD(resources);
+        hud = new HUD(resources, players);
         hud.showCountdown();
-
-        showTimes = false;
-        timesData = new HashMap<>();
     }
 
     @Override
@@ -159,8 +150,6 @@ public class RaceState extends State {
         CmdClientInput input = new CmdClientInput(ourID, (InputComponent) craft.getRemotePlayers()[ourID].get("input"));
         events.post(new EvAddUnreliableCommand(input));
         inpBuff.addEntry(input);
-
-        showResults();
     }
 
     @Override
@@ -303,9 +292,7 @@ public class RaceState extends State {
 
     @Subscribe
     public void onRaceResults(CmdRaceResults _cmd) {
-        showTimes = true;
-        timesData = _cmd.times;
-        hud.showResults();
+        hud.showResults(_cmd.times);
     }
 
     // Private Functions
@@ -473,32 +460,5 @@ public class RaceState extends State {
         //v.pos.x = MathUtils.lerp(curX, v.pos.x, 0.25f);
         //v.pos.y = MathUtils.lerp(curY, v.pos.y, 0.25f);
         //v.rotation = MathUtils.lerp(curR, v.rotation, 0.25f);
-    }
-
-    private void showResults() {
-        if (!showTimes) return;
-
-        ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());
-        ImGui.INSTANCE.setNextWindowSize(new Vec2(600, 400), Cond.Always);
-        ImGui.INSTANCE.begin("Results", null, WindowFlags.NoResize.getI());
-
-        for (Map.Entry<Integer, List<Float>> entry : timesData.entrySet()) {
-            float timeSum = 0;
-            for (float t : entry.getValue()) {
-                timeSum += t;
-            }
-
-            // Create a collapsible header with all of that players times.
-            // The header text contains the player name and total time, label under the header is a lap time.
-            ImGui.INSTANCE.pushId(entry.getKey());
-            if (ImGui.INSTANCE.collapsingHeader(players[entry.getKey()].getName() + " : " + timeSum + " seconds", 0)) {
-                for (float t : entry.getValue()) {
-                    ImGui.INSTANCE.text(String.valueOf(t));
-                }
-            }
-            ImGui.INSTANCE.popId();
-        }
-
-        ImGui.INSTANCE.end();
     }
 }
