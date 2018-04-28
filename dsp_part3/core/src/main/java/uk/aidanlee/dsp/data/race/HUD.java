@@ -18,24 +18,62 @@ import uk.aidanlee.dsp.data.Resources;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * HUD class displays game data for the player on the screen during the actual game.
+ * It displays the countdown, current lap, lap time, and speed data, and the end race total and lap times.
+ */
 public class HUD {
 
+    /**
+     * Resources instance which holds bitmap fonts and UI textures.
+     */
     private final Resources resources;
+
+    /**
+     * Orthographic camera for the HUD.
+     */
     private final OrthographicCamera camera;
+
+    /**
+     * Viewport for the HUD.
+     */
     private final Viewport viewport;
+
+    /**
+     * Batcher for drawing all of the HUD elements and fonts.
+     */
     private final SpriteBatch batch;
 
-    //
-
+    /**
+     * Texture region of the arrow image.
+     */
     private final TextureRegion uiArrow;
+
+    /**
+     * Texture region for the nine slice box image.
+     */
     private final NinePatchDrawable lapBox;
 
-    //
-
+    /**
+     * The ship entity to draw information about.
+     */
     private Entity entity;
+
+    /**
+     * The total time of the ship.
+     */
     private float totalTime;
+
+    /**
+     * The current lap of the ship.
+     */
     private int currentLap;
 
+    /**
+     * Creates a new HUD for the game client.
+     * @param _resources Resource instance.
+     * @param _entity    Ship entity to get data for the HUD from.
+     */
     public HUD(Resources _resources, Entity _entity) {
         resources = _resources;
         batch     = new SpriteBatch();
@@ -55,10 +93,16 @@ public class HUD {
         entity.getEvents().register(this);
     }
 
+    /**
+     * Resizes the view port to match the window size.
+     */
     public void resize() {
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
     }
 
+    /**
+     * Draws the HUD.
+     */
     public void render() {
 
         // Get the stats component for the local player.
@@ -104,7 +148,7 @@ public class HUD {
 
         // Draw motif text
         resources.helvetica19.draw(batch, "lap", 80, 134, 0, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "total time", 366, 971, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "lap time", 366, 971, 0, Align.topLeft, false);
         resources.helvetica19.draw(batch, "mph", 922, 971, 0, Align.topLeft, false);
 
         // Draw time, speed, and current lap counter.
@@ -116,13 +160,24 @@ public class HUD {
         batch.end();
     }
 
+    /**
+     * Listens to the ships on lap event.
+     * Increments the current lap when called.
+     * @param _lap Lap event instance.
+     */
     @Subscribe
     public void onCraftLap(EvLapTime _lap) {
         currentLap++;
     }
 
+    /**
+     * Returns a "--:--:--" formatted time string of the provided time.
+     * @param _time Number of seconds
+     * @return Formatted time string.
+     */
     private String formatTime(float _time) {
-        Date date = new Date((long) (totalTime * 1000));
-        return new SimpleDateFormat("mm:ss:SS").format(date);
+        Date date = new Date((long) (_time * 1000));
+        String formatted = new SimpleDateFormat("mm:ss:SS").format(date);
+        return formatted.substring(0, Math.min(formatted.length(), 8));
     }
 }
