@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.google.common.eventbus.Subscribe;
@@ -54,6 +55,18 @@ public class HUD {
      */
     private final NinePatchDrawable lapBox;
 
+    //
+
+    /**
+     * Current state of the HUD.
+     */
+    private HudState state;
+
+    /**
+     * Int value of the current countdown number.
+     */
+    private int countdownValue;
+
     /**
      * The ship entity to draw information about.
      */
@@ -72,9 +85,8 @@ public class HUD {
     /**
      * Creates a new HUD for the game client.
      * @param _resources Resource instance.
-     * @param _entity    Ship entity to get data for the HUD from.
      */
-    public HUD(Resources _resources, Entity _entity) {
+    public HUD(Resources _resources) {
         resources = _resources;
         batch     = new SpriteBatch();
         camera    = new OrthographicCamera();
@@ -86,18 +98,57 @@ public class HUD {
         uiArrow = new TextureRegion(resources.hudElements, 0, 40, 40, 40);
         lapBox  = new NinePatchDrawable(new NinePatch(patchSprite, 12, 12, 12, 12));
 
-        entity     = _entity;
+        // Initial HUD state.
+        state = HudState.Countdown;
+
+        // Setup countdown variables
+        countdownValue = 3;
+
+        // Setup race variables
         totalTime  = 0;
         currentLap = 1;
 
+        // Setup results variables
+    }
+
+    /**
+     * Starts a countdown timer.
+     */
+    public void showCountdown() {
+        state = HudState.Countdown;
+
+        // Create a series of three times which will decrement a int value.
+        Timer.Task task = new Timer.Task() {
+            @Override
+            public void run() {
+                countdownValue --;
+
+                if (countdownValue > 0) {
+                    Timer.schedule(this, 1);
+                }
+            }
+        };
+
+        // Start the timer series.
+        Timer.schedule(task, 1);
+    }
+
+    /**
+     * Show the in game HUD.
+     * @param _entity The ship entity we want to get HUD data from.
+     */
+    public void showRace(Entity _entity) {
+        state = HudState.InRace;
+
+        entity = _entity;
         entity.getEvents().register(this);
     }
 
     /**
-     * Resizes the view port to match the window size.
+     * Show the race results.
      */
-    public void resize() {
-        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+    public void showResults() {
+        state = HudState.Results;
     }
 
     /**
@@ -105,6 +156,45 @@ public class HUD {
      */
     public void render() {
 
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+
+        switch (state) {
+            case Countdown: drawCountdown(); break;
+            case InRace   : drawRace(); break;
+            case Results  : drawResults(); break;
+        }
+    }
+
+    /**
+     * Listens to the ships on lap event.
+     * Increments the current lap when called.
+     * @param _lap Lap event instance.
+     */
+    @Subscribe
+    public void onCraftLap(EvLapTime _lap) {
+        currentLap++;
+    }
+
+    /**
+     *
+     */
+    private void drawCountdown() {
+        viewport.apply();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.enableBlending();
+
+        resources.helvetica48.draw(batch, String.valueOf(countdownValue), Gdx.graphics.getWidth() / 2, Gdx.graphics.getHeight() / 4, 0, Align.center, true);
+
+        batch.disableBlending();
+        batch.end();
+    }
+
+    /**
+     *
+     */
+    private void drawRace() {
         // Get the stats component for the local player.
         StatsComponent stats = (StatsComponent) entity.get("stats");
 
@@ -161,13 +251,10 @@ public class HUD {
     }
 
     /**
-     * Listens to the ships on lap event.
-     * Increments the current lap when called.
-     * @param _lap Lap event instance.
+     *
      */
-    @Subscribe
-    public void onCraftLap(EvLapTime _lap) {
-        currentLap++;
+    private void drawResults() {
+        //
     }
 
     /**
@@ -179,5 +266,14 @@ public class HUD {
         Date date = new Date((long) (_time * 1000));
         String formatted = new SimpleDateFormat("mm:ss:SS").format(date);
         return formatted.substring(0, Math.min(formatted.length(), 8));
+    }
+
+    /**
+     *
+     */
+    private enum HudState {
+        Countdown,
+        InRace,
+        Results;
     }
 }

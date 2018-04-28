@@ -132,7 +132,8 @@ public class RaceState extends State {
         trackMesh.rebuild();
 
         // Create a new HUD to draw game information
-        hud = new HUD(resources, craft.getRemotePlayers()[ourID]);
+        hud = new HUD(resources);
+        hud.showCountdown();
 
         showTimes = false;
         timesData = new HashMap<>();
@@ -227,6 +228,7 @@ public class RaceState extends State {
         switch (_cmd.state) {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
+                hud.showRace(craft.getRemotePlayers()[ourID]);
                 break;
 
             case ServerEvent.EVENT_LOBBY_ENTER:
@@ -303,6 +305,7 @@ public class RaceState extends State {
     public void onRaceResults(CmdRaceResults _cmd) {
         showTimes = true;
         timesData = _cmd.times;
+        hud.showResults();
     }
 
     // Private Functions
@@ -313,7 +316,6 @@ public class RaceState extends State {
     private void simulatePlayer() {
         // Update the viewport size
         view.resize();
-        hud.resize();
 
         // Process all entities
         for (Visual v : craft.getRemotePlayers()) {
