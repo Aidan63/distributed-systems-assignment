@@ -165,6 +165,13 @@ public class HUD {
     }
 
     /**
+     * Display waiting for other players text.
+     */
+    public void showWaiting() {
+        state = HudState.Waiting;
+    }
+
+    /**
      * Show the race results.
      */
     public void showResults(Map<Integer, List<Float>> _times) {
@@ -182,6 +189,7 @@ public class HUD {
         switch (state) {
             case Countdown: drawCountdown(); break;
             case InRace   : drawRace(); break;
+            case Waiting  : drawWaiting(); break;
             case Results  : drawResults(); break;
         }
     }
@@ -197,7 +205,7 @@ public class HUD {
     }
 
     /**
-     *
+     * Draws centered, large countdown text.
      */
     private void drawCountdown() {
         viewport.apply();
@@ -213,18 +221,18 @@ public class HUD {
     }
 
     /**
-     *
+     * Draws the entire in game HUD.
+     * Current lap number, current lap time, and speed bar are drawn.
      */
     private void drawRace() {
-        // Get the stats component for the local player.
+        // If the entity does not have the required components, exit early.
+        if (!entity.has("stats")) return;
+
+        // Cast / get the stats component and time to draw.
         StatsComponent stats = (StatsComponent) entity.get("stats");
+        String displayTime = (entity.has("lap_timer")) ? formatTime(((LapTimer) entity.get("lap_timer")).time) : "--:--:--";
 
-        // Update the total time
-        if (entity.has("lap_timer")) {
-            LapTimer timer = (LapTimer) entity.get("lap_timer");
-            totalTime += (timer.time - totalTime);
-        }
-
+        // Apply viewport and batch projection settings.
         viewport.apply();
 
         batch.setProjectionMatrix(camera.combined);
@@ -263,7 +271,7 @@ public class HUD {
         resources.helvetica19.draw(batch, "mph", 922, 971, 0, Align.topLeft, false);
 
         // Draw time, speed, and current lap counter.
-        resources.helvetica48.draw(batch, formatTime(totalTime), 180 , 982, 0, Align.center, true);
+        resources.helvetica48.draw(batch, displayTime, 180, 982, 0, Align.center, true);
         resources.helvetica48.draw(batch, String.valueOf(Math.round(stats.engineSpeed * 7)), 1060, 982, 0, Align.center, true);
         resources.helvetica48.draw(batch, String.valueOf(currentLap), 100, 62, 0, Align.center, true);
 
@@ -272,7 +280,32 @@ public class HUD {
     }
 
     /**
-     *
+     * Draw race complete and waiting text.
+     */
+    private void drawWaiting() {
+        viewport.apply();
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.enableBlending();
+
+        resources.helvetica48.draw(
+                batch,
+                "Race Complete!\nWaiting for all other players to finish",
+                Gdx.graphics.getWidth() / 2,
+                Gdx.graphics.getHeight() / 4,
+                0,
+                Align.center,
+                true
+        );
+
+        batch.disableBlending();
+        batch.end();
+    }
+
+    /**
+     * Draws an ImGui with each players total and lap times.
+     * TODO : Make sure they are ordered!
      */
     private void drawResults() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());
@@ -311,11 +344,12 @@ public class HUD {
     }
 
     /**
-     *
+     * Four possible states of the hud.
      */
     private enum HudState {
         Countdown,
         InRace,
-        Results;
+        Waiting,
+        Results
     }
 }

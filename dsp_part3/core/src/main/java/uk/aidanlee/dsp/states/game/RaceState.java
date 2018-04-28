@@ -288,6 +288,8 @@ public class RaceState extends State {
             ((EntityStateMachine) entity.get("fsm")).changeState("InActive");
             ((StatsComponent) entity.get("stats")).stop();
         }
+
+        hud.showWaiting();
     }
 
     @Subscribe
