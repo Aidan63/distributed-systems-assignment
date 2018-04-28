@@ -27,6 +27,9 @@ public class HUD {
 
     //
 
+    private float totalTime;
+    private int currentLap;
+
     public HUD(Resources _resources) {
         resources = _resources;
         batch     = new SpriteBatch();
@@ -45,6 +48,10 @@ public class HUD {
     }
 
     public void render(Entity _entity) {
+
+        // Get the stats component for the local player.
+        StatsComponent stats = (StatsComponent) _entity.get("stats");
+
         viewport.apply();
 
         batch.setProjectionMatrix(camera.combined);
@@ -65,8 +72,6 @@ public class HUD {
         lapBox.draw(batch, 1548, 900, 332, 40);
 
         // Draw solid grey speed bar.
-        StatsComponent stats = (StatsComponent) _entity.get("stats");
-
         batch.setColor(0.84f, 0.84f, 0.84f, 1.0f);
         lapBox.draw(batch, 1100, 960, (stats.engineSpeed / stats.maxSpeed) * 780, 80);
 
@@ -92,15 +97,17 @@ public class HUD {
         batch.draw(uiArrow, 960, 960);
 
         // Draw Text
+        resources.helvetica19.setColor(0.16f, 0.59f, 1, 1);
 
         // Draw motif text
-        resources.helvetica19.setColor(0.16f, 0.59f, 1, 1);
-        resources.helvetica19.draw(batch, "laps", 80, 134, 100, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "total time", 366, 971, 100, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "mph", 922, 971, 100, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "lap times", 80, 871, 100, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "laps", 80, 134, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "total time", 366, 971, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "mph", 922, 971, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "lap times", 80, 871, 0, Align.topLeft, false);
 
-        //
+        // Draw time, speed, and current lap counter.
+        resources.helvetica48.draw(batch, "00:00:00", 180 , 982, 0, Align.center, true);
+        resources.helvetica48.draw(batch, String.valueOf(Math.round(stats.engineSpeed * 7)), 1060, 982, 0, Align.center, true);
 
         batch.disableBlending();
         batch.end();
