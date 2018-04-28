@@ -3,8 +3,8 @@ package uk.aidanlee.dsp.data.race;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
-import uk.aidanlee.dsp.ClientRunner;
 import uk.aidanlee.dsp.common.components.*;
+import uk.aidanlee.dsp.common.components.craft.LapTracker;
 import uk.aidanlee.dsp.common.data.circuit.CircuitSpawn;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
@@ -14,6 +14,7 @@ import uk.aidanlee.dsp.components.ShadowComponent;
 import uk.aidanlee.dsp.components.TrailComponent;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.jDiffer.math.Vector;
+import uk.aidanlee.jDiffer.shapes.Ray;
 
 public class Craft {
     /**
@@ -27,7 +28,7 @@ public class Craft {
      * @param _spawn
      * @param _ourID
      */
-    public Craft(Resources _resources, Player[] _players, CircuitSpawn _spawn, int _ourID) {
+    public Craft(Resources _resources, Player[] _players, CircuitSpawn _spawn, Ray[] _checkpoints, int _ourID) {
 
         remotePlayers = new Visual[_players.length];
 
@@ -57,7 +58,7 @@ public class Craft {
             craft.pos.y = _spawn.spawns[spawnIndex].position.y - (craft.origin.y);
 
             if (i == _ourID) {
-                remotePlayers[i] = createLocalPlayer(craft, _players[i]);
+                remotePlayers[i] = createLocalPlayer(craft, _players[i], _checkpoints);
             } else {
                 remotePlayers[i] = createNetworkPlayer(craft, _players[i]);
             }
@@ -78,7 +79,7 @@ public class Craft {
      * This entity will have all of the components needed to move and calculate collisions itself.
      * @return Visual entity.
      */
-    private Visual createLocalPlayer(Visual _visual, Player _player) {
+    private Visual createLocalPlayer(Visual _visual, Player _player, Ray[] _checkpoints) {
         _visual.add(new InputComponent("input"));
         _visual.add(new StatsComponent("stats"));
         _visual.add(new VelocityComponent("velocity"));
@@ -93,7 +94,8 @@ public class Craft {
         EntityStateMachine fsm = new EntityStateMachine("fsm");
         fsm.createState("InActive");
         fsm.createState("Active")
-                .add(new LocalInputComponent("local-input"));
+                .add(new LocalInputComponent("local-input"))
+                .add(new LapTracker("lap_tracker", _checkpoints));
 
         _visual.add(fsm);
         fsm.changeState("InActive");

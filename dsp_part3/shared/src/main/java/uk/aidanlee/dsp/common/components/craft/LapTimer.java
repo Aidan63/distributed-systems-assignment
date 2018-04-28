@@ -18,6 +18,6 @@ public class LapTimer extends Component {
     @Override
     public void update(float _dt) {
         // TODO : Remove this hard coded assumption of a DT of 0.16666 (60fps)
-        time += (1 * 0.167);
+        time += (1 * 0.0167);
     }
 }
