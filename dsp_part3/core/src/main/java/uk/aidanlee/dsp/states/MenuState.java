@@ -6,6 +6,7 @@ import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
 import imgui.SelectableFlags;
+import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionSettings;
@@ -15,11 +16,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class MenuState extends State {
-    private char[] ip;
-    private char[] port;
-    private char[] name;
+
+    /**
+     * Sends out LAN discovery packets and stores info on found servers.
+     */
     private ServerDiscovery discoverer;
-    private int selected;
+
+    /**
+     * Char array for the players name.
+     */
+    private char[] name;
 
     public MenuState(String _name) {
         super(_name);
@@ -27,11 +33,12 @@ public class MenuState extends State {
 
     @Override
     public void onEnter(Object _enterWith) {
-        ip   = new char[255];
-        port = new char[255];
-        name = new char[255];
         discoverer = new ServerDiscovery();
-        selected   = -1;
+        name       = new char[255];
+
+        // Insert a default name for the player.
+        char[] defaultName = "player".toCharArray();
+        System.arraycopy(defaultName, 0, name, 0, defaultName.length);
     }
 
     @Override
@@ -45,9 +52,11 @@ public class MenuState extends State {
         // Keep track of LAN servers.
         discoverer.update();
 
+        drawMenu();
+
         // Build the UI.
-        buildDirectConnect();
-        buildLANServers();
+        //buildDirectConnect();
+        //buildLANServers();
     }
 
     @Override
@@ -58,9 +67,62 @@ public class MenuState extends State {
         // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
     }
 
+    private void drawMenu() {
+        ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Once, new Vec2());
+        ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Once);
+        ImGui.INSTANCE.begin("Main Menu", null, WindowFlags.NoCollapse.getI());
+
+        // Draw the player name input box.
+        ImGui.INSTANCE.inputText("Name", name, 0);
+
+        // Draw the LAN servers.
+        ImGui.INSTANCE.text("LAN Servers");
+        ImGui.INSTANCE.beginChild("LAN Servers", new Vec2(-1, -1), true, 0);
+
+        // Iterate over all of the found servers and create a clickable list of all of them.
+        // when one is double clicked attempt to join that server.
+        for (ServerDiscovery.ServerDetails details : discoverer.getLanServers()) {
+
+            float width = ImGui.INSTANCE.getContentRegionAvailWidth();
+
+            boolean selected = ImGui.INSTANCE.selectable(
+                    details.getConnected() + " / " + details.getMaxConnections(),
+                    false,
+                    SelectableFlags.AllowDoubleClick.getI(),
+                    new Vec2(0, 0)
+            );
+
+            ImGui.INSTANCE.sameLine(75);
+            ImGui.INSTANCE.text(details.getName());
+            ImGui.INSTANCE.sameLine((int) (width - 150));
+            ImGui.INSTANCE.text(details.getIp().getCanonicalHostName() + ":" + details.getPort());
+
+            if (selected) {
+                if (ImGui.INSTANCE.isMouseClicked(0, true)) {
+                    changeState("connecting", new ConnectionSettings(
+                            new String(name).trim(),
+                            new EndPoint(details.getIp(), details.getPort())), null);
+                }
+            }
+        }
+
+        ImGui.INSTANCE.endChild();
+
+        ImGui.INSTANCE.end();
+    }
+
+    private void drawDirectConnect() {
+        //
+    }
+
+    private void drawStartServer() {
+        //
+    }
+
     /**
      * Builds the direct IP connect UI.
      */
+    /*
     private void buildDirectConnect() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 32), Cond.Once, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 123), Cond.Once);
@@ -88,10 +150,12 @@ public class MenuState extends State {
 
         ImGui.INSTANCE.end();
     }
+    */
 
     /*
      * Builds the UI which will show all discovered LAN servers.
      */
+    /*
     private void buildLANServers() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(32, 187), Cond.Once, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(400, 130), Cond.Once);
@@ -124,4 +188,5 @@ public class MenuState extends State {
 
         ImGui.INSTANCE.end();
     }
+    */
 }
