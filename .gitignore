@@ -63,3 +63,5 @@ nb-configuration.xml
 ## OS Specific
 .DS_Store
 dsp_part3/assets/imgui\.ini
+
+dsp_part3/imgui\.ini
