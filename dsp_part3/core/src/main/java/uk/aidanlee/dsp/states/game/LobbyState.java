@@ -14,7 +14,6 @@ import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.data.ChatLog;
@@ -114,45 +113,27 @@ public class LobbyState extends State {
 
     @Subscribe
     public void onSnapshot(CmdSnapshot _cmd) {
-        for (PlayerDiff player : _cmd.getDiffedPlayers()) {
+        for (int i = 0; i < _cmd.snapshot.getPlayerCount(); i++) {
+            Player player = _cmd.snapshot.getPlayer(i);
+            int    id     = _cmd.snapshot.getID(i);
 
-            if (player.id == ourID);
+            //if (id == ourID) continue;
 
-            if (player.diffShipIndex) {
-                players[player.id].setShipIndex(player.shipIndex);
-            }
+            players[id].setShipIndex(player.getShipIndex());
 
-            if (player.diffShipColR) {
-                players[player.id].getShipColor()[0] = player.shipColR;
-            }
-            if (player.diffShipColG) {
-                players[player.id].getShipColor()[1] = player.shipColG;
-            }
-            if (player.diffShipColB) {
-                players[player.id].getShipColor()[2] = player.shipColB;
-            }
+            players[id].getShipColor()[0] = player.getShipColor()[0];
+            players[id].getShipColor()[1] = player.getShipColor()[1];
+            players[id].getShipColor()[2] = player.getShipColor()[2];
 
-            if (player.diffTrailColR) {
-                players[player.id].getTrailColor()[0] = player.trailColR;
-            }
-            if (player.diffTrailColG) {
-                players[player.id].getTrailColor()[1] = player.trailColG;
-            }
-            if (player.diffTrailColB) {
-                players[player.id].getTrailColor()[2] = player.trailColB;
-            }
+            players[id].getTrailColor()[0] = player.getTrailColor()[0];
+            players[id].getTrailColor()[1] = player.getTrailColor()[1];
+            players[id].getTrailColor()[2] = player.getTrailColor()[2];
 
-            players[player.id].setReady(player.ready);
+            players[id].setReady(player.isReady());
 
-            if (player.diffX) {
-                players[player.id].setX(player.x);
-            }
-            if (player.diffY) {
-                players[player.id].setY(player.y);
-            }
-            if (player.diffRotation) {
-                players[player.id].setRotation(player.rotation);
-            }
+            players[id].setX(player.getX());
+            players[id].setY(player.getY());
+            players[id].setRotation(player.getRotation());
         }
     }
 

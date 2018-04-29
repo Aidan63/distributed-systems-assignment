@@ -10,10 +10,6 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import glm_.vec2.Vec2;
-import imgui.Cond;
-import imgui.ImGui;
-import imgui.WindowFlags;
 import uk.aidanlee.dsp.common.components.AABBComponent;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.components.PolygonComponent;
@@ -22,7 +18,6 @@ import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.data.circuit.Circuit;
 import uk.aidanlee.dsp.common.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.net.PlayerDiff;
 import uk.aidanlee.dsp.common.net.commands.*;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
@@ -45,10 +40,8 @@ import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.data.ShapeCollision;
 import uk.aidanlee.jDiffer.shapes.Polygon;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class RaceState extends State {
 
@@ -237,45 +230,27 @@ public class RaceState extends State {
         predictionCorrection(_cmd);
 
         // Smooths the remote players movement.
-        for (PlayerDiff player : _cmd.getDiffedPlayers()) {
+        for (int i = 0; i < _cmd.snapshot.getPlayerCount(); i++) {
+            Player player = _cmd.snapshot.getPlayer(i);
+            int    id     = _cmd.snapshot.getID(i);
 
-            if (player.id == ourID);
+            if (id == ourID) continue;
 
-            if (player.diffShipIndex) {
-                players[player.id].setShipIndex(player.shipIndex);
-            }
+            players[id].setShipIndex(player.getShipIndex());
 
-            if (player.diffShipColR) {
-                players[player.id].getShipColor()[0] = player.shipColR;
-            }
-            if (player.diffShipColG) {
-                players[player.id].getShipColor()[1] = player.shipColG;
-            }
-            if (player.diffShipColB) {
-                players[player.id].getShipColor()[2] = player.shipColB;
-            }
+            players[id].getShipColor()[0] = player.getShipColor()[0];
+            players[id].getShipColor()[1] = player.getShipColor()[1];
+            players[id].getShipColor()[2] = player.getShipColor()[2];
 
-            if (player.diffTrailColR) {
-                players[player.id].getTrailColor()[0] = player.trailColR;
-            }
-            if (player.diffTrailColG) {
-                players[player.id].getTrailColor()[1] = player.trailColG;
-            }
-            if (player.diffTrailColB) {
-                players[player.id].getTrailColor()[2] = player.trailColB;
-            }
+            players[id].getTrailColor()[0] = player.getTrailColor()[0];
+            players[id].getTrailColor()[1] = player.getTrailColor()[1];
+            players[id].getTrailColor()[2] = player.getTrailColor()[2];
 
-            players[player.id].setReady(player.ready);
+            players[id].setReady(player.isReady());
 
-            if (player.diffX) {
-                players[player.id].setX(player.x);
-            }
-            if (player.diffY) {
-                players[player.id].setY(player.y);
-            }
-            if (player.diffRotation) {
-                players[player.id].setRotation(player.rotation);
-            }
+            players[id].setX(player.getX());
+            players[id].setY(player.getY());
+            players[id].setRotation(player.getRotation());
         }
     }
 
@@ -408,34 +383,26 @@ public class RaceState extends State {
      * Corrects the client side prediction to agree with the snapshot the server sent.
      * We calculate the time difference between when the packet was sent and arrived and rollback the client simulation to then.
      * We then fix any incorrect predictions by re-advancing time back to the presence.
-     * @param _latest The latest snapshot received by the server.
+     * @param _cmd The latest snapshot received by the server.
      */
-    private void predictionCorrection(CmdSnapshot _latest) {
+    private void predictionCorrection(CmdSnapshot _cmd) {
 
-        PlayerDiff p = _latest.getDiffedPlayers().stream().filter(pd -> pd.id == ourID).findFirst().get();
-        Visual     v = craft.getRemotePlayers()[ourID];
+        Player p = _cmd.snapshot.getPlayerByID(ourID);
+        Visual v = craft.getRemotePlayers()[ourID];
 
-        float curX = 0;
-        float curY = 0;
-        float curR = 0;
+        v.pos.x = p.getX();
+        float curX = p.getX();
 
-        if (p.diffX) {
-            v.pos.x = p.x;
-            curX = p.x;
-        }
-        if (p.diffY) {
-            v.pos.y = p.y;
-            curY = p.y;
-        }
-        if (p.diffRotation) {
-            v.rotation = p.rotation;
-            curR = p.rotation;
-        }
+        v.pos.y = p.getY();
+        float curY = p.getY();
+
+        v.rotation = p.getRotation();
+        float curR = p.getRotation();
 
         // Re-play any input commands which have been pressed since the servers snapshot time.
         // This re-calculates the client prediction based off what the server says.
         for (InputBuffer.InputRecord cmd : inpBuff.getInputs()) {
-            if (cmd.sentTime > _latest.sentTime) {
+            if (cmd.sentTime > _cmd.sentTime) {
                 InputComponent ip = (InputComponent) v.get("input");
                 ip.accelerate = cmd.input.accel;
                 ip.decelerate = cmd.input.decel;
