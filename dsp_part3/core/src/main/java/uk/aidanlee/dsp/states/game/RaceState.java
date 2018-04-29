@@ -391,13 +391,8 @@ public class RaceState extends State {
         Visual v = craft.getRemotePlayers()[ourID];
 
         v.pos.x = p.getX();
-        float curX = p.getX();
-
         v.pos.y = p.getY();
-        float curY = p.getY();
-
         v.rotation = p.getRotation();
-        float curR = p.getRotation();
 
         // Re-play any input commands which have been pressed since the servers snapshot time.
         // This re-calculates the client prediction based off what the server says.
@@ -416,8 +411,8 @@ public class RaceState extends State {
                 v.get("velocity").update(0);
 
                 // Re-figure out any collisions.
-                //resolveWallCollisions();
-                //resolveCraftCollisions();
+                resolveWallCollisions();
+                resolveCraftCollisions();
             }
         }
 
