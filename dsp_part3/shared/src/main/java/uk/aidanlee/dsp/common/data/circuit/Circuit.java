@@ -2,6 +2,8 @@ package uk.aidanlee.dsp.common.data.circuit;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.math.Rectangle;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import uk.aidanlee.dsp.common.structural.Quadtree;
 import uk.aidanlee.dsp.common.structural.ec.Entity;
@@ -9,7 +11,11 @@ import uk.aidanlee.jDiffer.math.Vector;
 import uk.aidanlee.jDiffer.shapes.InfiniteState;
 import uk.aidanlee.jDiffer.shapes.Ray;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -38,9 +44,11 @@ public class Circuit {
     // Constructors
 
     public Circuit(String _filePath) {
+        URL url = getClass().getResource(_filePath);
+
         try {
             Gson gson = new Gson();
-            CircuitJson json = gson.fromJson(new String(Files.readAllBytes(Paths.get(_filePath))), CircuitJson.class);
+            CircuitJson json = gson.fromJson(Resources.toString(url, Charsets.UTF_8), CircuitJson.class);
 
             info   = json.info;
             points = json.points;
@@ -52,7 +60,7 @@ public class Circuit {
             createCheckPoints();
             applySettings();
         } catch (IOException _ex) {
-            System.out.println("IO Exception reading track file : " + _ex.getMessage());
+            System.out.println("Failed to load track resource : " + _ex.getMessage());
         }
     }
 
