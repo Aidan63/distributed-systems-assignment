@@ -61,7 +61,7 @@ public class RaceState extends State {
 
         events.register(this);
 
-        Circuit circuit = new Circuit("/media/aidan/BFE6-24C6/dsp/dsp_part2/assets/tracks/track.p2");
+        Circuit circuit = new Circuit("/track.p2");
         craft  = new Craft(players, circuit);
         times  = new Times(craft.getRemotePlayers().values(), 3);
         states = new StateMachine()
