@@ -2,7 +2,14 @@ package uk.aidanlee.dsp.common.net.commands;
 
 import uk.aidanlee.dsp.common.net.Packet;
 
+/**
+ * Reads and write a server event in a netchan packet.
+ */
 public class CmdServerEvent extends Command {
+
+    /**
+     * ID of the server event.
+     */
     public final byte state;
 
     public CmdServerEvent(byte _state) {

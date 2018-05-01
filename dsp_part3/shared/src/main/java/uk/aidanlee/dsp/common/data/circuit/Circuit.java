@@ -22,27 +22,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Circuit class holds all data on a track circuit. This information is used by the server and client to perform collision detection
+ * and by the client to draw a visual representation of the track.
+ *
+ * Track information is stored in a JSON file and is parsed out using GSON.
+ */
 public class Circuit {
+    /**
+     * General information about the track, e.g. Author, track name. Currently unused.
+     */
     private CircuitInfo info;
 
-    private CircuitPoint firstPoint;
-
+    /**
+     * All of the points in this circuit.
+     */
     private CircuitPoint[] points;
 
+    /**
+     * All of the tiles in this circuit.
+     */
     private CircuitTile[] tiles;
 
+    /**
+     * Information on all of the circuit spawns.
+     */
     private CircuitSpawn spawn;
 
+    /**
+     * Quad tree containing all wall collision data.
+     */
     private Quadtree<TreeTileWall> wallTree;
 
+    /**
+     * Array of four checkpoints to track player lap progress.
+     */
     private Ray[] checkpoints;
-
-    private List<Entity> boostpads;
-
-    private Map<String, UUID> quadIDs;
 
     // Constructors
 
+    /**
+     * Loads a track from a resource file path location.
+     * @param _filePath Java resource location.
+     */
     public Circuit(String _filePath) {
         URL url = getClass().getResource(_filePath);
 
@@ -58,12 +80,15 @@ public class Circuit {
             createLinkedList();
             createQuadTree();
             createCheckPoints();
-            applySettings();
         } catch (IOException _ex) {
             System.out.println("Failed to load track resource : " + _ex.getMessage());
         }
     }
 
+    /**
+     * Loads a track from a LibGDX file handle.
+     * @param _handle File handle.
+     */
     public Circuit(FileHandle _handle) {
         Gson gson = new Gson();
         CircuitJson json = gson.fromJson(_handle.readString(), CircuitJson.class);
@@ -76,17 +101,12 @@ public class Circuit {
         createLinkedList();
         createQuadTree();
         createCheckPoints();
-        applySettings();
     }
 
     // Getters and Setters
 
     public CircuitInfo getInfo() {
         return info;
-    }
-
-    public CircuitPoint getFirstPoint() {
-        return firstPoint;
     }
 
     public CircuitPoint[] getPoints() {
@@ -111,12 +131,10 @@ public class Circuit {
 
     // Public API
 
-    private void load(String _filePath) {
-
-    }
-
+    /**
+     * re-constructs the circular, doubly linked list from all of the circuit points.
+     */
     private void createLinkedList() {
-        firstPoint = points[0];
 
         for (int i = 0; i < points.length; i++) {
             CircuitPoint thisPoint = points[i];
@@ -128,6 +146,9 @@ public class Circuit {
         }
     }
 
+    /**
+     * Creates the collision quad tree from all circuit points.
+     */
     private void createQuadTree() {
         wallTree = new Quadtree<>(new Rectangle(0, 0, 20000, 20000), 5, 100);
 
@@ -137,6 +158,9 @@ public class Circuit {
         }
     }
 
+    /**
+     * Creates checkpoints at each quarter way around the track. First checkpoint is also the start / finish line.
+     */
     private void createCheckPoints() {
         checkpoints = new Ray[4];
 
@@ -150,10 +174,10 @@ public class Circuit {
         }
     }
 
-    private void applySettings() {
-        //
-    }
-
+    /**
+     * Class which represents the overall structure of the track JSON files.
+     * Used by GSON to parse and map data onto the java classes.
+     */
     private class CircuitJson {
         private CircuitPoint[] points;
         private CircuitTile[] tiles;

@@ -3,6 +3,10 @@ package uk.aidanlee.dsp.common.components;
 import uk.aidanlee.dsp.common.structural.ec.Component;
 import uk.aidanlee.dsp.common.utils.MathsUtil;
 
+/**
+ * Physics component.
+ * It simulates the ship when updated according to the input keys and stats.
+ */
 public class PhysicsComponent extends Component {
     public PhysicsComponent(String _name) {
         super(_name);
@@ -11,6 +15,8 @@ public class PhysicsComponent extends Component {
     @Override
     public void update(float _dt) {
         if (has("stats") && has("input") && has("velocity")) {
+
+            // Get all of the other attached components needed for the simulation.
             StatsComponent stats = (StatsComponent) get("stats");
             InputComponent input = (InputComponent) get("input");
             VelocityComponent velocity = (VelocityComponent) get("velocity");

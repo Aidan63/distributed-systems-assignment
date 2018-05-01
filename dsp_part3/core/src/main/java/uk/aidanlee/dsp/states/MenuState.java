@@ -121,7 +121,7 @@ public class MenuState extends State {
 
             if (selected) {
                 if (ImGui.INSTANCE.isMouseClicked(0, true)) {
-                    changeState("connecting", new ConnectionSettings(
+                    machine.set("connecting", new ConnectionSettings(
                             new String(name).trim(),
                             new EndPoint(details.getIp(), details.getPort())), null);
                 }
@@ -158,7 +158,7 @@ public class MenuState extends State {
                     String sIP   = new String(ip).trim();
                     int    sPort = Integer.parseInt(new String(port).trim());
 
-                    changeState("connecting", new ConnectionSettings(
+                    machine.set("connecting", new ConnectionSettings(
                             new String(name).trim(),
                             new EndPoint(InetAddress.getByName(sIP), sPort)), null);
                 }  catch (UnknownHostException _ex) {

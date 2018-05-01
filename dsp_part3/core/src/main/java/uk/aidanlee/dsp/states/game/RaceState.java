@@ -222,7 +222,7 @@ public class RaceState extends State {
                 break;
 
             case ServerEvent.EVENT_LOBBY_ENTER:
-                changeState("lobby", new LobbyData(chatLog, players, ourID), null);
+                machine.set("lobby", new LobbyData(chatLog, players, ourID), null);
                 break;
         }
     }
@@ -323,7 +323,7 @@ public class RaceState extends State {
         for (TreeTileWall col : collisions) {
             Polygon transformedPoly = poly.getShape();
 
-            ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.wall, null);
+            ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.getPolygon(), null);
             if (wallCol == null) continue;
 
             e.pos.x += wallCol.separationX;

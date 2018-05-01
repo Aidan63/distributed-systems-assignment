@@ -7,8 +7,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Read and write the times of all players into the netchan packet.
+ */
 public class CmdRaceResults extends Command {
-    public final int laps;
+
+    /**
+     * The number of laps each client has done.
+     */
+    private final int laps;
+
+    /**
+     * Map clientIDs to all of their lap times.
+     */
     public final Map<Integer, List<Float>> times;
 
     public CmdRaceResults(Map<Integer, List<Float>> _times, int _laps) {

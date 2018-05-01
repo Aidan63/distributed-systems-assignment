@@ -3,7 +3,6 @@ package uk.aidanlee.dsp.common.net.commands;
 import uk.aidanlee.dsp.common.data.ClientInfo;
 import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.utils.ColorUtil;
 
 public class CmdClientConnected extends Command {
     /**

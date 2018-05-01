@@ -53,9 +53,9 @@ public class ConnectingState extends State {
     public void onOOBPacket(EvOOBData _event) {
         if (_event.packet.getData().readByte() == Packet.CONNECTION_RESPONSE) {
             if (_event.packet.getData().readBoolean()) {
-                changeState("game", new ConnectionResponse(settings.getEp(), _event.packet), null);
+                machine.set("game", new ConnectionResponse(settings.getEp(), _event.packet), null);
             } else {
-                changeState("menu", null, null);
+                machine.set("menu", null, null);
             }
         }
     }

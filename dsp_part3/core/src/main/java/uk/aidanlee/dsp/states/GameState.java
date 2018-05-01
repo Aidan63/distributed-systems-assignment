@@ -123,7 +123,7 @@ public class GameState extends State {
 
     @Subscribe
     public void onStateChange(EvStateChange _stateData) {
-        changeState(_stateData.state, _stateData.enterWith, _stateData.leaveWith);
+        machine.set(_stateData.state, _stateData.enterWith, _stateData.leaveWith);
     }
 
     @Subscribe
@@ -141,7 +141,7 @@ public class GameState extends State {
                 break;
 
             case Packet.DISCONNECTION:
-                changeState("menu", null, null);
+                machine.set("menu", null, null);
                 break;
         }
     }
@@ -223,7 +223,7 @@ public class GameState extends State {
             @Override
             public void run() {
                 System.out.println("Server timeout");
-                changeState("menu", null, null);
+                machine.set("menu", null, null);
             }
         };
         heartbeatTimeout = new Timer();

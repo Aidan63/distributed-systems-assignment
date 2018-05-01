@@ -3,6 +3,10 @@ package uk.aidanlee.dsp.common.structural;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * State machine which holds a number of states keyed by a string name.
+ * States have an update and render function which can be called by the state machine.
+ */
 public class StateMachine {
     /**
      * All of the states in this machine keyed by the states name.
@@ -89,7 +93,7 @@ public class StateMachine {
     }
 
     /**
-     *
+     * Update the current state.
      */
     public void update() {
         if (activeState != null) {
@@ -98,7 +102,7 @@ public class StateMachine {
     }
 
     /**
-     *
+     * Render the current state.
      */
     public void render() {
         if (activeState != null) {

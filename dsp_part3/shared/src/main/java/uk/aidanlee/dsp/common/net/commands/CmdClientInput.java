@@ -3,6 +3,10 @@ package uk.aidanlee.dsp.common.net.commands;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.net.Packet;
 
+/**
+ * This command is only ever sent from the client to the server. It contains the state a clients game buttons from a specific time.
+ * Server uses these keys inputs to properly simulate a client in the game state.
+ */
 public class CmdClientInput extends Command {
     public final int clientID;
     public final boolean accel;
@@ -12,9 +16,9 @@ public class CmdClientInput extends Command {
     public final boolean abLeft;
     public final boolean abRight;
 
-    public CmdClientInput(int _cID, InputComponent _input) {
+    public CmdClientInput(int _clientID, InputComponent _input) {
         super(Command.CLIENT_INPUT);
-        clientID = _cID;
+        clientID = _clientID;
         accel      = _input.accelerate;
         decel      = _input.decelerate;
         steerLeft  = _input.steerLeft;

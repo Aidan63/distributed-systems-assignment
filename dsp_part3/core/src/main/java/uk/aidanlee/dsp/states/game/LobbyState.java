@@ -106,7 +106,7 @@ public class LobbyState extends State {
                 break;
 
             case ServerEvent.EVENT_RACE_ENTER:
-                changeState("race", new LobbyData(chatLog, players, ourID), null);
+                machine.set("race", new LobbyData(chatLog, players, ourID), null);
                 break;
         }
     }

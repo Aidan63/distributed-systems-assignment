@@ -4,10 +4,23 @@ import uk.aidanlee.dsp.common.net.commands.*;
 
 import java.util.*;
 
+/**
+ * Net Channels implements reliability on top of UDP for each client. The server has a netchan instance for each connected client,
+ * and the client has a singular netchan for itself.
+ * NetChan is the main way to transfer information between the client and server. Commands can be added to the netchan to be sent
+ * across the network, the commands can be sent as reliable or unreliable.
+ */
 public class NetChan {
 
+    /**
+     * The maximum number of commands which can be sent in one netchan packet.
+     */
     private static final int MAX_PACKET_CMDS = 4;
-    private static final int MAX_RELIABLE_CMDS = 4;
+
+    /**
+     * The max number of reliable commands we can attempt to send at once.
+     */
+    private static final int MAX_RELIABLE_CMDS = 2;
 
     /**
      * The sequence number of the next outgoing packet.
@@ -40,7 +53,8 @@ public class NetChan {
     private LinkedList<Command> reliableBuffer;
 
     /**
-     *
+     * Creates a new netchan pointing to a specific endpoint.
+     * @param _dest The IP and port this netchan send packets to.
      */
     public NetChan(EndPoint _dest) {
         sequence    = 0;

@@ -6,6 +6,10 @@ import uk.aidanlee.dsp.common.structural.ec.Component;
 import uk.aidanlee.jDiffer.Collision;
 import uk.aidanlee.jDiffer.shapes.Ray;
 
+/**
+ * Component which keeps track of the entities lap progress. Once a lap has been complete it fires off an event into
+ * the entities event bus with the lap time. Allowing other objects to listen for that event.
+ */
 public class LapTracker extends Component {
     /**
      * Boolean status for if each checkpoint for the current lap has been passed.
@@ -17,6 +21,11 @@ public class LapTracker extends Component {
      */
     private Ray[] checkpoints;
 
+    /**
+     * Create a lap tracker component.
+     * @param _name        Name of the component.
+     * @param _checkpoints Array of all track checkpoints.
+     */
     public LapTracker(String _name, Ray[] _checkpoints) {
         super(_name);
 
@@ -62,6 +71,10 @@ public class LapTracker extends Component {
         }
     }
 
+    /**
+     * If we've passed all track checkpoints.
+     * @return boolean.
+     */
     private boolean allCheckpointsPassed() {
         for (boolean b : checkpointPassed) {
             if (!b) return false;

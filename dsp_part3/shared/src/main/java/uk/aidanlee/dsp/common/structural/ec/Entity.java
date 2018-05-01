@@ -6,6 +6,10 @@ import uk.aidanlee.dsp.common.structural.ModList;
 
 import java.util.*;
 
+/**
+ * Entity class. Entities contain some basic spatial information (pos, rotation, origin) acts as a holder for components.
+ * Components are freely capable of modifying the entity they are attached to and accessing other components.
+ */
 public class Entity {
     /**
      * Unique ID of this entity.

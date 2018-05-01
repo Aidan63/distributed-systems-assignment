@@ -1,10 +1,6 @@
 package uk.aidanlee.dsp.common.net;
 
 import uk.aidanlee.dsp.common.data.ClientInfo;
-import uk.aidanlee.dsp.common.utils.ColorUtil;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 public class Packet {
 

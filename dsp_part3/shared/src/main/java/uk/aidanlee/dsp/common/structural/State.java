@@ -1,5 +1,8 @@
 package uk.aidanlee.dsp.common.structural;
 
+/**
+ * Base state class for the state machine.
+ */
 public class State {
     /**
      * Name of this state.
@@ -23,24 +26,16 @@ public class State {
         return name;
     }
 
-    public void setMachine(StateMachine machine) {
-        this.machine = machine;
+    /**
+     * Sets the state machine which owns this state.
+     * @param _machine this states machine.
+     */
+    void setMachine(StateMachine _machine) {
+        machine = _machine;
     }
 
-    public void onEnter(Object _enterWith) {
-        System.out.println( name +  " entered state with : " + _enterWith);
-    }
-    public void onLeave(Object _leaveWith) {
-        System.out.println( name + " left state with : " + _leaveWith);
-    }
-    public void onUpdate() {
-        //
-    }
-    public void onRender() {
-        //
-    }
-
-    public void changeState(String _name, Object _enterWith, Object _leaveWith) {
-        machine.set(_name, _enterWith, _leaveWith);
-    }
+    public void onEnter(Object _enterWith) { }
+    public void onLeave(Object _leaveWith) { }
+    public void onUpdate() { }
+    public void onRender() { }
 }

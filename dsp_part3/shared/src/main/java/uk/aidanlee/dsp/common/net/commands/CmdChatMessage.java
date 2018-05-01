@@ -14,21 +14,12 @@ public class CmdChatMessage extends Command {
      */
     public final String message;
 
-    /**
-     *
-     * @param _id
-     * @param _msg
-     */
     public CmdChatMessage(int _id, String _msg) {
         super(Command.CHAT_MESSAGE);
         clientID = _id;
         message  = _msg;
     }
 
-    /**
-     *
-     * @param _packet
-     */
     public CmdChatMessage(Packet _packet, int _sentTime) {
         super(Command.CHAT_MESSAGE, _sentTime);
         clientID = _packet.getData().readByte();

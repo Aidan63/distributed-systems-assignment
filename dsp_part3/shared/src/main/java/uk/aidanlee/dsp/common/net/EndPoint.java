@@ -2,8 +2,20 @@ package uk.aidanlee.dsp.common.net;
 
 import java.net.InetAddress;
 
+/**
+ * Represents a specific location on the network.
+ * Contains an IP address and port.
+ */
 public class EndPoint {
+
+    /**
+     * The IP address of this location
+     */
     private InetAddress address;
+
+    /**
+     * The port the device at the IP is listening on.
+     */
     private int port;
 
     public EndPoint(InetAddress _address, int _port) {

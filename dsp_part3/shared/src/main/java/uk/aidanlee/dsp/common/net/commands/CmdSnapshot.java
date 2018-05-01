@@ -4,17 +4,34 @@ import uk.aidanlee.dsp.common.net.Packet;
 import uk.aidanlee.dsp.common.net.Player;
 import uk.aidanlee.dsp.common.net.Snapshot;
 
+/**
+ * Snapshot command. Reads and write a snapshot to and from a packet.
+ */
 public class CmdSnapshot extends Command {
+    /**
+     * The snapshot data.
+     */
     public final Snapshot snapshot;
 
+    /**
+     * Creates a packet with a snapshot to write to the packet.
+     * @param _snapshot Snapshot to write.
+     */
     public CmdSnapshot(Snapshot _snapshot) {
         super(Command.SNAPSHOT);
         snapshot = _snapshot;
     }
 
+    /**
+     * Reads a snapshot from the provided packet.
+     * @param _packet   Packet to read the snapshot from.
+     * @param _sentTime Time the command was sent.
+     */
     public CmdSnapshot(Packet _packet, int _sentTime) {
         super(Command.SNAPSHOT, _sentTime);
 
+        // Reconstruct the snapshot by reading and adding all player data.
+        // Normalized color floats (0.0 - 1.0) are converted to bytes so they can be sent as 8 bits per RGB component instead of 32bits.
         snapshot = new Snapshot();
 
         // Read all player data from the packet and re-create the snapshot.

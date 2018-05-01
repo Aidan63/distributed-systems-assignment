@@ -3,7 +3,13 @@ package uk.aidanlee.dsp.common.net;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A snapshot represents the current state of the game simulation at a specific moment in time.
+ * The snapshot contains a list of all players and their information.
+ * The clientID, name, ship index, ready state, ship and trail color, x pos, y pos, and rotation for all players are stored in a snapshot.
+ */
 public class Snapshot {
+
     /**
      * The players in this snapshot.
      */
@@ -11,6 +17,9 @@ public class Snapshot {
 
     // Constructors
 
+    /**
+     * Creates a new empty snapshot.
+     */
     public Snapshot() {
         players  = new LinkedList<>();
     }

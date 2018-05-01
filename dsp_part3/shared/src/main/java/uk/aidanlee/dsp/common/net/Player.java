@@ -1,5 +1,9 @@
 package uk.aidanlee.dsp.common.net;
 
+/**
+ * Player data container used by the game simulation.
+ * Stores the complete information about a player in the game.
+ */
 public class Player {
     /**
      * This players name.
@@ -69,6 +73,8 @@ public class Player {
         shipColor  = _shipColor;
         trailColor = _trailColor;
     }
+
+    // whole lot of getters and setters.
 
     public String getName() {
         return name;

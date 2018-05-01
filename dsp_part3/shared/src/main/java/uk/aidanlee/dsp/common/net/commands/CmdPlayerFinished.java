@@ -2,7 +2,14 @@ package uk.aidanlee.dsp.common.net.commands;
 
 import uk.aidanlee.dsp.common.net.Packet;
 
+/**
+ * Reads and writes a clientID for a netchan for a player which has finished the race.
+ */
 public class CmdPlayerFinished extends Command {
+
+    /**
+     * ClientID of the player who has finished the race.
+     */
     public final int clientID;
 
     public CmdPlayerFinished(int _clientID) {

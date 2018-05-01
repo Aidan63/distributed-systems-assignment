@@ -31,11 +31,19 @@ public class Quadtree<T extends IQuadtreeElement> {
      */
     private int minElementsBeforeSplit;
 
+
+    // Four children quads.
     private Quadtree<T> topLeft;
     private Quadtree<T> topRight;
     private Quadtree<T> bottomRight;
     private Quadtree<T> bottomLeft;
 
+    /**
+     * Creates a new quad tree structure.
+     * @param _bounds                 The total rectangle this quad tree covers.
+     * @param _minElementsBeforeSplit Minimum number of elements needed at each level before it splits.
+     * @param _maxDepth               The maximum depth this tree can split to.
+     */
     public Quadtree(Rectangle _bounds, int _minElementsBeforeSplit, int _maxDepth) {
         entities = new LinkedList<>();
 

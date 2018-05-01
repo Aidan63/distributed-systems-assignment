@@ -33,7 +33,7 @@ class RaceStateCountdown extends State {
         // 3 second countdown
         if (timer == 180) {
             // Change to the game and tell all clients.
-            changeState("game", null, null);
+            machine.set("game", null, null);
             events.post(new EvGameEvent(ServerEvent.EVENT_RACE_START));
         }
     }

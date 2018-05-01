@@ -100,7 +100,7 @@ class RaceStateGame extends State {
             for (TreeTileWall col : collisions) {
                 Polygon transformedPoly = poly.getShape();
 
-                ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.wall, null);
+                ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.getPolygon(), null);
                 if (wallCol == null) continue;
 
                 e.pos.x += wallCol.separationX;
@@ -157,7 +157,7 @@ class RaceStateGame extends State {
 
         if (times.allPlayersFinished()) {
             events.post(new EvRaceResults(getTimes()));
-            changeState("results", null, null);
+            machine.set("results", null, null);
         }
     }
 

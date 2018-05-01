@@ -3,7 +3,8 @@ package uk.aidanlee.dsp.common.net;
 import java.util.BitSet;
 
 /**
- * Bit packer utility class
+ * Bit packer utility class.
+ * This bit packet allows us to specify exactly how many bits for values we want to send.
  */
 public class BitPacker {
     /**
@@ -36,20 +37,10 @@ public class BitPacker {
         readCursor = 0;
     }
 
-    /**
-     * Create a bit packer with an initial set of data.
-     * @param _initialData byte array of initial data.
-     */
-    public BitPacker(byte[] _initialData) {
-        this();
-
-        writeBytes(_initialData);
-    }
-
     // Write API
 
     /**
-     * Writes an entire byte into the bit set.
+     * Writes an entire byte into the bit stream.
      * @param _data The byte to add.
      */
     public void writeByte(byte _data) {
@@ -57,7 +48,7 @@ public class BitPacker {
     }
 
     /**
-     * Writes a specific number of bits from the provided byte into the bit set.
+     * Writes a specific number of bits from the provided byte into the bit stream.
      * @param _data   The byte to add.
      * @param _length The number of bits to write (max 8)
      */
@@ -85,7 +76,7 @@ public class BitPacker {
     }
 
     /**
-     * Writes a specific number of bits from the provided int into the bit set.
+     * Writes a specific number of bits from the provided int into the bit stream.
      * @param _data   The int to write.
      * @param _length The number of bits to write (max 32)
      */
@@ -104,26 +95,8 @@ public class BitPacker {
         }
     }
 
-    public void writeLong(long _data) {
-        writeLong(_data, Long.SIZE);
-    }
-
-    public void writeLong(long _data, int _length) {
-        if (_length > Long.SIZE) {
-            System.exit(-1);
-        }
-
-        for (int i = 0; i < _length; i++) {
-            if (((_data >> i) & 1) == 1) {
-                data.set(numBits++, true);
-            } else {
-                data.set(numBits++, false);
-            }
-        }
-    }
-
     /**
-     * Writes an entire float into the bit set.
+     * Writes an entire float into the bit stream.
      * @param _data The float to write.
      */
     public void writeFloat(float _data) {
@@ -139,7 +112,7 @@ public class BitPacker {
     }
 
     /**
-     * Writes a boolean into the bit set.
+     * Writes a boolean into the bit stream.
      * @param _data The boolean to write.
      */
     public boolean writeBoolean(boolean _data) {
@@ -149,8 +122,8 @@ public class BitPacker {
 
 
     /**
-     * Writes a string to the bit set. Max length of 255 chars.
-     * @param _data
+     * Writes a string to the bit stream. Max length of 255 chars.
+     * @param _data String value.
      */
     public void writeString(String _data) {
         byte[] payload = _data.getBytes();
@@ -165,7 +138,7 @@ public class BitPacker {
     }
 
     /**
-     * Writes a set of bytes into the bit set.
+     * Writes a set of bytes into the bit stream.
      * @param _data Byte array to add.
      */
     public void writeBytes(byte[] _data) {
@@ -173,7 +146,7 @@ public class BitPacker {
     }
 
     /**
-     * Writes a specific number of bytes from a byte array into the bit set.
+     * Writes a specific number of bytes from a byte array into the bit stream.
      * @param _data  The bytes to add.
      * @param _bytes The number of bytes to add.
      */
@@ -186,7 +159,7 @@ public class BitPacker {
     // Read API
 
     /**
-     * Read an entire byte from the bit set.
+     * Read an entire byte from the bit stream.
      * @return
      */
     public byte readByte() {
@@ -194,9 +167,9 @@ public class BitPacker {
     }
 
     /**
-     *
-     * @param length
-     * @return
+     * Read a specific number of bits of a byte from the bit stream.
+     * @param length Number of bits to read.
+     * @return byte.
      */
     public byte readByte(int length) {
 
@@ -210,17 +183,17 @@ public class BitPacker {
     }
 
     /**
-     *
-     * @return
+     * Reads an entire 32bit integer from the bit stream.
+     * @return integer.
      */
     public int readInteger() {
         return readInteger(Integer.SIZE);
     }
 
     /**
-     *
-     * @param _length
-     * @return
+     * Reads a specific number of integer bits from the bit stream.
+     * @param _length Number of bits to read.
+     * @return integer.
      */
     public int readInteger(int _length) {
         int value = 0;
@@ -236,35 +209,18 @@ public class BitPacker {
         return value;
     }
 
-    public long readLong() {
-        return readLong(Long.SIZE);
-    }
-
-    public long readLong(int _length) {
-        long value = 0;
-        for (int i = 0; i < _length; i++) {
-            if (readCursor > numBits - 1) {
-                System.exit(-1);
-            }
-
-            value |= (data.get(readCursor++) ? 1 : 0) << (i % Long.SIZE);
-        }
-
-        return value;
-    }
-
     /**
-     *
-     * @return
+     * Reads an entire 32bit float from the bit stream.
+     * @return float.
      */
     public float readFloat() {
         return readFloat(Float.SIZE);
     }
 
     /**
-     *
-     * @param _length
-     * @return
+     * Reads a specific number of bits of a float from a bit stream.
+     * @param _length Number of bits to read.
+     * @return float.
      */
     public float readFloat(int _length) {
         int value = 0;
@@ -280,8 +236,8 @@ public class BitPacker {
     }
 
     /**
-     *
-     * @return
+     * Reads a boolean from the bit stream.
+     * @return boolean.
      */
     public boolean readBoolean() {
         if (readCursor > numBits - 1) {
@@ -293,9 +249,9 @@ public class BitPacker {
     }
 
     /**
-     *
-     * @param _length
-     * @return
+     * Reads a specific number of bytes from the bit stream.
+     * @param _length Number of bytes to read.
+     * @return byte array.
      */
     public byte[] readBytes(int _length) {
         byte[] output = new byte[_length];
@@ -308,7 +264,7 @@ public class BitPacker {
 
 
     /**
-     *
+     * Reads a string from the bit stream.
      * @return
      */
     public String readString() {
@@ -353,32 +309,5 @@ public class BitPacker {
             writeBoolean(false);
         }
 
-    }
-
-    /**
-     *
-     */
-    public void dump() {
-        System.out.println("+--------------- ------------- ------- ------ --- -- -- - -- -- --");
-        System.out.println("| Dumping bitset, length: " + numBits);
-        System.out.println("+--------------- ------------- ------- ------ --- -- -- - -- -- --");
-
-        int count = 0;
-
-        for (int i = 0; i < numBits; i++) {
-            System.out.print(data.get(i) ? "1" : "0");
-
-            if ((i != 0) && (i % 8 == 7)) {
-                System.out.print(" ");
-                count++;
-                if (count == 12) {
-                    System.out.println();
-                    count = 0;
-                }
-            }
-        }
-
-        System.out.println();
-        System.out.println("+--------------- ------------- ------- ------ --- -- -- - -- -- --");
     }
 }

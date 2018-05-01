@@ -52,7 +52,7 @@ public class LobbyActiveState extends State {
     @Override
     public void onUpdate() {
         if (numPlayers() > 0 && allPlayersReady()) {
-            changeState("lobby-countdown", null, null);
+            machine.set("lobby-countdown", null, null);
         }
     }
 

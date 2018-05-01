@@ -7,6 +7,11 @@ import java.net.SocketException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+/**
+ * Threaded network listener. NetManager listens on a provided or automatically assigned port.
+ * When it receives data creates a packet instance and places it on the queue.
+ * This queue provides thread safe access for the main thread to access incoming packets.
+ */
 public class NetManager extends Thread {
     /**
      * The socket used for sending and receiving data.

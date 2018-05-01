@@ -2,10 +2,20 @@ package uk.aidanlee.dsp.common.components.craft;
 
 import uk.aidanlee.dsp.common.structural.ec.Component;
 
+/**
+ * Keeps track of the total time this lap is taking.
+ */
 public class LapTimer extends Component {
 
+    /**
+     * Current lap time.
+     */
     public float time;
 
+    /**
+     * Creates a new lap timer.
+     * @param _name Name of this component.
+     */
     public LapTimer(String _name) {
         super(_name);
     }

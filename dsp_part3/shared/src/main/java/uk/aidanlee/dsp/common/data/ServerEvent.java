@@ -25,16 +25,4 @@ public class ServerEvent {
      * This event is sent 3 seconds after EVENT_RACE_ENTER.
      */
     public static final byte EVENT_RACE_START = 3;
-
-    /**
-     * Sent once the first player has finished all of their laps.
-     * Other players are given 30 seconds to finish before the race ends.
-     */
-    public static final byte EVENT_RACE_ENDS_SOON = 4;
-
-    /**
-     * Sent when the race is over.
-     * LOBBY_ENTER event follows shortly after.
-     */
-    public static final byte EVENT_RACE_END = 5;
 }

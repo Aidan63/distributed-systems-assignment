@@ -146,7 +146,7 @@ public class RaceState extends State {
     @Subscribe
     public void onGameEvent(EvGameEvent _event) {
         if (_event.event == ServerEvent.EVENT_LOBBY_ENTER) {
-            changeState("lobby-active", null, null);
+            machine.set("lobby-active", null, null);
         }
     }
 
@@ -163,7 +163,7 @@ public class RaceState extends State {
 
     private void checkIfEmpty() {
         if (players.size() == 0) {
-            changeState("lobby-active", null, null);
+            machine.set("lobby-active", null, null);
         }
     }
 }

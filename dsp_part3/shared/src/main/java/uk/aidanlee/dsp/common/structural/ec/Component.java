@@ -1,5 +1,9 @@
 package uk.aidanlee.dsp.common.structural.ec;
 
+/**
+ * Base component class. Allows access to the entity its attached to and other attached components.
+ * Components should extend this class to implement actual functionality.
+ */
 public class Component {
     /**
      * The name of this component.
@@ -19,6 +23,8 @@ public class Component {
         name = _name;
     }
 
+    // Convenience wrapper functions around the attached entities functions.
+
     public boolean has(String _name) {
         return entity.has(_name);
     }
@@ -37,29 +43,21 @@ public class Component {
      * Called whenever the entity is updated.
      * @param _dt Delta time
      */
-    public void update(float _dt) {
-        //
-    }
+    public void update(float _dt) { }
 
     /**
      * Called once this component has been added to an entity.
      */
-    public void onadded() {
-        //
-    }
+    public void onadded() { }
 
     /**
      * Called when this component is about to be removed from its entity.
      */
-    public void onremoved() {
-        //
-    }
+    public void onremoved() { }
 
     /**
      * Destroy method.
      * Called when the entity is destroyed.
      */
-    public void destroy() {
-        //
-    }
+    public void destroy() { }
 }
