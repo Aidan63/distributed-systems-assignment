@@ -3,6 +3,10 @@ package uk.aidanlee.dsp_assignment.structural;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * State machine which holds a number of states keyed by a string name.
+ * States have an update and render function which can be called by the state machine.
+ */
 public class StateMachine {
     /**
      * All of the states in this machine keyed by the states name.
@@ -27,9 +31,11 @@ public class StateMachine {
      * Adds a new state to the machine.
      * @param _state The state to add.
      */
-    public void add(State _state) {
+    public StateMachine add(State _state) {
         states.put(_state.getName(), _state);
         _state.setMachine(this);
+
+        return this;
     }
 
     /**
@@ -57,7 +63,12 @@ public class StateMachine {
      */
     public void set(String _stateName, Object _enterWith, Object _leaveWith)
     {
-        if (!states.containsKey(_stateName)) return;
+        if (!states.containsKey(_stateName)) {
+            return;
+        }
+        if (activeState != null && activeState.getName().equals(_stateName)) {
+            return;
+        }
 
         unset(_leaveWith);
 
@@ -77,10 +88,21 @@ public class StateMachine {
         }
     }
 
+    /**
+     * Update the current state.
+     */
     public void update() {
-        if (activeState != null) activeState.onUpdate();
+        if (activeState != null) {
+            activeState.onUpdate();
+        }
     }
+
+    /**
+     * Render the current state.
+     */
     public void render() {
-        if (activeState != null) activeState.onRender();
+        if (activeState != null) {
+            activeState.onRender();
+        }
     }
 }

@@ -2,6 +2,7 @@ package uk.aidanlee.dsp;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import com.badlogic.gdx.graphics.GL20;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import imgui.Context;
@@ -70,6 +71,9 @@ public class Client {
     }
 
     public void onRender() {
+        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         states.render();
 
         ImGui.INSTANCE.render();

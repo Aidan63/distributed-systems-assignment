@@ -1,12 +1,6 @@
 package uk.aidanlee.dsp_assignment.structural;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
-import uk.aidanlee.jDiffer.math.Vector;
-import uk.aidanlee.dsp_assignment.data.circuit.TreeTileWall;
-import uk.aidanlee.dsp_assignment.utils.Debug;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,65 +31,25 @@ public class Quadtree<T extends IQuadtreeElement> {
      */
     private int minElementsBeforeSplit;
 
+
+    // Four children quads.
     private Quadtree<T> topLeft;
     private Quadtree<T> topRight;
     private Quadtree<T> bottomRight;
     private Quadtree<T> bottomLeft;
 
+    /**
+     * Creates a new quad tree structure.
+     * @param _bounds                 The total rectangle this quad tree covers.
+     * @param _minElementsBeforeSplit Minimum number of elements needed at each level before it splits.
+     * @param _maxDepth               The maximum depth this tree can split to.
+     */
     public Quadtree(Rectangle _bounds, int _minElementsBeforeSplit, int _maxDepth) {
         entities = new LinkedList<>();
 
         boundary = _bounds;
         maxDepth = _maxDepth;
         minElementsBeforeSplit = _minElementsBeforeSplit;
-    }
-
-    /**
-     * Draws debug shapes related to the quad tree and its elements.
-     * @param _renderer The shape renderer to draw with.
-     */
-    public void debugDraw(ShapeRenderer _renderer) {
-        // Draws a red boundary box.
-        if (Debug.drawQuadtree()) {
-            _renderer.setColor(Color.RED);
-            _renderer.rect(boundary.x, boundary.y, boundary.width, boundary.height);
-        }
-
-        if (Debug.drawAABBs() || Debug.drawPolys()) {
-            for (T ent : entities) {
-                // Draw the AABB box for each entity.
-                if (Debug.drawAABBs()) {
-                    Rectangle box = ent.box();
-                    _renderer.setColor(Color.GREEN);
-                    _renderer.rect(box.x, box.y, box.width, box.height);
-                }
-
-                // Draw the precise collision poly for each entity.
-                if (Debug.drawPolys()) {
-                    TreeTileWall wall = (TreeTileWall) ent;
-                    float[] verts = new float[8];
-                    int index = 0;
-                    for (Vector v : wall.wall.get_transformedVertices()) {
-                        verts[index++] = (float) v.x;
-                        verts[index++] = (float) v.y;
-                    }
-
-                    _renderer.setColor(Color.BLUE);
-                    _renderer.polygon(verts);
-
-                    _renderer.setColor(Color.YELLOW);
-                    _renderer.line((float)wall.ray.start.x, (float)wall.ray.start.y, (float)wall.ray.end.x, (float)wall.ray.end.y);
-                }
-            }
-        }
-
-        // Recursive drawing if this quadtree has been split
-        if (topLeft == null) return;
-
-        topLeft.debugDraw(_renderer);
-        topRight.debugDraw(_renderer);
-        bottomLeft.debugDraw(_renderer);
-        bottomRight.debugDraw(_renderer);
     }
 
     /**

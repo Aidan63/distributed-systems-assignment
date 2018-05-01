@@ -3,26 +3,30 @@ package uk.aidanlee.dsp_assignment.data;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.*;
-import uk.aidanlee.dsp_assignment.race.Race;
 
 public class Views {
+
+    /**
+     *
+     */
     private OrthographicCamera[] cameras;
+
+    /**
+     *
+     */
     private Viewport[] viewports;
+
+    /**
+     *
+     */
     private SplitType split;
 
-    public OrthographicCamera[] getCameras() {
-        return cameras;
-    }
-    public Viewport[] getViewports() {
-        return viewports;
-    }
+    public Views(int _numPlayers, SplitType _split) {
+        cameras   = new OrthographicCamera[_numPlayers];
+        viewports = new Viewport[_numPlayers];
+        split     = _split;
 
-    public void setup() {
-        cameras   = new OrthographicCamera[Race.settings.getLocalPlayers()];
-        viewports = new Viewport[Race.settings.getLocalPlayers()];
-        split     = Race.settings.getSplit();
-
-        for (int i = 0; i < Race.settings.getLocalPlayers(); i++) {
+        for (int i = 0; i < _numPlayers; i++) {
             cameras[i] = new OrthographicCamera();
             cameras[i].setToOrtho(true);
             cameras[i].zoom = 1.2f;
@@ -32,13 +36,21 @@ public class Views {
         resize();
     }
 
+    public OrthographicCamera[] getCameras() {
+        return cameras;
+    }
+
+    public Viewport[] getViewports() {
+        return viewports;
+    }
+
     public void resize() {
         // All of the libGDX viewport stuff assumes 0x0 is bottom left instead of top left...
 
         int midx = Gdx.graphics.getWidth()  / 2;
         int midy = Gdx.graphics.getHeight() / 2;
 
-        switch (Race.settings.getLocalPlayers()) {
+        switch (cameras.length) {
             case 1:
                 viewports[0].update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
                 viewports[0].setScreenPosition(0, 0);

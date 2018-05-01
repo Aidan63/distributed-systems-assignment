@@ -5,6 +5,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
+/**
+ * Convenience wrapper over the Entity class for an entity with a visual image attached.
+ * Contains basic rendering information and a draw function.
+ */
 public class Visual extends Entity {
     /**
      * Texture region for this entity.

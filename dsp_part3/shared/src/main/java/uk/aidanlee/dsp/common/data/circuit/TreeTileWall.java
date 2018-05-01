@@ -4,9 +4,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import uk.aidanlee.dsp.common.structural.IQuadtreeElement;
 import uk.aidanlee.jDiffer.math.Vector;
-import uk.aidanlee.jDiffer.shapes.InfiniteState;
 import uk.aidanlee.jDiffer.shapes.Polygon;
-import uk.aidanlee.jDiffer.shapes.Ray;
 
 /**
  * The track is split up into a series of walls for each tile in the track. All of these tiles are inserted into the quad tree

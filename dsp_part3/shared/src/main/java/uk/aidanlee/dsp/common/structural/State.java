@@ -15,8 +15,8 @@ public class State {
     protected StateMachine machine;
 
     /**
-     *
-     * @param _name
+     * Creates a new state with the provided name.
+     * @param _name State name.
      */
     public State(String _name) {
         name = _name;

@@ -4,23 +4,30 @@ import java.util.HashMap;
 import java.util.Map;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
 import imgui.Cond;
 import imgui.ImGui;
 import imgui.WindowFlags;
+import imgui.impl.LwjglGL3;
+import uk.aidanlee.dsp_assignment.data.Resources;
 import uk.aidanlee.dsp_assignment.data.SplitType;
 import uk.aidanlee.dsp_assignment.race.PlayerSetting;
 import uk.aidanlee.dsp_assignment.race.RaceSettings;
 import uk.aidanlee.dsp_assignment.structural.State;
 
 public class Menu extends State {
+
     /*
       Arrays are used to hold single values since that's how the java port of ImGui handles modifying variables.
       Saves having to create other variables which are arrays containing other variables
      */
+
+    /**
+     * Access to the games resources.
+     */
+    private Resources resources;
 
     /**
      * One element containing how many local players there are.
@@ -31,11 +38,6 @@ public class Menu extends State {
      * One element (0 - 1) mapping onto the SplitType enum for how the screen should be split for 2 or 3 players.
      */
     private int[] splitType;
-
-    /**
-     * One element which sets if boost pads should be enabled in game.
-     */
-    private boolean[] boostPads;
 
     /**
      * Staggered array storing the index for each players image in the texture atlas.
@@ -53,13 +55,9 @@ public class Menu extends State {
      */
     private Map<Integer, Vec4> playerTrailColours;
 
-    /**
-     * Texture atlas for the player image data.
-     */
-    private TextureAtlas texture;
-
-    public Menu(String _name) {
+    public Menu(String _name, Resources _resources) {
         super(_name);
+        resources = _resources;
     }
 
     @Override
@@ -70,8 +68,6 @@ public class Menu extends State {
 
         localPlayers = new int[] { 1 };
         splitType    = new int[] { 0 };
-        boostPads    = new boolean[] { true };
-        texture      = new TextureAtlas(Gdx.files.internal("assets/textures/craft.atlas"));
 
         playerShipColours = new HashMap<>();
         playerShipColours.put(0, new Vec4(1, 1, 1, 1));
@@ -96,22 +92,12 @@ public class Menu extends State {
     @Override
     public void onLeave(Object _leaveWith) {
         super.onLeave(_leaveWith);
-
-        texture.dispose();
     }
 
     @Override
     public void onUpdate() {
         uiRaceSettings();
         uiPlayerSettings();
-    }
-
-    @Override
-    public void onRender() {
-        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
     }
 
     /**
@@ -127,11 +113,6 @@ public class Menu extends State {
         ImGui.INSTANCE.indent(8);
         ImGui.INSTANCE.radioButton("Vertical"  , splitType, 0);
         ImGui.INSTANCE.radioButton("Horizontal", splitType, 1);
-        ImGui.INSTANCE.unindent(8);
-
-        ImGui.INSTANCE.text("Game Options");
-        ImGui.INSTANCE.indent(8);
-        ImGui.INSTANCE.checkbox("Boost pads", boostPads);
         ImGui.INSTANCE.unindent(8);
 
         if (ImGui.INSTANCE.button("Start Race", new Vec2(-1, 0))) {
@@ -163,7 +144,7 @@ public class Menu extends State {
         ImGui.INSTANCE.pushId(_i);
 
         // Get the current players texture region.
-        TextureRegion region = texture.findRegion("craft", playerShips[_i][0]);
+        TextureRegion region = resources.craftAtlas.findRegion("craft", playerShips[_i][0]);
 
         ImGui.INSTANCE.text("Player " + (_i + 1));
         ImGui.INSTANCE.image(region.getTexture().getTextureObjectHandle(), new Vec2(128, 64), new Vec2(region.getU(), region.getV()), new Vec2(region.getU2(), region.getV2()), playerShipColours.get(_i), playerTrailColours.get(_i));
@@ -191,10 +172,9 @@ public class Menu extends State {
         RaceSettings settings = new RaceSettings(
                 localPlayers[0],
                 SplitType.values()[splitType[0]],
-                boostPads[0],
                 playerSettings
         );
 
-        changeState("game", settings, null);
+        machine.set("game", settings, null);
     }
 }

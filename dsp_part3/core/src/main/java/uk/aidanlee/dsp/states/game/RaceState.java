@@ -153,8 +153,6 @@ public class RaceState extends State {
 
     @Override
     public void onRender() {
-        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         // Get the projection matrix from our camera
         view.getViewport().apply();
@@ -329,8 +327,6 @@ public class RaceState extends State {
 
             e.pos.x += wallCol.separationX;
             e.pos.y += wallCol.separationY;
-
-            // TODO: bounce collisions
         }
     }
 

@@ -4,7 +4,8 @@ eclipse.project.name = appName + '-core'
 dependencies {
     compile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     compile "com.badlogicgames.gdx:gdx:$gdxVersion"
-    compile "com.badlogicgames.gdx:gdx-controllers:$gdxVersion"
     compile "com.google.code.gson:gson:2.8.2"
-    compile fileTree(dir: 'libs', include: '*.jar')
+    compile "com.google.guava:guava:24.1-jre"
+    compile files("libs/imgui-all.jar")
+    compile files("libs/jDiffer.jar")
 }

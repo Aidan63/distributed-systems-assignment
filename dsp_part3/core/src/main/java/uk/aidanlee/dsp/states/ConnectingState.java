@@ -39,14 +39,6 @@ public class ConnectingState extends State {
         events.post(new EvSendPacket(Packet.Connection(settings.getName(), settings.getEp())));
     }
 
-    @Override
-    public void onRender() {
-        Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        // Nothing is explicitly drawn since everything in this state is part of ImGui and drawn by that instead.
-    }
-
     // Event Functions
 
     @Subscribe

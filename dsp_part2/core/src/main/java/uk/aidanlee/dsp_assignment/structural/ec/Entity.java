@@ -1,10 +1,15 @@
 package uk.aidanlee.dsp_assignment.structural.ec;
 
 import com.badlogic.gdx.math.Vector2;
+import com.google.common.eventbus.EventBus;
 import uk.aidanlee.dsp_assignment.structural.ModList;
 
 import java.util.*;
 
+/**
+ * Entity class. Entities contain some basic spatial information (pos, rotation, origin) acts as a holder for components.
+ * Components are freely capable of modifying the entity they are attached to and accessing other components.
+ */
 public class Entity {
     /**
      * Unique ID of this entity.
@@ -21,6 +26,11 @@ public class Entity {
      * Mod list is used since component will want to add and remove other component while the components are being iterated over.
      */
     private ModList<Component> components;
+
+    /**
+     * Events for this entity.
+     */
+    private final EventBus events;
 
     /**
      * Position of this entity.
@@ -50,6 +60,7 @@ public class Entity {
         rotation = 0;
 
         components = new ModList<>();
+        events     = new EventBus();
     }
 
     // Getters and Setters
@@ -64,6 +75,10 @@ public class Entity {
 
     public String getId() {
         return id;
+    }
+
+    public EventBus getEvents() {
+        return events;
     }
 
     // Public API
@@ -145,6 +160,7 @@ public class Entity {
      */
     public void destroy() {
         for (Component comp : components) {
+            comp.onremoved();
             comp.destroy();
         }
     }
