@@ -22,10 +22,29 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Active race state. State is used when clients can freely move around.
+ */
 class RaceStateGame extends State {
+
+    /**
+     * Access to the game event bus.
+     */
     private EventBus events;
+
+    /**
+     * Access to this races circuit.
+     */
     private Circuit circuit;
+
+    /**
+     * Access to this races craft entities.
+     */
     private Craft craft;
+
+    /**
+     * Access to this races times.
+     */
     private Times times;
 
     RaceStateGame(String _name, Circuit _circuit, EventBus _events, Craft _craft, Times _times) {
@@ -105,14 +124,12 @@ class RaceStateGame extends State {
 
                 e.pos.x += wallCol.separationX;
                 e.pos.y += wallCol.separationY;
-
-                // TODO: bounce collisions
             }
         }
     }
 
     /**
-     *
+     * Moves any colliding ship entities apart from each other.
      */
     private void resolveCraftCollisions() {
         for (Entity e : craft.getRemotePlayers().values()) {
@@ -124,6 +141,7 @@ class RaceStateGame extends State {
             AABBComponent    aabb = (AABBComponent) e.get("aabb");
             PolygonComponent poly = (PolygonComponent) e.get("polygon");
 
+            // Check for collisions with all other entities
             for (Entity craft : craft.getRemotePlayers().values()) {
                 if (craft == null) continue;
                 if (craft.getName().equals(e.getName())) continue;
@@ -134,6 +152,7 @@ class RaceStateGame extends State {
                 PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
                 ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
                 while (col != null) {
+                    // If we are colliding move apart until we aren't.
                     e.pos.x += (float)col.unitVectorX;
                     e.pos.y += (float)col.unitVectorY;
                     craft.pos.x -= (float)col.otherUnitVectorX;
@@ -145,8 +164,13 @@ class RaceStateGame extends State {
         }
     }
 
+    /**
+     * Check the lap status of all entities. If an entity has completed all of its laps, disable it.
+     */
     private void checkLapStatus() {
         for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
+            // If an entity has finished all laps, disable it as its finished the race.
+            // Also fires an event off to tell all other players that a player finished.
             if (times.playerFinished(entry.getValue().getName())) {
                 if (((EntityStateMachine) entry.getValue().get("fsm")).getState().equals("Active")) {
                     ((EntityStateMachine) entry.getValue().get("fsm")).changeState("InActive");
@@ -155,12 +179,18 @@ class RaceStateGame extends State {
             }
         }
 
+        // If all players have finished fire off all of the players times and transition into the results sub game event.
         if (times.allPlayersFinished()) {
             events.post(new EvRaceResults(getTimes()));
             machine.set("results", null, null);
         }
     }
 
+    /**
+     * Constructs a map of clientID integers to a list of all of that clients times.
+     * This map of times is then sent to all other players.
+     * @return All clients times.
+     */
     private Map<Integer, List<Float>> getTimes() {
 
         Map<Integer, List<Float>> structure = new HashMap<>();
@@ -172,6 +202,11 @@ class RaceStateGame extends State {
         return structure;
     }
 
+    /**
+     * Given a craft entities name, the corresponding clientID will be retrurned.
+     * @param _entityName Entity name.
+     * @return clientID.
+     */
     private int findCraftClientID(String _entityName) {
         for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
             if (entry.getValue().getName().equals(_entityName)) return entry.getKey();

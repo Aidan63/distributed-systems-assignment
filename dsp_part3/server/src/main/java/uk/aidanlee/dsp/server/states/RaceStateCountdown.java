@@ -6,8 +6,15 @@ import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.server.data.events.EvGameEvent;
 
 class RaceStateCountdown extends State {
+
+    /**
+     * Current timer.
+     */
     private int timer;
 
+    /**
+     * Access to the games event bus.
+     */
     private EventBus events;
 
     RaceStateCountdown(String _name, EventBus _events) {

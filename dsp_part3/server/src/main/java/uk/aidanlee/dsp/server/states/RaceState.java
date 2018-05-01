@@ -16,6 +16,10 @@ import uk.aidanlee.dsp.server.data.events.*;
 
 import java.util.Map;
 
+/**
+ * Race state. Holds a sub state machine for each sub state of the race.
+ * Simulates the race in this state.
+ */
 public class RaceState extends State {
 
     /**
@@ -46,7 +50,7 @@ public class RaceState extends State {
     /**
      * Creates a new race state to be added to a machine.
      * @param _name    The name of this race state.
-     * @param _events  //
+     * @param _events  Games event bus.
      * @param _players The players object to modify.
      */
     public RaceState(String _name, EventBus _events, Map<Integer, Player> _players) {
@@ -61,7 +65,10 @@ public class RaceState extends State {
 
         events.register(this);
 
+        // Load the circuit.
         Circuit circuit = new Circuit("/track.p2");
+
+        // Create the entities, time storage, and sub state machine.
         craft  = new Craft(players, circuit);
         times  = new Times(craft.getRemotePlayers().values(), 3);
         states = new StateMachine()
@@ -104,8 +111,8 @@ public class RaceState extends State {
 
     /**
      * Client Input Command. Contains all of the input keys for a client and if they are pressed.
-     * Copy the values into the right entity component so it can be simulated.
-     * @param //
+     * Copy the values into the right entities input component so it can be simulated.
+     * @param _event client input.
      */
     @Subscribe
     public void onClientInput(EvClientInput _event) {
@@ -135,16 +142,21 @@ public class RaceState extends State {
     }
 
     /**
-     *
-     * @param _event
+     * Called when a craft entity has completed a lap. Adds the lap time into the times storage.
+     * @param _event Contains the time of the lap.
      */
     @Subscribe
     public void onLapTime(EvLapTime _event) {
         times.addTime(_event.name, _event.time);
     }
 
+    /**
+     * Listens to any game events from the sub states.
+     * @param _event Game event.
+     */
     @Subscribe
     public void onGameEvent(EvGameEvent _event) {
+        // Return to the lobby, since the race is over.
         if (_event.event == ServerEvent.EVENT_LOBBY_ENTER) {
             machine.set("lobby-active", null, null);
         }
@@ -152,6 +164,9 @@ public class RaceState extends State {
 
     // Private Functions
 
+    /**
+     * Update the players positions and rotations according to the current game state.
+     */
     private void updatePlayerData() {
         for (Map.Entry<Integer, Entity> entry : craft.getRemotePlayers().entrySet()) {
             Entity e = craft.getPlayerEntity(entry.getKey());
@@ -161,6 +176,9 @@ public class RaceState extends State {
         }
     }
 
+    /**
+     * If all players has disconnected mid race, return to the lobby.
+     */
     private void checkIfEmpty() {
         if (players.size() == 0) {
             machine.set("lobby-active", null, null);

@@ -13,7 +13,11 @@ import uk.aidanlee.dsp.server.states.RaceState;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Game simulation. Game has no dependencies on networking and could in theory be ran without a server.
+ */
 public class Game {
+
     /**
      * All of the players data in this game.
      */
@@ -25,7 +29,7 @@ public class Game {
     private final StateMachine states;
 
     /**
-     *
+     * Game event bus. Allows various parts of the game simulation to communicate without being tied to each other.
      */
     private final EventBus events;
 
@@ -58,11 +62,19 @@ public class Game {
         return events;
     }
 
+    /**
+     * When a client connects, add a new player into the structure, keyed by the clientID.
+     * @param _event connection event.
+     */
     @Subscribe
     public void eventPlayerConnected(EvClientConnected _event) {
         players.put(_event.clientID, new Player(_event.name));
     }
 
+    /**
+     * When a client disconnects, remove them from the structure.
+     * @param _event disconnection event.
+     */
     @Subscribe
     public void eventPlayerDisconnected(EvClientDisconnected _event) {
         players.remove(_event.clientID);
@@ -87,7 +99,7 @@ public class Game {
     }
 
     /**
-     * Process and commands and step forward the game simulation.
+     * Progress the game simulation forward one step.
      */
     public void update() {
         states.update();

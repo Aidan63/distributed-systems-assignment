@@ -5,10 +5,19 @@ import uk.aidanlee.dsp.common.data.ServerEvent;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.server.data.events.EvGameEvent;
 
+/**
+ * The results state is shown for 10 seconds. In this time clients are show the race results.
+ */
 class RaceStateResults extends State {
 
+    /**
+     * Access to the games event bus.
+     */
     private EventBus events;
 
+    /**
+     * Current timer.
+     */
     private int timer;
 
     RaceStateResults(String _name, EventBus _events) {

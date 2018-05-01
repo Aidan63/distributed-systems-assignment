@@ -2,20 +2,13 @@ package uk.aidanlee.dsp.server.states;
 
 import com.google.common.eventbus.EventBus;
 import uk.aidanlee.dsp.common.data.ServerEvent;
-import uk.aidanlee.dsp.common.net.commands.CmdServerEvent;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
-import uk.aidanlee.dsp.server.Server;
 import uk.aidanlee.dsp.server.data.events.EvGameEvent;
 
-import java.util.LinkedList;
-
+/**
+ * Once all clients have readied up a three second lobby countdown begins before starting the race.
+ */
 public class LobbyCountdownState extends State {
-
-    /**
-     * Timer variable.
-     */
-    private int timer;
 
     /**
      * Access to the game event bus.
@@ -23,9 +16,14 @@ public class LobbyCountdownState extends State {
     private EventBus events;
 
     /**
-     * //
-     * @param _name   //
-     * @param _events //
+     * Current timer.
+     */
+    private int timer;
+
+    /**
+     * Creates a new lobby countdown state.
+     * @param _name   State name.
+     * @param _events Game event bus.
      */
     public LobbyCountdownState(String _name, EventBus _events) {
         super(_name);

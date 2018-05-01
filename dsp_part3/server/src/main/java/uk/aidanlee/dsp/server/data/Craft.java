@@ -12,6 +12,9 @@ import uk.aidanlee.jDiffer.math.Vector;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Creates entities with all the needed components for the server simulation.
+ */
 public class Craft {
 
     /**
@@ -20,8 +23,9 @@ public class Craft {
     private final Map<Integer, Entity> remotePlayers;
 
     /**
-     * //
-     * @param _players //
+     * Creates a new set of craft entities.
+     * @param _players Map of clientIDs to player data to create craft entities for.
+     * @param _circuit Circuit data, used to get spawn positions for initial entity positions.
      */
     public Craft(Map<Integer, Player> _players, Circuit _circuit) {
         remotePlayers = new HashMap<>();
@@ -85,8 +89,8 @@ public class Craft {
     }
 
     /**
-     * //
-     * @return Collection<Entity>
+     * Returns all of the entities in the game simulation.
+     * @return map of clientIDs to Entities.
      */
     public Map<Integer, Entity> getRemotePlayers() {
         return remotePlayers;

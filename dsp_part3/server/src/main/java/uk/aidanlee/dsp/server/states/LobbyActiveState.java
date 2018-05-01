@@ -3,14 +3,15 @@ package uk.aidanlee.dsp.server.states;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.net.Player;
-import uk.aidanlee.dsp.common.net.commands.CmdClientSettings;
-import uk.aidanlee.dsp.common.net.commands.Command;
 import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.server.data.events.EvClientSettings;
 
-import java.util.LinkedList;
 import java.util.Map;
 
+/**
+ * Active lobby state.
+ * Lobby is active when some clients are still not ready meaning clients can still change their settings.
+ */
 public class LobbyActiveState extends State {
 
     /**
@@ -24,10 +25,10 @@ public class LobbyActiveState extends State {
     private EventBus events;
 
     /**
-     * //
-     * @param _name    //
-     * @param _events  //
-     * @param _players //
+     * Creates a new active lobby state.
+     * @param _name    States name.
+     * @param _events  Games event bus.
+     * @param _players All of the players in the game.
      */
     public LobbyActiveState(String _name, EventBus _events, Map<Integer, Player> _players) {
         super(_name);
@@ -51,6 +52,7 @@ public class LobbyActiveState extends State {
 
     @Override
     public void onUpdate() {
+        // If all players are ready, progress to the countdown state.
         if (numPlayers() > 0 && allPlayersReady()) {
             machine.set("lobby-countdown", null, null);
         }
@@ -58,6 +60,10 @@ public class LobbyActiveState extends State {
 
     // Event Functions.
 
+    /**
+     * When we receive a client settings event update the clients info to match the events.
+     * @param _event settings event.
+     */
     @Subscribe
     public void onClientSettings(EvClientSettings _event) {
         players.get(_event.cmd.clientID).setShipIndex(_event.cmd.index);

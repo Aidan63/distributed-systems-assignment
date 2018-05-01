@@ -2,7 +2,10 @@ package uk.aidanlee.dsp.server;
 
 import com.badlogic.gdx.utils.TimeUtils;
 
-/** Launches the server application. */
+/**
+ * ServerRunner, runs an infinite loop with two fixed timestep loops, one for network ticks, and another for game simulation steps.
+ * Splitting the network send rate for the game simulation allows the send rate to vary based on the network conditions.
+ */
 public class ServerRunner {
     public static void main(String[] _args) {
 
@@ -16,8 +19,11 @@ public class ServerRunner {
         // Create the server.
         Server server = new Server(name, port, discoveryPort, maxClients);
 
-        // Setup variables for server fixed time step.
+        // Game is stepped at a constant 60 times per second. Game is currently tied to this number.
+        // Changing from 60 to another number will speed up or slow down the entire simulation.
         final float step = 1.0f / 60.0f;
+
+        // Tick rate can be freely changed and its value is read from a CLI argument.
         final float tick = 1.0f / tickRate;
 
         double currentTime = 0;
