@@ -67,7 +67,7 @@ public class ShipAudioComponent extends Component {
 
     @Override
     public void onremoved() {
-        engine.stop();
-        airbrakes.stop();
+        engine.stop(engineID);
+        airbrakes.stop(airbrakesID);
     }
 }

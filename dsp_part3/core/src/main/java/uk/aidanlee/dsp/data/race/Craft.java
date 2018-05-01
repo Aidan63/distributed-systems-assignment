@@ -76,6 +76,16 @@ public class Craft {
     }
 
     /**
+     * Calls destroy on all player entities.
+     */
+    public void destroy() {
+        for (Visual v : remotePlayers) {
+            if (v == null) continue;
+            v.destroy();
+        }
+    }
+
+    /**
      * Creates a local player entity.
      * This entity will have all of the components needed to move and calculate collisions itself.
      * @return Visual entity.

@@ -131,6 +131,7 @@ public class RaceState extends State {
     @Override
     public void onLeave(Object _leaveWith) {
         events.unregister(this);
+        craft.destroy();
     }
 
     @Override

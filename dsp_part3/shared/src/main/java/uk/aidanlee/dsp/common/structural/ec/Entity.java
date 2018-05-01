@@ -160,6 +160,7 @@ public class Entity {
      */
     public void destroy() {
         for (Component comp : components) {
+            comp.onremoved();
             comp.destroy();
         }
     }
