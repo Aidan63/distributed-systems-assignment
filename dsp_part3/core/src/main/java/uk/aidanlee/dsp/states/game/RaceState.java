@@ -123,9 +123,6 @@ public class RaceState extends State {
         // Create a new HUD to draw game information
         hud = new HUD(resources, players);
         hud.showCountdown();
-
-        // Countdown starts as soon as we enter the game state.
-        playCountdownAudio();
     }
 
     @Override
@@ -215,9 +212,6 @@ public class RaceState extends State {
             case ServerEvent.EVENT_RACE_START:
                 ((EntityStateMachine) craft.getRemotePlayers()[ourID].get("fsm")).changeState("Active");
                 hud.showRace(craft.getRemotePlayers()[ourID]);
-
-                // don't play the last, different toned countdown beep until we get the command from the server.
-                playStartAudio();
                 break;
 
             case ServerEvent.EVENT_LOBBY_ENTER:
@@ -425,45 +419,5 @@ public class RaceState extends State {
         players[ourID].setX(v.pos.x);
         players[ourID].setY(v.pos.y);
         players[ourID].setRotation(v.rotation);
-    }
-
-    /**
-     * Plays the 3..2..1 countdown beeps at the beginning of the race.
-     * Does not play the final beep for the start of the race.
-     */
-    private void playCountdownAudio() {
-        Sound countdown = Gdx.audio.newSound(Gdx.files.internal("audio/COUNTDOWNNORMAL.wav"));
-
-        // Play initial beep.
-        countdown.play(0.75f);
-
-        // Task to play the sound.
-        // The two tasks are identical but libGDX does not allow the same task to be scheduled twice.
-        Timer.Task task1 = new Timer.Task() {
-            @Override
-            public void run() {
-                countdown.play(0.75f);
-            }
-        };
-
-        Timer.Task task2 = new Timer.Task() {
-            @Override
-            public void run() {
-                countdown.play(0.75f);
-            }
-        };
-
-        // Play two more at one second intervals.
-        Timer.schedule(task1, 1);
-        Timer.schedule(task2, 2);
-    }
-
-    /**
-     * Plays the final countdown beep.
-     * Is played when the command is received from the server.
-     */
-    private void playStartAudio() {
-        Sound countdown = Gdx.audio.newSound(Gdx.files.internal("audio/COUNTDOWNGO.wav"));
-        countdown.play(0.75f);
     }
 }

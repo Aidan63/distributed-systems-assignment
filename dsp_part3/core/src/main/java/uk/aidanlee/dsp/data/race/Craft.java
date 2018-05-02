@@ -11,7 +11,6 @@ import uk.aidanlee.dsp.common.structural.ec.EntityStateMachine;
 import uk.aidanlee.dsp.common.structural.ec.Visual;
 import uk.aidanlee.dsp.components.LocalInputComponent;
 import uk.aidanlee.dsp.components.ShadowComponent;
-import uk.aidanlee.dsp.components.ShipAudioComponent;
 import uk.aidanlee.dsp.components.TrailComponent;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.jDiffer.math.Vector;
@@ -101,7 +100,6 @@ public class Craft {
                 new Vector(0, -16), new Vector(70, -5), new Vector(70, 5), new Vector(0, 16)
         }));
         _visual.add(new TrailComponent("trail", new Color(_player.getTrailColor()[0], _player.getTrailColor()[1], _player.getTrailColor()[2], 1)));
-        _visual.add(new ShipAudioComponent("audio"));
 
         EntityStateMachine fsm = new EntityStateMachine("fsm");
         fsm.createState("InActive");
