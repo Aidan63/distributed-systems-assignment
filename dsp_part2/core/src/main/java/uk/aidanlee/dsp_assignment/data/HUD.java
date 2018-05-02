@@ -231,7 +231,7 @@ public class HUD {
 
         // Draw solid grey speed bar.
         batch.setColor(0.84f, 0.84f, 0.84f, 1.0f);
-        lapBox.draw(batch, viewport.getWorldWidth() - 820, viewport.getWorldHeight() - 120, (stats.engineSpeed / stats.maxSpeed) * 780, 80);
+        lapBox.draw(batch, viewport.getWorldWidth() - 820, viewport.getWorldHeight() - 120, Math.abs((stats.engineSpeed / stats.maxSpeed) * 780), 80);
 
         // Draw solid blue elements.
         batch.setColor(0.16f, 0.59f, 1, 1);
@@ -256,7 +256,7 @@ public class HUD {
 
         // Draw time, speed, and current lap counter.
         resources.helvetica48.draw(batch, displayTime, 180, viewport.getWorldHeight() - 98, 0, Align.center, true);
-        resources.helvetica48.draw(batch, String.valueOf(Math.round(stats.engineSpeed * 7)), viewport.getWorldWidth() - 860, viewport.getWorldHeight() - 98, 0, Align.center, true);
+        resources.helvetica48.draw(batch, String.valueOf(Math.abs(Math.round(stats.engineSpeed * 7))), viewport.getWorldWidth() - 860, viewport.getWorldHeight() - 98, 0, Align.center, true);
         resources.helvetica48.draw(batch, String.valueOf(currentLap), 100, 62, 0, Align.center, true);
 
         batch.disableBlending();

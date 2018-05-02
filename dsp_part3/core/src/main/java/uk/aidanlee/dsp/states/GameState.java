@@ -97,6 +97,7 @@ public class GameState extends State {
     @Override
     public void onLeave(Object _leaveWith) {
         events.unregister(this);
+        gameState.unset(null);
         heartbeatTimeout.cancel();
         heartbeatSender.cancel();
         resources.dispose();

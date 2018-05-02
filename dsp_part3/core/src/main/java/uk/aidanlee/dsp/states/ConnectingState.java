@@ -1,7 +1,6 @@
 package uk.aidanlee.dsp.states;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.utils.Timer;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.net.Packet;
@@ -17,6 +16,8 @@ public class ConnectingState extends State {
 
     private EventBus events;
 
+    private Timer.Task timeout;
+
     public ConnectingState(String _name, EventBus _events) {
         super(_name);
         events = _events;
@@ -26,6 +27,15 @@ public class ConnectingState extends State {
     public void onEnter(Object _enterWith) {
         settings = (ConnectionSettings) _enterWith;
         events.register(this);
+
+        Timer.Task task = new Timer.Task() {
+            @Override
+            public void run() {
+                machine.set("menu", null, null);
+            }
+        };
+
+        timeout = Timer.schedule(task, 5);
     }
 
     @Override
@@ -46,8 +56,10 @@ public class ConnectingState extends State {
         if (_event.packet.getData().readByte() == Packet.CONNECTION_RESPONSE) {
             if (_event.packet.getData().readBoolean()) {
                 machine.set("game", new ConnectionResponse(settings.getEp(), _event.packet), null);
+                timeout.cancel();
             } else {
                 machine.set("menu", null, null);
+                timeout.cancel();
             }
         }
     }

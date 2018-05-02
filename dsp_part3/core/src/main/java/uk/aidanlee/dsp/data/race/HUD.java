@@ -241,36 +241,36 @@ public class HUD {
         batch.setColor(0.84f, 0.84f, 0.84f, 0.5f);
 
         // Speed bar
-        lapBox.draw(batch, 1060, 960, 820, 80);
+        lapBox.draw(batch, viewport.getWorldWidth() - 860, viewport.getWorldHeight() - 120, 820, 80);
 
         // Draw solid grey speed bar.
         batch.setColor(0.84f, 0.84f, 0.84f, 1.0f);
-        lapBox.draw(batch, 1100, 960, (stats.engineSpeed / stats.maxSpeed) * 780, 80);
+        lapBox.draw(batch, viewport.getWorldWidth() - 820, viewport.getWorldHeight() - 120, Math.abs((stats.engineSpeed / stats.maxSpeed) * 780), 80);
 
         // Draw solid blue elements.
         batch.setColor(0.16f, 0.59f, 1, 1);
 
         // Draw lap, total time, and speed box elements.
-        lapBox.draw(batch, 40  , 40 , 120, 80);
-        lapBox.draw(batch, 40  , 960, 280, 80);
-        lapBox.draw(batch, 1000, 960, 120, 80);
+        lapBox.draw(batch, 40, 40, 120, 80);
+        lapBox.draw(batch, 40, viewport.getWorldHeight() - 120, 280, 80);
+        lapBox.draw(batch, viewport.getWorldWidth() - 920, viewport.getWorldHeight() - 120, 120, 80);
 
         // Draw ui arrow motifs
         batch.draw(uiArrow, 40, 120, 20, 20, 40, 40, 1, 1, 270);
-        batch.draw(uiArrow, 320, 960, 20, 20, 40, 40, 1, 1, 180);
-        batch.draw(uiArrow, 960, 960);
+        batch.draw(uiArrow, 320, viewport.getWorldHeight() - 120, 20, 20, 40, 40, 1, 1, 180);
+        batch.draw(uiArrow, viewport.getWorldWidth() - 960, viewport.getWorldHeight() - 120);
 
         // Draw Text
         resources.helvetica19.setColor(0.16f, 0.59f, 1, 1);
 
         // Draw motif text
         resources.helvetica19.draw(batch, "lap", 80, 134, 0, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "lap time", 366, 971, 0, Align.topLeft, false);
-        resources.helvetica19.draw(batch, "mph", 922, 971, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "lap time", 366, viewport.getWorldHeight() - 109, 0, Align.topLeft, false);
+        resources.helvetica19.draw(batch, "mph", viewport.getWorldWidth() - 998, viewport.getWorldHeight() - 109, 0, Align.topLeft, false);
 
         // Draw time, speed, and current lap counter.
-        resources.helvetica48.draw(batch, displayTime, 180, 982, 0, Align.center, true);
-        resources.helvetica48.draw(batch, String.valueOf(Math.round(stats.engineSpeed * 7)), 1060, 982, 0, Align.center, true);
+        resources.helvetica48.draw(batch, displayTime, 180, viewport.getWorldHeight() - 98, 0, Align.center, true);
+        resources.helvetica48.draw(batch, String.valueOf(Math.abs(Math.round(stats.engineSpeed * 7))), viewport.getWorldWidth() - 860, viewport.getWorldHeight() - 98, 0, Align.center, true);
         resources.helvetica48.draw(batch, String.valueOf(currentLap), 100, 62, 0, Align.center, true);
 
         batch.disableBlending();
