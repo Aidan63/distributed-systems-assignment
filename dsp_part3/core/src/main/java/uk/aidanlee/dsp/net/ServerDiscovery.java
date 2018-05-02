@@ -1,5 +1,6 @@
 package uk.aidanlee.dsp.net;
 
+import com.badlogic.gdx.utils.Timer;
 import uk.aidanlee.dsp.common.net.BitPacker;
 import uk.aidanlee.dsp.common.net.EndPoint;
 import uk.aidanlee.dsp.common.net.NetManager;
@@ -28,6 +29,11 @@ public class ServerDiscovery {
     private NetManager listener;
 
     /**
+     *
+     */
+    private Timer.Task requestSender;
+
+    /**
      * List of all found LAN servers.
      */
     private List<ServerDetails> lanServers;
@@ -48,6 +54,31 @@ public class ServerDiscovery {
         lanServers = new LinkedList<>();
 
         listener.start();
+
+        Timer.Task task = new Timer.Task() {
+            @Override
+            public void run() {
+
+                Thread thread = new Thread(() -> {
+                    // Build the discovery request data.
+                    BitPacker packer = new BitPacker();
+                    packer.writeBoolean(true);
+                    packer.writeByte(DISCOVERY_REQUEST);
+
+                    // Send it out every interfaces broadcast address.
+                    try {
+                        for (InetAddress address : getBroadcastAddresses()) {
+                            Packet packet = new Packet(packer, new EndPoint(address, 7778));
+                            listener.send(packet);
+                        }
+                    } catch (SocketException _ex) {
+                        System.out.println("Socket Exception : " + _ex.getMessage());
+                    }
+                });
+                thread.start();
+            }
+        };
+        requestSender = Timer.schedule(task, 1, 1);
     }
 
     /**
@@ -60,21 +91,6 @@ public class ServerDiscovery {
             readPacket(pck);
             pck = listener.getPackets().poll();
         }
-
-        // Build the discovery request data.
-        BitPacker packer = new BitPacker();
-        packer.writeBoolean(true);
-        packer.writeByte(DISCOVERY_REQUEST);
-
-        // Send it out every interfaces broadcast address.
-        try {
-            for (InetAddress address : getBroadcastAddresses()) {
-                Packet packet = new Packet(packer, new EndPoint(address, 7778));
-                listener.send(packet);
-            }
-        } catch (SocketException _ex) {
-            System.out.println("Socket Exception : " + _ex.getMessage());
-        }
     }
 
     /**
@@ -82,6 +98,7 @@ public class ServerDiscovery {
      */
     public void destroy() {
         listener.interrupt();
+        requestSender.cancel();
     }
 
     /**
