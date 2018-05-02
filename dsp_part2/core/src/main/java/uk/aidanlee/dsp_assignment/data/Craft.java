@@ -39,6 +39,7 @@ public class Craft {
 
             craft.pos.x = _circuit.getSpawn().spawns[spawnIndex].position.x - (craft.origin.x);
             craft.pos.y = _circuit.getSpawn().spawns[spawnIndex].position.y - (craft.origin.y);
+            System.out.println(craft.pos.x + ":" + craft.pos.y);
 
             // Ordering is Important!
             // The order in which components are added to the entity defines the order in which they are updated.
@@ -60,10 +61,11 @@ public class Craft {
             EntityStateMachine fsm = new EntityStateMachine("fsm");
             fsm.createState("InActive");
             fsm.createState("Active")
-                    .add(new InputComponent("input"));
+                    .add(new InputComponent("input"))
+                    .add(new LapTracker("lap_tracker", _circuit.getCheckpoints()));
 
             craft.add(fsm);
-            fsm.changeState("Active");
+            fsm.changeState("InActive");
 
             localPlayers[i] = craft;
         }

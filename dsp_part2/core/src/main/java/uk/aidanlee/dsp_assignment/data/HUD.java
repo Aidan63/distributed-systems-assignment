@@ -1,6 +1,5 @@
 package uk.aidanlee.dsp_assignment.data;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -10,7 +9,10 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.google.common.eventbus.Subscribe;
+import uk.aidanlee.dsp_assignment.components.craft.LapTimer;
 import uk.aidanlee.dsp_assignment.components.craft.StatsComponent;
+import uk.aidanlee.dsp_assignment.data.events.EvLapTime;
 import uk.aidanlee.dsp_assignment.structural.ec.Entity;
 
 import java.text.SimpleDateFormat;
@@ -73,11 +75,6 @@ public class HUD {
      * The current lap of the ship.
      */
     private int currentLap;
-
-    /**
-     * Ordered time data from the server.
-     */
-    private List<PlayerTimes> timesData;
 
     /**
      * Creates a new HUD for the game client.
@@ -150,23 +147,13 @@ public class HUD {
     }
 
     /**
-     * Show the race results. Sorts time data received from the server.
-     *
-     * @param _times Time data to sort.
+     * Shows no hud elements.
      */
-    public void showResults(Map<Integer, List<Float>> _times) {
-        state = HudState.Results;
-        timesData = new ArrayList<>();
-        for (Map.Entry<Integer, List<Float>> entry : _times.entrySet()) {
-            timesData.add(new PlayerTimes(entry.getKey(), entry.getValue()));
-        }
-
-        timesData.sort((_t1, _t2) -> Float.compare(_t1.totalTime, _t2.totalTime));
+    public void showEmpty() {
+        state = HudState.Empty;
     }
 
     public void resize(int _x, int _y, int _width, int _height) {
-        //System.out.println(_x + ":" + _y + "    " + _width + ":" + _height);
-
         viewport.update(_width, _height, true);
         viewport.setScreenPosition(_x, _y);
         viewport.apply();
@@ -187,9 +174,6 @@ public class HUD {
             case Waiting:
                 drawWaiting();
                 break;
-            case Results:
-                drawResults();
-                break;
         }
     }
 
@@ -199,12 +183,10 @@ public class HUD {
      *
      * @param _lap Lap event instance.
      */
-    /*
     @Subscribe
     public void onCraftLap(EvLapTime _lap) {
         currentLap++;
     }
-    */
 
     /**
      * Draws centered, large countdown text.
@@ -232,7 +214,7 @@ public class HUD {
 
         // Cast / get the stats component and time to draw.
         StatsComponent stats = (StatsComponent) entity.get("stats");
-        String displayTime = "--:--:--"; //(entity.has("lap_timer")) ? formatTime(((LapTimer) entity.get("lap_timer")).time) : "--:--:--";
+        String displayTime = (entity.has("lap_timer")) ? formatTime(((LapTimer) entity.get("lap_timer")).time) : "--:--:--";
 
         // Apply viewport and batch projection settings.
         viewport.apply();
@@ -282,6 +264,18 @@ public class HUD {
     }
 
     /**
+     * Returns a "--:--:--" formatted time string of the provided time.
+     *
+     * @param _time Number of seconds
+     * @return Formatted time string.
+     */
+    private String formatTime(float _time) {
+        Date date = new Date((long) (_time * 1000));
+        String formatted = new SimpleDateFormat("mm:ss:SS").format(date);
+        return formatted.substring(0, Math.min(formatted.length(), 8));
+    }
+
+    /**
      * Draw race complete and waiting text.
      */
     private void drawWaiting() {
@@ -306,57 +300,12 @@ public class HUD {
     }
 
     /**
-     * Draws an ImGui with each players total and lap times.
-     */
-    private void drawResults() {
-        //
-    }
-
-    /**
-     * Returns a "--:--:--" formatted time string of the provided time.
-     *
-     * @param _time Number of seconds
-     * @return Formatted time string.
-     */
-    private String formatTime(float _time) {
-        Date date = new Date((long) (_time * 1000));
-        String formatted = new SimpleDateFormat("mm:ss:SS").format(date);
-        return formatted.substring(0, Math.min(formatted.length(), 8));
-    }
-
-    /**
-     * Simple class which holds all time data on a particular client.
-     */
-    private class PlayerTimes {
-        /**
-         * The clientID.
-         */
-        final int clientID;
-
-        /**
-         * The total time for this race.
-         */
-        final float totalTime;
-
-        /**
-         * All individual lap times.
-         */
-        final List<Float> lapTimes;
-
-        private PlayerTimes(int _id, List<Float> _times) {
-            clientID = _id;
-            lapTimes = _times;
-            totalTime = _times.stream().mapToInt(Float::intValue).sum();
-        }
-    }
-
-    /**
      * Four possible states of the hud.
      */
     private enum HudState {
         Countdown,
         InRace,
         Waiting,
-        Results
+        Empty
     }
 }

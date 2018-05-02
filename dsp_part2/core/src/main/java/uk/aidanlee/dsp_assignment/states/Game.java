@@ -6,14 +6,18 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Timer;
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import uk.aidanlee.dsp_assignment.components.AABBComponent;
+import uk.aidanlee.dsp_assignment.components.PolygonComponent;
 import uk.aidanlee.dsp_assignment.components.ShadowComponent;
 import uk.aidanlee.dsp_assignment.components.TrailComponent;
-import uk.aidanlee.dsp_assignment.data.Craft;
-import uk.aidanlee.dsp_assignment.data.HUD;
-import uk.aidanlee.dsp_assignment.data.Resources;
-import uk.aidanlee.dsp_assignment.data.Views;
+import uk.aidanlee.dsp_assignment.data.*;
 import uk.aidanlee.dsp_assignment.data.circuit.Circuit;
+import uk.aidanlee.dsp_assignment.data.circuit.TreeTileWall;
+import uk.aidanlee.dsp_assignment.data.events.EvLapTime;
 import uk.aidanlee.dsp_assignment.geometry.MeshBatch;
 import uk.aidanlee.dsp_assignment.geometry.QuadMesh;
 import uk.aidanlee.dsp_assignment.states.race.RaceCountdownState;
@@ -24,6 +28,12 @@ import uk.aidanlee.dsp_assignment.structural.ec.Entity;
 import uk.aidanlee.dsp_assignment.structural.ec.Visual;
 import uk.aidanlee.dsp_assignment.race.RaceSettings;
 import uk.aidanlee.dsp_assignment.structural.State;
+import uk.aidanlee.jDiffer.Collision;
+import uk.aidanlee.jDiffer.data.ShapeCollision;
+import uk.aidanlee.jDiffer.shapes.Polygon;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class Game extends State {
 
@@ -37,6 +47,8 @@ public class Game extends State {
 
     private Views views;
 
+    private Times times;
+
     private StateMachine raceState;
 
     private SpriteBatch spriteBatcher;
@@ -46,6 +58,8 @@ public class Game extends State {
     private QuadMesh trackMesh;
 
     private HUD[] huds;
+
+    private Timer.Task resultsTimer;
 
     public Game(String _name, Resources _resources) {
         super(_name);
@@ -63,6 +77,7 @@ public class Game extends State {
         circuit = new Circuit(Gdx.files.internal("tracks/track.p2"));
         views   = new Views(settings.getLocalPlayers(), settings.getSplit());
         craft   = new Craft(settings.getPlayers(), circuit, views, resources);
+        times   = new Times(craft.getLocalPlayers(), 3);
 
         spriteBatcher = new SpriteBatch();
         meshBatcher   = new MeshBatch(resources.trackAtlas.getTextures().first());
@@ -82,17 +97,21 @@ public class Game extends State {
         }
         trackMesh.rebuild();
 
-        // Race state machine
-        raceState = new StateMachine();
-        raceState.add(new RaceCountdownState("countdown"));
-        raceState.add(new RaceState("race", circuit, craft, views));
-        raceState.add(new RaceResultsState("results"));
-        raceState.set("race", null, null);
-
         huds = new HUD[settings.getLocalPlayers()];
         for (int i = 0; i < settings.getLocalPlayers(); i++) {
             huds[i] = new HUD(resources);
-            huds[i].showRace(craft.getLocalPlayers()[i]);
+            huds[i].showCountdown();
+        }
+
+        // Race state machine
+        raceState = new StateMachine();
+        raceState.add(new RaceCountdownState("countdown"));
+        raceState.add(new RaceState("race", circuit, craft, views, times, huds));
+        raceState.add(new RaceResultsState("results"));
+        raceState.set("countdown", null, null);
+
+        for (Entity e : craft.getLocalPlayers()) {
+            e.getEvents().register(this);
         }
 
     }
@@ -103,11 +122,30 @@ public class Game extends State {
 
         spriteBatcher.dispose();
         meshBatcher.dispose();
+
+        resultsTimer = null;
     }
 
     @Override
     public void onUpdate() {
+        simulatePlayers();
+
+        resolveWallCollisions();
+
+        resolveCraftCollisions();
+
         raceState.update();
+
+        if (resultsTimer == null && times.allPlayersFinished()) {
+            Timer.Task task = new Timer.Task() {
+                @Override
+                public void run() {
+                    machine.set("menu", null, null);
+                }
+            };
+
+            resultsTimer = Timer.schedule(task, 10);
+        }
     }
 
     @Override
@@ -153,6 +191,96 @@ public class Game extends State {
 
             huds[i].resize(views.getViewports()[i].getScreenX(), views.getViewports()[i].getScreenY(), views.getViewports()[i].getScreenWidth(), views.getViewports()[i].getScreenHeight());
             huds[i].render();
+        }
+    }
+
+    /**
+     * Called when a craft entity has completed a lap. Adds the lap time into the times storage.
+     * @param _event Contains the time of the lap.
+     */
+    @Subscribe
+    public void onLapTime(EvLapTime _event) {
+        times.addTime(_event.name, _event.time);
+    }
+
+    /**
+     *
+     */
+    private void simulatePlayers() {
+        // Resize the views in case the window size has changed and update all player entities.
+        views.resize();
+
+        // Update entities.
+        for (Entity e : craft.getLocalPlayers()) {
+            e.update(0);
+        }
+    }
+
+    /**
+     * Resolve any wall collisions between the player craft.
+     */
+    private void resolveWallCollisions() {
+        for (Entity e : craft.getLocalPlayers()) {
+
+            // Get the entity and ensure it has the AABB and poly components
+            if (!e.has("aabb") || !e.has("polygon")) continue;
+
+            // Get the components and query the circuit wall tree for collisions.
+            AABBComponent aabb = (AABBComponent) e.get("aabb");
+            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+            List<TreeTileWall> collisions = new LinkedList<>();
+            circuit.getWallTree().getCollisions(aabb.getBox(), collisions);
+
+            // If there are no collisions skip this loop.
+            if (collisions.size() == 0) continue;
+
+            // Check each AABB collision for a precise collision.
+            for (TreeTileWall col : collisions) {
+                Polygon transformedPoly = poly.getShape();
+
+                ShapeCollision wallCol = Collision.shapeWithShape(transformedPoly, col.getPolygon(), null);
+                if (wallCol == null) continue;
+
+                e.pos.x += wallCol.separationX;
+                e.pos.y += wallCol.separationY;
+            }
+        }
+    }
+
+    /**
+     * Moves any colliding ship entities apart from each other.
+     */
+    private void resolveCraftCollisions() {
+        for (Entity e : craft.getLocalPlayers()) {
+
+            // Get the entity and ensure it has the AABB and poly components
+            if (!e.has("aabb") || !e.has("polygon")) continue;
+
+            // Get the components and query the circuit wall tree for collisions.
+            AABBComponent    aabb = (AABBComponent) e.get("aabb");
+            PolygonComponent poly = (PolygonComponent) e.get("polygon");
+
+            // Check for collisions with all other entities
+            for (Entity craft : craft.getLocalPlayers()) {
+                if (craft == null) continue;
+                if (craft.getName().equals(e.getName())) continue;
+
+                Rectangle otherBox = ((AABBComponent) craft.get("aabb")).getBox();
+                if (!aabb.getBox().overlaps(otherBox)) continue;
+
+                PolygonComponent otherPoly = (PolygonComponent) craft.get("polygon");
+                ShapeCollision col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+                while (col != null) {
+                    // If we are colliding move apart until we aren't.
+                    e.pos.x += (float)col.unitVectorX;
+                    e.pos.y += (float)col.unitVectorY;
+                    craft.pos.x -= (float)col.otherUnitVectorX;
+                    craft.pos.y -= (float)col.otherUnitVectorY;
+
+                    col = Collision.shapeWithShape(poly.getShape(), otherPoly.getShape(), null);
+                }
+            }
         }
     }
 }

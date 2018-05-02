@@ -303,7 +303,6 @@ public class HUD {
 
     /**
      * Draws an ImGui with each players total and lap times.
-     * TODO : Make sure they are ordered!
      */
     private void drawResults() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2((Gdx.graphics.getWidth() / 2) - 300, (Gdx.graphics.getHeight() / 2) - 200), Cond.Always, new Vec2());

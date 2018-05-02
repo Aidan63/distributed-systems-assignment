@@ -53,6 +53,8 @@ public class Client {
 
         // Add a new input processor so ImGui is able to read key presses.
         Gdx.input.setInputProcessor(new ImGuiInputProcessor());
+
+        ImGui.INSTANCE.getIo().setIniFilename(null);
     }
 
     public void onUpdate(float _dt) {

@@ -203,7 +203,7 @@ class RaceStateGame extends State {
     }
 
     /**
-     * Given a craft entities name, the corresponding clientID will be retrurned.
+     * Given a craft entities name, the corresponding clientID will be returned.
      * @param _entityName Entity name.
      * @return clientID.
      */
