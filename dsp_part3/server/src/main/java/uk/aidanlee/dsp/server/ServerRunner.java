@@ -9,6 +9,11 @@ import com.badlogic.gdx.utils.TimeUtils;
 public class ServerRunner {
     public static void main(String[] _args) {
 
+        if (_args.length < 5) {
+            printHelp();
+            return;
+        }
+
         // Reads server CLI args
         String name          = _args[0];
         int    port          = Integer.parseInt(_args[1]);
@@ -57,5 +62,16 @@ public class ServerRunner {
             }
 
         }
+    }
+
+    private static void printHelp() {
+        System.out.println("Unable to start server");
+        System.out.println("The server requires the following five arguments to run");
+        System.out.println("    name           - The name of the server");
+        System.out.println("    port           - The port the server will communicate with clients on.");
+        System.out.println("    discovery port - The port the server will listen for LAN discovery packets on");
+        System.out.println("    max clients    - The maximum number of connections allowed at any one time. Max 16");
+        System.out.println("    tick rate      - The number of times per second the server will send game data to clients");
+        System.out.println("Example : java -jar server.jar \"Server Name\" 7777 7778 16 60");
     }
 }

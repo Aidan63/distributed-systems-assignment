@@ -17,6 +17,13 @@ public class Craft {
      */
     private Visual[] localPlayers;
 
+    /**
+     * Creates a new set of craft entities.
+     * @param _players   Player data to create the entities from.
+     * @param _circuit   The loaded circuit data.
+     * @param _views     All the views for local players.
+     * @param _resources The resources class to get ship images from.
+     */
     public Craft(PlayerSetting[] _players, Circuit _circuit, Views _views, Resources _resources) {
         localPlayers = new Visual[_players.length];
 

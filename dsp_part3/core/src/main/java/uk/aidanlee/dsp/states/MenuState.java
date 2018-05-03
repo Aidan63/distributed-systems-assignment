@@ -1,7 +1,6 @@
 package uk.aidanlee.dsp.states;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
 import glm_.vec2.Vec2;
 import imgui.Cond;
 import imgui.ImGui;
@@ -12,7 +11,6 @@ import uk.aidanlee.dsp.common.structural.State;
 import uk.aidanlee.dsp.net.ConnectionSettings;
 import uk.aidanlee.dsp.net.ServerDiscovery;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 

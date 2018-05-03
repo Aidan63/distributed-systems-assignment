@@ -5,6 +5,9 @@ import com.badlogic.gdx.Input;
 import uk.aidanlee.dsp.common.components.InputComponent;
 import uk.aidanlee.dsp.common.structural.ec.Component;
 
+/**
+ * Sets the inputs of the attached input component to that of the keys pressed.
+ */
 public class LocalInputComponent extends Component {
     public LocalInputComponent(String _name) {
         super(_name);

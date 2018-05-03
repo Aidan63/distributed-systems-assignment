@@ -37,28 +37,65 @@ import java.util.List;
 
 public class Game extends State {
 
+    /**
+     * All resources (images, track data, etc) used by the client.
+     */
     private Resources resources;
 
+    /**
+     * Access to the event bus.
+     */
     private EventBus events;
 
+    /**
+     * Stores all the local player entities.
+     */
     private Craft craft;
 
+    /**
+     * Loads the track data needed for calculating collisions and drawing the track.
+     */
     private Circuit circuit;
 
+    /**
+     * Manages the viewports for the local players.
+     */
     private Views views;
 
+    /**
+     * Holds lap times for all clients.
+     */
     private Times times;
 
+    /**
+     * Race sub state machine.
+     */
     private StateMachine raceState;
 
+    /**
+     * Batcher to draw ship images with.
+     */
     private SpriteBatch spriteBatcher;
 
+    /**
+     * Batcher to draw the track and trail meshes with.
+     */
     private MeshBatch meshBatcher;
 
+    /**
+     * The mesh of the track data used to draw a visual representation of the track.
+     */
     private QuadMesh trackMesh;
 
+    /**
+     * Draws the HUDs for the local players.
+     */
     private HUD[] huds;
 
+    /**
+     * Time which starts when the results are shown.
+     * Once triggered the game returns to the menu.
+     */
     private Timer.Task resultsTimer;
 
     public Game(String _name, Resources _resources) {
@@ -106,7 +143,7 @@ public class Game extends State {
         // Race state machine
         raceState = new StateMachine();
         raceState.add(new RaceCountdownState("countdown"));
-        raceState.add(new RaceState("race", circuit, craft, views, times, huds));
+        raceState.add(new RaceState("race", craft, times, huds));
         raceState.add(new RaceResultsState("results"));
         raceState.set("countdown", null, null);
 

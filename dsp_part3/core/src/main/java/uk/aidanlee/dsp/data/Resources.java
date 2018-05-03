@@ -5,6 +5,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 
+/**
+ * Loads and stores references to resources used by the client.
+ */
 public class Resources {
     public final TextureAtlas trackAtlas;
     public final TextureAtlas craftAtlas;

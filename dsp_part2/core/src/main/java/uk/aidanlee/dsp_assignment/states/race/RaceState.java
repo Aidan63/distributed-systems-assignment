@@ -1,43 +1,35 @@
 package uk.aidanlee.dsp_assignment.states.race;
 
-import com.badlogic.gdx.math.Rectangle;
-import uk.aidanlee.dsp_assignment.components.AABBComponent;
-import uk.aidanlee.dsp_assignment.components.PolygonComponent;
 import uk.aidanlee.dsp_assignment.data.Craft;
 import uk.aidanlee.dsp_assignment.data.HUD;
 import uk.aidanlee.dsp_assignment.data.Times;
-import uk.aidanlee.dsp_assignment.data.Views;
-import uk.aidanlee.dsp_assignment.data.circuit.Circuit;
-import uk.aidanlee.dsp_assignment.data.circuit.TreeTileWall;
 import uk.aidanlee.dsp_assignment.structural.State;
 import uk.aidanlee.dsp_assignment.structural.ec.Entity;
 import uk.aidanlee.dsp_assignment.structural.ec.EntityStateMachine;
-import uk.aidanlee.dsp_assignment.structural.ec.Visual;
-import uk.aidanlee.jDiffer.Collision;
-import uk.aidanlee.jDiffer.data.ShapeCollision;
-import uk.aidanlee.jDiffer.shapes.Polygon;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
+/**
+ * Active race state. State is used when clients can freely move around.
+ */
 public class RaceState extends State {
 
-    private Circuit circuit;
-
+    /**
+     * Access to all of the local player entities.
+     */
     private Craft craft;
 
-    private Views views;
-
+    /**
+     * Access to all of the local player HUDS.
+     */
     private HUD[] huds;
 
+    /**
+     * Access to the time storage instance.
+     */
     private Times times;
 
-    public RaceState(String _name, Circuit _circuit, Craft _craft, Views _views, Times _times, HUD[] _huds) {
+    public RaceState(String _name, Craft _craft, Times _times, HUD[] _huds) {
         super(_name);
-        circuit = _circuit;
         craft   = _craft;
-        views   = _views;
         times   = _times;
         huds    = _huds;
     }

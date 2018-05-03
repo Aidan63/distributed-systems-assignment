@@ -5,6 +5,10 @@ import uk.aidanlee.dsp_assignment.structural.ec.Component;
 import uk.aidanlee.dsp_assignment.structural.ec.Visual;
 import uk.aidanlee.dsp_assignment.utils.MathsUtil;
 
+/**
+ * Physics component.
+ * It simulates the ship when updated according to the input keys and stats.
+ */
 public class PhysicsComponent extends Component {
     public PhysicsComponent(String _name) {
         super(_name);

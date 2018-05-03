@@ -2,6 +2,9 @@ package uk.aidanlee.dsp_assignment.components;
 
 import uk.aidanlee.dsp_assignment.structural.ec.Component;
 
+/**
+ * Holds the x and y component of a velocity vector for an entity.
+ */
 public class VelocityComponent extends Component {
     public float x;
     public float y;

@@ -16,13 +16,39 @@ import static uk.aidanlee.dsp.utils.Vector2Tools.multiply;
 import static uk.aidanlee.dsp.utils.Vector2Tools.subtract;
 import static uk.aidanlee.dsp.utils.Vector2Tools.tangent2D;
 
+/**
+ * Maintains a mesh for a trail from the entity.
+ */
 public class TrailComponent extends Component {
-    public List<Vector2> points;
+
+    /**
+     * Previous positions of the entity to create the trail from.
+     */
+    private List<Vector2> points;
+
+    /**
+     * LibGDX mesh for the final trail.
+     */
     public Mesh mesh;
 
-    private int   maxLength;
+    /**
+     * Max mumber of previous entity positions to store.
+     */
+    private int maxLength;
+
+    /**
+     * The width of the trail at the head.
+     */
     private float startSize;
+
+    /**
+     * The width of the trail at the tail.
+     */
     private float endSize;
+
+    /**
+     * The colour of this trail.
+     */
     private Color color;
 
     public TrailComponent(String _name, Color _color) {

@@ -24,6 +24,10 @@ public class RaceResultsState extends State {
         super(_name);
     }
 
+    /**
+     * When entering the state we sum up and order the time data we entered with.
+     * @param _enterWith Unordered time data for each player.
+     */
     @Override
     public void onEnter(Object _enterWith) {
         Map<String, List<Float>> times = (Map<String, List<Float>>) _enterWith;

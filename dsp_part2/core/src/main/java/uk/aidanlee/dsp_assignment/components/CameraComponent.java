@@ -4,6 +4,9 @@ import com.badlogic.gdx.graphics.Camera;
 import uk.aidanlee.dsp_assignment.structural.ec.Component;
 import uk.aidanlee.dsp_assignment.utils.MathsUtil;
 
+/**
+ * Holds the camera for this specific entity.
+ */
 public class CameraComponent extends Component {
     public Camera camera;
 

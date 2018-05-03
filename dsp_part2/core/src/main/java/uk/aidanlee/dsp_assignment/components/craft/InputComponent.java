@@ -4,6 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import uk.aidanlee.dsp_assignment.structural.ec.Component;
 
+/**
+ * Reads inputs from the keyboard.
+ * Depending on which player we are different keys will be checked.
+ */
 public class InputComponent extends Component {
     public boolean accelerate = false;
     public boolean decelerate = false;

@@ -17,17 +17,17 @@ import uno.glfw.GlfwWindow;
 public class Client {
 
     /**
-     *
+     * All image and data resources used by the client.
      */
     private Resources resources;
 
     /**
-     *
+     * Main game state machine.
      */
     private StateMachine states;
 
     /**
-     *
+     * ImGui context for drawing ImGui UIs.
      */
     private Context imguiContext;
 
@@ -57,11 +57,19 @@ public class Client {
         ImGui.INSTANCE.getIo().setIniFilename(null);
     }
 
+    /**
+     * Main client loop. Runs the game state.
+     * @param _dt Delta time.
+     */
     public void onUpdate(float _dt) {
         LwjglGL3.INSTANCE.newFrame();
         states.update();
     }
 
+    /**
+     * Called when the client should draw to the screen.
+     * Renders the current state, then draws ImGui data.
+     */
     public void onRender() {
         Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -72,6 +80,9 @@ public class Client {
         LwjglGL3.INSTANCE.renderDrawData(ImGui.INSTANCE.getDrawData());
     }
 
+    /**
+     * Cleans up client resources for exit.
+     */
     public void dispose() {
         LwjglGL3.INSTANCE.shutdown();
         ContextKt.destroy(imguiContext);

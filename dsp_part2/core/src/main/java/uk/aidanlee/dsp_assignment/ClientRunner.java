@@ -3,21 +3,24 @@ package uk.aidanlee.dsp_assignment;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.utils.TimeUtils;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+/**
+ * Client runner, extends a base LibGDX application and calls the clients update function 60 times per second (60fps)
+ * The render function is drawn as fast as the computer allows.
+ */
 public class ClientRunner extends ApplicationAdapter {
 
     /**
-     *
+     * Constantly increasing timer, increases by the time difference between the current and previous loop call.
      */
     private double accumulator;
 
     /**
-     *
+     * The current system time.
      */
     private double currentTime;
 
     /**
-     *
+     * Actual client class containing actual game code.
      */
     private Client client;
 

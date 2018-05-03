@@ -1,7 +1,6 @@
 package uk.aidanlee.dsp.states.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -9,7 +8,6 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Timer;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import uk.aidanlee.dsp.common.components.AABBComponent;
@@ -45,36 +43,74 @@ import uk.aidanlee.jDiffer.shapes.Polygon;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Actual game race state.
+ */
 public class RaceState extends State {
 
+    /**
+     * Access to the clients event bus.
+     */
     private EventBus events;
 
+    /**
+     * Access to the clients loaded resources.
+     */
     private Resources resources;
 
-    //
-
+    /**
+     * Access to the games chat log.
+     */
     private ChatLog chatLog;
 
+    /**
+     * Access to the array of client data.
+     */
     private Player[] players;
 
+    /**
+     * This clients ID.
+     */
     private int ourID;
 
-    //
-
+    /**
+     * Holds data of the track circuit.
+     */
     private Circuit circuit;
 
+    /**
+     * Stores ship entities for each connected client.
+     */
     private Craft craft;
 
+    /**
+     * Manages the viewport of the client according to window size.
+     */
     private View view;
 
+    /**
+     * Batcher to draw ship images with.
+     */
     private SpriteBatch spriteBatch;
 
+    /**
+     * Batcher to draw the track and trail meshes with.
+     */
     private MeshBatch meshBatch;
 
+    /**
+     * The mesh of the track data used to draw a visual representation of the track.
+     */
     private QuadMesh trackMesh;
 
+    /**
+     * Stores the previously pressed input keys for our client.
+     */
     private InputBuffer inpBuff;
 
+    /**
+     * Draws the HUD for the client.
+     */
     private HUD hud;
 
     public RaceState(String _name, Resources _resources, EventBus _events) {
@@ -196,6 +232,10 @@ public class RaceState extends State {
 
     // Event Functions
 
+    /**
+     * Called when a client disconnects. Remove its physical entity from the game to stop processing it.
+     * @param _cmd Command containing the ID of the disconnected client.
+     */
     @Subscribe
     public void onClientDisconnected(CmdClientDisconnected _cmd) {
         craft.getRemotePlayers()[_cmd.clientID].destroy();
@@ -255,6 +295,10 @@ public class RaceState extends State {
         }
     }
 
+    /**
+     * Event received when we have finished the race. We change the entities state to "InActive" and show the waiting HUD.
+     * @param _cmd Command containing the finished client info.
+     */
     @Subscribe
     public void onPlayerFinished(CmdPlayerFinished _cmd) {
         Entity entity = craft.getRemotePlayers()[_cmd.clientID];
@@ -276,7 +320,9 @@ public class RaceState extends State {
     // Private Functions
 
     /**
-     *
+     * Called every update step, resizes the view in case the window size has changed.
+     * Also iterates over each entity and updates it and its components.
+     * Updates this clients camera position to show slightly ahead of the client.
      */
     private void simulatePlayer() {
         // Update the viewport size
@@ -295,7 +341,7 @@ public class RaceState extends State {
     }
 
     /**
-     *
+     * Checks the AABB of any nearby track tiles, if it collides with the players AABB perform a precise collision.
      */
     private void resolveWallCollisions() {
         // Get the entity and ensure it has the AABB and poly components
@@ -324,6 +370,9 @@ public class RaceState extends State {
         }
     }
 
+    /**
+     * Moves any colliding player entities apart from each other.
+     */
     private void resolveCraftCollisions() {
         // Get the entity and ensure it has the AABB and poly components
         Entity e = craft.getRemotePlayers()[ourID];

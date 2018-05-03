@@ -4,6 +4,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import uk.aidanlee.dsp_assignment.structural.ec.Component;
 import uk.aidanlee.dsp_assignment.structural.ec.Visual;
 
+/**
+ * Draws a offset drop shadow of the visual entity it is attached to.
+ */
 public class ShadowComponent extends Component {
     private Visual sprite;
 

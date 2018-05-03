@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Class which can hold multiple non connected quads within one libGDX mesh.
+ */
 public class QuadMesh {
     /**
      * Mesh instance of this quad mesh.
@@ -159,6 +162,11 @@ public class QuadMesh {
         tileUvSpace(_quad, new Rectangle(tlx, tly, szx, szy));
     }
 
+    /**
+     * Apply the UV texture coordinates to a packed quad.
+     * @param _quad Packed quad to modify.
+     * @param _uv   UV rectangle.
+     */
     private void tileUvSpace(PackedQuad _quad, Rectangle _uv) {
         float sz_x = _uv.width;
         float sz_y = _uv.height;
@@ -218,14 +226,38 @@ public class QuadMesh {
         _quad.uv[5].set( br_x , br_y );
     }
 
+    /**
+     * Individual quad in the mesh.
+     */
     public class PackedQuad {
-        public Vector2[] verts;
+        /**
+         * Six vertices of this quad.
+         */
+        Vector2[] verts;
 
+        /**
+         * UUID of this quad.
+         */
         UUID uid;
+
+        /**
+         * Colour tint of this quad.
+         */
         Color color;
 
+        /**
+         * If this quads texture is flipped on the x axis.
+         */
         private boolean flipx;
+
+        /**
+         * IF this quads texture is flipped on the y axis.
+         */
         private boolean flipy;
+
+        /**
+         * Six UV texture coordinates for this quad.
+         */
         private Vector2[] uv;
     }
 }

@@ -10,12 +10,26 @@ import uk.aidanlee.dsp.data.events.EvSendPacket;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.net.ConnectionSettings;
 
+/**
+ * Client is in this state when attempting to connect to a client.
+ * It send out a connection request packet each update loop.
+ * After five seconds if no response has been received, return to the menu.
+ */
 public class ConnectingState extends State {
 
+    /**
+     * The settings to connect with, received from the menu state.
+     */
     private ConnectionSettings settings;
 
+    /**
+     * Access to the clients main event bus.
+     */
     private EventBus events;
 
+    /**
+     * Timeout task for is no response is received.
+     */
     private Timer.Task timeout;
 
     public ConnectingState(String _name, EventBus _events) {
@@ -51,6 +65,10 @@ public class ConnectingState extends State {
 
     // Event Functions
 
+    /**
+     * Event when an OOB packet is received. This state is only interested if its a connection response packet.
+     * @param _event Event containing the OOB packet.
+     */
     @Subscribe
     public void onOOBPacket(EvOOBData _event) {
         if (_event.packet.getData().readByte() == Packet.CONNECTION_RESPONSE) {

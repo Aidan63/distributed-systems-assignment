@@ -10,9 +10,24 @@ import com.badlogic.gdx.math.Matrix4;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Allows drawing multiple meshes with a single texture.
+ */
 public class MeshBatch {
+
+    /**
+     * The texture to draw all meshes with.
+     */
     private Texture texture;
+
+    /**
+     * The current active shader to draw with.
+     */
     private ShaderProgram shader;
+
+    /**
+     * Map of all shaders usable by this batcher.
+     */
     private Map<String, ShaderProgram> shaders;
 
     public MeshBatch(Texture _texture) {

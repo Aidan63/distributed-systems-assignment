@@ -7,6 +7,11 @@ import glm_.vec2.Vec2d;
 import imgui.impl.LwjglGL3;
 import org.lwjgl.glfw.GLFW;
 
+/**
+ * LibGDX imgui inputs.
+ * Maps LibGDX input codes to ImGui ones so imgui can detect keyboard and mouse inputs.
+ * https://github.com/kotlin-graphics/imgui/wiki/Using-libGDX
+ */
 public class ImGuiInputProcessor extends InputAdapter {
     private final IntMap<Integer> gdxGLFWKeyMap;
 

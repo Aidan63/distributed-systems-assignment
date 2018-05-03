@@ -19,7 +19,8 @@ import static uk.aidanlee.dsp.common.net.Packet.DISCOVERY_REQUEST;
 import static uk.aidanlee.dsp.common.net.Packet.DISCOVERY_RESPONSE;
 
 /**
- *
+ * Sends broadcast discovery OOB packets out all interfaces. Any servers listen for the discovery packet will
+ * respond with data about them.
  */
 public class ServerDiscovery {
 
@@ -29,7 +30,7 @@ public class ServerDiscovery {
     private NetManager listener;
 
     /**
-     *
+     * Timer which is called once per second sending out discovery requests.
      */
     private Timer.Task requestSender;
 

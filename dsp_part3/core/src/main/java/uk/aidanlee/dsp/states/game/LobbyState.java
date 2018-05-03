@@ -2,7 +2,6 @@ package uk.aidanlee.dsp.states.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -25,30 +24,60 @@ import uk.aidanlee.dsp.data.states.LobbyData;
 
 import java.util.List;
 
+/**
+ * Lobby game sub state. Lobby state allows the player to change their settings. Once all players have clicked ready a
+ * three second countdown is started on the server before switching to the race state.
+ */
 public class LobbyState extends State {
 
+    /**
+     * Access to the clients event bus.
+     */
     private EventBus events;
 
+    /**
+     * Ip address and port of the server.
+     */
     private EndPoint server;
 
+    /**
+     * Access to all of the clients resources.
+     */
     private Resources resources;
 
-    //
-
+    /**
+     * Access to the clients chat log.
+     */
     private ChatLog chatLog;
 
+    /**
+     * Access to the array of all client info.
+     */
     private Player[] players;
 
+    /**
+     * Our clients ID. Used for quick lookup of our-self in the player array.
+     */
     private int ourID;
 
-    //
-
+    /**
+     * If the client can edit its settings.
+     */
     private boolean canEdit;
 
+    /**
+     * Chat input box buffer.
+     */
     private char[] inputBox;
 
+    /**
+     * Index of the ship image.
+     */
     private int[] ourShipIndex;
 
+    /**
+     * If this client is ready.
+     */
     private boolean isReady;
 
     public LobbyState(String _name, Resources _resources, EventBus _events, EndPoint _server) {
@@ -131,6 +160,9 @@ public class LobbyState extends State {
 
     // Private Functions
 
+    /**
+     * Draws a list of all clients connected to the server.
+     */
     private void drawClientList() {
         ImGui.INSTANCE.setNextWindowPos(new Vec2(40, 40), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(440, 420), Cond.Always);

@@ -52,7 +52,7 @@ public class InputBuffer {
         public final int sentTime;
         public final CmdClientInput input;
 
-        public InputRecord(CmdClientInput _input) {
+        InputRecord(CmdClientInput _input) {
             sentTime = (int) System.currentTimeMillis();
             input    = _input;
         }

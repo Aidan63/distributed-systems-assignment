@@ -7,17 +7,17 @@ import com.badlogic.gdx.utils.viewport.*;
 public class Views {
 
     /**
-     *
+     * Orthographic camera for each local player.
      */
     private OrthographicCamera[] cameras;
 
     /**
-     *
+     * Viewprort for each local player. Sets the bounds the camera is in.
      */
     private Viewport[] viewports;
 
     /**
-     *
+     * Vertical or Horizontal split type for 2 or 3 player games.
      */
     private SplitType split;
 
@@ -44,6 +44,10 @@ public class Views {
         return viewports;
     }
 
+    /**
+     * Manages creating the rectangle bounds for the local players.
+     * Splits the window into rectangles, each local player has its data drawn in that rectangle.
+     */
     public void resize() {
         // All of the libGDX viewport stuff assumes 0x0 is bottom left instead of top left...
 

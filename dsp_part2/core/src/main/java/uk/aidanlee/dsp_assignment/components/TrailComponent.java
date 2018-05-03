@@ -16,13 +16,39 @@ import static uk.aidanlee.dsp_assignment.utils.Vector2Tools.subtract;
 import static uk.aidanlee.dsp_assignment.utils.Vector2Tools.multiply;
 import static uk.aidanlee.dsp_assignment.utils.Vector2Tools.tangent2D;
 
+/**
+ * Maintains a mesh for a trail from the entity.
+ */
 public class TrailComponent extends Component {
-    public List<Vector2> points;
+
+    /**
+     * Previous positions of the entity to create the trail from.
+     */
+    private List<Vector2> points;
+
+    /**
+     * LibGDX mesh for the final trail.
+     */
     public Mesh mesh;
 
-    private int   maxLength;
+    /**
+     * Max mumber of previous entity positions to store.
+     */
+    private int maxLength;
+
+    /**
+     * The width of the trail at the head.
+     */
     private float startSize;
+
+    /**
+     * The width of the trail at the tail.
+     */
     private float endSize;
+
+    /**
+     * The colour of this trail.
+     */
     private Color color;
 
     public TrailComponent(String _name, Color _color) {
@@ -61,7 +87,7 @@ public class TrailComponent extends Component {
 
         for (int i = 0; i < points.size(); i++) {
             if (i < points.size() - 1) {
-                Vector2 tangent = Vector2Tools.tangent2D(Vector2Tools.subtract(points.get(i), points.get(i + 1)).nor());
+                Vector2 tangent = tangent2D(subtract(points.get(i), points.get(i + 1)).nor());
                 float   offset  = MathUtils.lerp(startSize, endSize, i / points.size());
 
                 Vector2 pointNegative = Vector2Tools.add(points.get(i), multiply(tangent, -1 * offset));

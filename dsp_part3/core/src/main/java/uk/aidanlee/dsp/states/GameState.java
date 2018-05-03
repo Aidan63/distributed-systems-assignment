@@ -12,7 +12,6 @@ import uk.aidanlee.dsp.common.structural.StateMachine;
 import uk.aidanlee.dsp.data.ChatLog;
 import uk.aidanlee.dsp.data.Resources;
 import uk.aidanlee.dsp.data.events.*;
-import uk.aidanlee.dsp.data.race.HUD;
 import uk.aidanlee.dsp.data.states.LobbyData;
 import uk.aidanlee.dsp.net.ConnectionResponse;
 import uk.aidanlee.dsp.states.game.LobbyState;
@@ -21,28 +20,55 @@ import uk.aidanlee.dsp.states.game.RaceState;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Main game state. When the client is connected to a server it is in this state.
+ */
 public class GameState extends State {
 
+    /**
+     * Access to the clients event bus.
+     */
     private EventBus events;
 
+    /**
+     * IP address and port of the server.
+     */
     private EndPoint server;
 
-    //
-
+    /**
+     * Clients netchannel for send commands to the server.
+     */
     private NetChan netChan;
 
+    /**
+     * Data on all clients connected to the server.
+     */
     private Player[] players;
 
+    /**
+     * chat log for text chat between players in the game lobby.
+     */
     private ChatLog chat;
 
+    /**
+     * All resources (images, track data, etc) used by the client.
+     */
     private Resources resources;
 
-    //
-
+    /**
+     * Game sub state. Contains a lobby and race state.
+     */
     private StateMachine gameState;
 
+    /**
+     * Timer for sending out heartbeats packets. Timer is repeatedly called.
+     */
     private Timer heartbeatSender;
 
+    /**
+     * If this timer triggers we disconnect as the server has not sent a heartbeat in 5 seconds.
+     * This resets on every heartbeat packet received.
+     */
     private Timer heartbeatTimeout;
 
     public GameState(String _name, EventBus _events) {
@@ -98,8 +124,10 @@ public class GameState extends State {
     public void onLeave(Object _leaveWith) {
         events.unregister(this);
         gameState.unset(null);
+
         heartbeatTimeout.cancel();
         heartbeatSender.cancel();
+
         resources.dispose();
     }
 
@@ -108,6 +136,7 @@ public class GameState extends State {
         // Read and process and commands from the server.
         gameState.update();
 
+        // Sends out a netchan packet every step.
         Packet netchanPacket = netChan.send();
         if (netchanPacket != null) {
             events.post(new EvSendPacket(netchanPacket));
@@ -122,11 +151,19 @@ public class GameState extends State {
 
     // Event Functions
 
+    /**
+     * State change events are called by the sub state to change the main event.
+     * @param _stateData State to switch to along with the data to enter and leave with.
+     */
     @Subscribe
     public void onStateChange(EvStateChange _stateData) {
         machine.set(_stateData.state, _stateData.enterWith, _stateData.leaveWith);
     }
 
+    /**
+     * When we receive a netchan packet, process it and post all the containing commands into the event bus.
+     * @param _event Event containing the netchan packet.
+     */
     @Subscribe
     public void onNetChanMessage(EvNetChanData _event) {
         for (Command cmd : netChan.receive(_event.packet)) {
@@ -134,6 +171,10 @@ public class GameState extends State {
         }
     }
 
+    /**
+     * Clients only care about receiving two OOB packet types once they are in game.
+     * @param _event Event containing the OOB Packet.
+     */
     @Subscribe
     public void onOOBMessage(EvOOBData _event) {
         switch (_event.packet.getData().readByte()) {
@@ -147,16 +188,29 @@ public class GameState extends State {
         }
     }
 
+    /**
+     * Event posts the included command into the netchans reliable command buffer.
+     * @param _event Event containing the command to reliably send.
+     */
     @Subscribe
     public void onReliableCommand(EvAddReliableCommand _event) {
         netChan.addCommand(_event.cmd);
     }
 
+    /**
+     * Event posts the included command into the netchan.
+     * @param _event Event containing the command to unreliably send.
+     */
     @Subscribe
     public void onUnreliableCommand(EvAddUnreliableCommand _event) {
         netChan.addReliableCommand(_event.cmd);
     }
 
+    /**
+     * Event is received when a connection command is received in a netchan packet.
+     * Contains data about a new client connection. It reads the data and adds them to the player array.
+     * @param _cmd Command containing newly joined clients info.
+     */
     @Subscribe
     public void onClientConnected(CmdClientConnected _cmd) {
         Player player = new Player(_cmd.client.getName());
@@ -168,6 +222,11 @@ public class GameState extends State {
         chat.addServerMessage(_cmd.client.getName() + " has joined");
     }
 
+    /**
+     * Event is received when a disconnection command is received in a netchan packet.
+     * Command contains the ID of the disconnected client so it can be removed from our player array.
+     * @param _cmd Command containing the ID of the disconnected client.
+     */
     @Subscribe
     public void onClientDisconnected(CmdClientDisconnected _cmd) {
         if (players[_cmd.clientID] == null) return;
@@ -176,6 +235,10 @@ public class GameState extends State {
         players[_cmd.clientID] = null;
     }
 
+    /**
+     * Event is received when a new chat message is received in a netchan packet.
+     * @param _cmd Command containing message string and the ID of the client who sent it.
+     */
     @Subscribe
     public void onChatMessage(CmdChatMessage _cmd) {
         chat.addPlayerMessage(players[_cmd.clientID].getName(), _cmd.message);
@@ -183,6 +246,11 @@ public class GameState extends State {
 
     // Internal Functions
 
+    /**
+     * Reads a specific number of player data from a packet.
+     * @param _packet     Packet to raad player data from.
+     * @param _numPlayers Number of players to read.
+     */
     private void readPlayers(Packet _packet, int _numPlayers) {
         for (int i = 0; i < _numPlayers; i++) {
             // Read Basic Info
@@ -213,6 +281,10 @@ public class GameState extends State {
         }
     }
 
+    /**
+     * Resets the heartbeat timeout, creates a timer if none exists.
+     * When a timeout occurs return to the menu.
+     */
     private void resetHeartbeatTimeout() {
         if (heartbeatTimeout != null) {
             heartbeatTimeout.cancel();

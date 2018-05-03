@@ -23,10 +23,12 @@ public class Craft {
     private Visual[] remotePlayers;
 
     /**
-     *
-     * @param _players
-     * @param _spawn
-     * @param _ourID
+     * Creates a new set of craft entities.
+     * @param _resources   The resources class to get ship images from.
+     * @param _players     Player data to create the entities from.
+     * @param _spawn       The spawn points of the current track to determine starting positions.
+     * @param _checkpoints All the checkpoints in this track.
+     * @param _ourID       Which ID belongs to the client.
      */
     public Craft(Resources _resources, Player[] _players, CircuitSpawn _spawn, Ray[] _checkpoints, int _ourID) {
 

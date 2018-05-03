@@ -13,7 +13,6 @@ import imgui.*;
 import imgui.impl.LwjglGL3;
 import uno.glfw.GlfwWindow;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
     private double accumulator;
     private double currentTime;
@@ -34,32 +33,66 @@ public class Main extends ApplicationAdapter {
      */
     private SpriteBatch spriteBatch;
 
+    /*
+      Arrays are used to hold single values since that's how the java port of ImGui handles modifying variables.
+      Saves having to create other variables which are arrays containing other variables
+    */
+
+    /*
+      Single index which stores the ID mapping onto an image in the craft texture atlas.
+    */
+
     private int[] player1Design;
     private int[] player2Design;
+
+    /*
+       Single index which holds the current rotation value. Sprite rotation values are set to these.
+    */
 
     private float[] player1Rotation;
     private float[] player2Rotation;
 
+    /*
+      Holds 3 normalized floats (0 - 1). Maps onto RGB.
+    */
+
     private float[] player1Color;
     private float[] player2Color;
+
+    /*
+       Two sprites which will be used to draw the players.
+    */
 
     private Sprite player1;
     private Sprite player2;
 
+    /**
+     * Called once LibGDX starts up.
+     */
     @Override
     public void create() {
         super.create();
 
-        // ImGui setup
+        // Setup ImGui
+
+        // Create the ImGui window for our menu UI
         Lwjgl3Graphics gfx = (Lwjgl3Graphics) Gdx.graphics;
         GlfwWindow imguiWindow = new GlfwWindow(gfx.getWindow().getWindowHandle());
 
+        // Create a new imgui context and pass the window to the LWJGL3 imgui backend.
         imguiContext = new Context(null);
         LwjglGL3.INSTANCE.init(imguiWindow, false);
 
+        // Disable ImGui ini saving.
+        ImGui.INSTANCE.getIo().setIniFilename(null);
+
         // Drawing setup
-        playerAtlas = new TextureAtlas(Gdx.files.internal("assets/craft.atlas"));
+
+        // Load the atlas and create our sprite batch.
+        playerAtlas = new TextureAtlas(Gdx.files.internal("craft.atlas"));
         spriteBatch = new SpriteBatch();
+
+        // Initial values for both players.
 
         player1Design = new int[] { 0 };
         player2Design = new int[] { 0 };
@@ -110,6 +143,8 @@ public class Main extends ApplicationAdapter {
      * Update function.
      */
     private void update() {
+
+        // Create the ImGui UI allowing the user to modify the player values.
         ImGui.INSTANCE.setNextWindowPos(new Vec2(20, 20), Cond.Always, new Vec2());
         ImGui.INSTANCE.setNextWindowSize(new Vec2(430, 210), Cond.Always);
         ImGui.INSTANCE.begin("Player Settings", null, WindowFlags.NoResize.getI() | WindowFlags.NoCollapse.getI() | WindowFlags.NoMove.getI());
@@ -129,6 +164,8 @@ public class Main extends ApplicationAdapter {
 
         ImGui.INSTANCE.end();
 
+        // Update our sprites with the data.
+
         player1.setRotation(player1Rotation[0]);
         player2.setRotation(player2Rotation[0]);
 
@@ -140,7 +177,7 @@ public class Main extends ApplicationAdapter {
     }
 
     /**
-     *
+     * Clear the screen and draw the two sprites.
      */
     private void draw() {
         Gdx.gl.glClearColor(0.47f, 0.56f, 0.61f, 1f);
@@ -152,6 +189,9 @@ public class Main extends ApplicationAdapter {
         spriteBatch.end();
     }
 
+    /**
+     * Clean up any loaded resources.
+     */
     @Override
     public void dispose() {
         playerAtlas.dispose();

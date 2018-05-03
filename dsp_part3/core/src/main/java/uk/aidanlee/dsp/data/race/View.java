@@ -5,8 +5,19 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+/**
+ * Manages the view and camera for the client.
+ */
 public class View {
+
+    /**
+     * The camera used to determine what the client sees.
+     */
     private OrthographicCamera camera;
+
+    /**
+     * Viewport which describes how the camera is scaled when the window is resized.
+     */
     private Viewport viewport;
 
     public View() {
